@@ -10,8 +10,8 @@ Siga as etapas em ordem. Cada uma recebe o arquivo da anterior e não depende da
 
 | Etapa | Skill | Recebe | Produz |
 |---|---|---|---|
-| 1. Fechar perguntas em aberto | `grilling` | PRD e atas das calls | Decisões registradas no PRD |
-| 2. PRD de produto | `tlc-prd` | Problema e decisões | `.prd/<slug>.md`, sem tecnologia |
+| 1. Rever desde a ideia | `grilling` | Atas, pesquisas e o PRD atual como hipótese | `especificacao/decisoes-levantamento.md`, com veredito datado |
+| 2. PRD de produto | `tlc-prd` | Arquivo de decisões, como decisão já tomada | `.prd/<slug>.md`, sem tecnologia |
 | 3. Plano | `tlc-plan` | PRD e fontes de `especificacao/` | `.specs/features/<feature>/plan.md`, aprovado por escrito |
 | 4. Construção | `tlc-implement` | Plano aprovado | Código, `checks.md` e `proofs.md` |
 | 5. Avaliação | `spec-driven-eval` | PRD e implementação | Nota por critério |
