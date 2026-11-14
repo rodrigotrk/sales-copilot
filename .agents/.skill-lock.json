@@ -1,0 +1,53 @@
+{
+  "version": 2,
+  "skills": {
+    "tlc-prd": {
+      "name": "tlc-prd",
+      "source": "local",
+      "contentHash": "ce417e8df0cff1870fbfdd157959e6efbdc6b1b547c57ac3850134e8f70bba80",
+      "installedAt": "2026-11-14T21:25:25.797Z",
+      "updatedAt": "2026-11-14T21:25:25.797Z",
+      "agents": [
+        "claude-code"
+      ],
+      "method": "copy",
+      "global": false
+    },
+    "tlc-plan": {
+      "name": "tlc-plan",
+      "source": "local",
+      "contentHash": "7b3deced549d6cd3b812ed675760c69027166b6ce5e9b293b073f1570b747152",
+      "installedAt": "2026-11-14T21:25:25.810Z",
+      "updatedAt": "2026-11-14T21:25:25.810Z",
+      "agents": [
+        "claude-code"
+      ],
+      "method": "copy",
+      "global": false
+    },
+    "tlc-implement": {
+      "name": "tlc-implement",
+      "source": "local",
+      "contentHash": "28efe469462e37cbf1ff3c64a08068e507f16ab07251529fc2dc134a53b7d5f0",
+      "installedAt": "2026-11-14T21:25:25.820Z",
+      "updatedAt": "2026-11-14T21:25:25.820Z",
+      "agents": [
+        "claude-code"
+      ],
+      "method": "copy",
+      "global": false
+    },
+    "spec-driven-eval": {
+      "name": "spec-driven-eval",
+      "source": "local",
+      "contentHash": "168d6860c6e84809a02c2abface032a4a625bdd81fec6131615e00a2cf87e311",
+      "installedAt": "2026-11-14T21:25:25.824Z",
+      "updatedAt": "2026-11-14T21:25:25.824Z",
+      "agents": [
+        "claude-code"
+      ],
+      "method": "copy",
+      "global": false
+    }
+  }
+}

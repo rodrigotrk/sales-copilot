@@ -9,7 +9,7 @@
 
 ## Antes de listar cortes
 
-Leia o código que o alvo toca, não só as linhas do alvo: encontre quem chama o que você apagaria ou faria inline, e procure no repositório helpers existentes antes de dizer que algo foi reinventado. As convenções do repositório vencem este checklist. Cada linha é um sinal, não uma prova.
+Leia o código que o alvo toca, não só as linhas do alvo: encontre quem chama o que você apagaria ou faria inline em toda a árvore, incluindo testes, fixtures, configuração e referências por string ou busca dinâmica, como registros, pontos de entrada ou reflexão, e procure no repositório helpers existentes antes de dizer que algo foi reinventado. As convenções do repositório vencem este checklist. Cada linha é um sinal, não uma prova.
 
 Julgue um corte por o leitor ter menos para guardar na cabeça depois, não pela contagem de linhas. Mover complexidade para outro lugar não é corte.
 

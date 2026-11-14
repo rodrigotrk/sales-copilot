@@ -1,6 +1,6 @@
 # Fluxo do harness — Fase 0: preparar o projeto
 
-A Fase 0 deixa o `sales-copilot` pronto para o fluxo de especificação. Ela termina com o projeto versionado no GitHub, as skills do fluxo instaladas e um `CLAUDE.md` que fixa a ordem, os caminhos e as regras. Nenhum documento de produto muda nesta fase.
+A Fase 0 deixa o `sales-copilot` pronto para o fluxo de especificação. Ela termina com o projeto versionado no GitHub, as skills do fluxo instaladas e um `AGENTS.md` que fixa a ordem, os caminhos e as regras. Nenhum documento de produto muda nesta fase.
 
 O fluxo completo:
 
@@ -62,7 +62,7 @@ cd /Users/rodrigo/Estudos/vendas/sales-copilot
 npx @tech-leads-club/agent-skills install -s tlc-prd tlc-plan tlc-implement spec-driven-eval -a claude-code
 ```
 
-Elas vão para `.claude/skills/` e aparecem como `/skill`. As skills não são editadas, para continuar recebendo atualizações. As adaptações ficam no `CLAUDE.md` (passo 5). O `python3` 3.15 da máquina atende aos scripts de validação. Rodar o `selftest.py` da `tlc-plan` e da `tlc-implement` para confirmar.
+Elas vão para `.claude/skills/` e aparecem como `/skill`. As skills não são editadas, para continuar recebendo atualizações. As adaptações ficam no `AGENTS.md` (passo 5). O `python3` 3.15 da máquina atende aos scripts de validação. Rodar o `selftest.py` da `tlc-plan` e da `tlc-implement` para confirmar.
 
 ### 3. Copiar o `grilling`
 
@@ -75,7 +75,9 @@ Copiar `skills/productivity/grilling/SKILL.md` de `mattpocock/skills` para `.cla
 
 O `SubagentStart` também injeta o padrão no Verifier e no subagente de telas da `tlc-implement`. Isso é aceitável: o padrão governa a escrita, não o julgamento.
 
-### 5. Escrever o `CLAUDE.md`
+### 5. Escrever o `AGENTS.md`
+
+O arquivo de instruções é o `AGENTS.md`, lido pelo Claude Code e por outros agentes, como o Codex.
 
 Ele fixa, em poucas linhas:
 
@@ -91,6 +93,7 @@ Abrir uma sessão nova no projeto e confirmar:
 
 - [ ] `/grilling`, `/tlc-prd`, `/tlc-plan`, `/tlc-implement` e `/spec-driven-eval` aparecem na lista de skills.
 - [ ] O `writing-standard` chega no início da sessão, pelo hook.
+- [ ] O `AGENTS.md` é carregado: perguntar à sessão em que fase o projeto está. Se não for carregado, criar um `CLAUDE.md` com a única linha `@AGENTS.md`.
 - [ ] Escrever um `.md` de teste fora de `.specs/` dispara o `deslop` no Stop, e um dentro de `.specs/` não dispara.
 - [ ] Os `selftest.py` passam.
 - [ ] `git status` limpo e o repositório privado no GitHub com o mesmo conteúdo, sem vídeos.

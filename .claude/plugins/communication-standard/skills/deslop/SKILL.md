@@ -8,7 +8,7 @@ compatibility: >
   Precisa de acesso de leitura aos arquivos-alvo. Usa git para resolver um alvo do tipo diff quando informado. Executa o comando de testes do próprio repositório, quando existe, apenas se pedirem para aplicar cortes de código.
 metadata:
   author: Vinicius Albano
-  version: "0.1.0"
+  version: "0.2.0"
 ---
 
 # Deslop

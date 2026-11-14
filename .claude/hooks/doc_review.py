@@ -13,8 +13,8 @@ from pathlib import Path
 
 PROJECT = Path(__file__).resolve().parents[2]
 STATE_DIR = Path(tempfile.gettempdir()) / "claude-doc-review"
-# Transcrições são literais e repos clonados são de terceiros: revisar estragaria o conteúdo.
-EXCLUDED_PARTS = {".claude", "repos", "node_modules"}
+# Transcrições são literais, repos clonados são de terceiros e .specs/ é lido pelos scripts da TLC: revisar estragaria o conteúdo.
+EXCLUDED_PARTS = {".claude", ".specs", "repos", "node_modules"}
 EXCLUDED_NAME_FRAGMENTS = ("transcricao",)
 
 

@@ -6,7 +6,7 @@ disable-model-invocation: true
 license: MIT
 metadata:
   author: Vinicius Albano
-  version: "0.1.0"
+  version: "0.2.0"
 ---
 
 # Padrão de comunicação
@@ -47,7 +47,8 @@ Seu leitor está ocupado e lê cada palavra. Cada frase, seção e linha de cód
 ## Código
 
 - Entenda primeiro: leia o código que a mudança toca e siga o fluxo. Depois escolha a primeira opção que funciona: nem é necessário → já existe no repositório → biblioteca padrão, escolhendo a chamada correta nos casos de borda → recurso da plataforma → dependência já instalada → o mínimo de código novo. Nunca adicione uma dependência para o que poucas linhas resolvem, e reutilize um tipo de erro existente antes de definir um novo.
-- Altere só o que a tarefa exige e deixe em paz código, nomes e formatação não relacionados.
+- Altere só o que a tarefa exige e deixe em paz código, nomes e formatação não relacionados. Termine tudo: quem chama, os testes e as fixtures que sua mudança quebra fazem parte da tarefa.
+- Mantenha a estrutura que o código já tem: suas camadas, interfaces e convenções.
 - Adicione uma abstração só para um segundo uso real: nada de interface com uma implementação, factory com um produto, configuração para um valor que nunca muda ou wrapper que só repassa.
 - Escreva só código que a tarefa usa: nada de estrutura para depois, ramos mortos, exports não usados, cópias de lógica que precisam mudar juntas ou verificações de valores que a mesma função acabou de produzir ou que seus tipos já garantem.
 - Trate um erro ou deixe-o subir; nunca o esconda com um catch genérico, um cast ou uma supressão de tipo.

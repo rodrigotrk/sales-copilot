@@ -14,7 +14,7 @@ Cada linha é um sinal, não uma prova. Confirme que o texto não carrega nada a
 | Narração de changelog | "foi alterado para", "agora usa", "anteriormente", "atualizado para", "corrigido: a versão anterior dizia", notas de correção datadas | Reescrever para o estado atual; apagar o histórico. Isentos: ADRs, changelogs, notas de versão, guias de migração |
 | Ponteiro como explicação | Uma frase que só faz sentido depois de abrir um link, arquivo ou ID, ou de conhecer uma sigla ou rótulo inventado que nunca foi apresentado ao leitor; vários ponteiros num parágrafo | Reescrever: nomear o conceito ou dar o contexto em poucas palavras; manter o ponteiro depois, se útil |
 | Fato repetido | O mesmo requisito, número ou decisão declarado em dois lugares | Fundir no nível que é dono dele; nos outros lugares, referir-se a ele pelo nome |
-| Contexto repetido | Contexto que o leitor já tem diante de si: a pergunta que acabou de fazer, o texto poucas linhas acima, o arquivo que está editando | Apagar |
+| Contexto repetido | Contexto que o leitor já tem diante de si: a pergunta que acabou de fazer, o texto poucas linhas acima, o arquivo que está editando e, numa resposta com a conversa visível, o contexto que o leitor escreveu ou com que já concordou na conversa | Apagar |
 | Detalhe derivável | Listas de arquivos, métodos, valores de configuração ou convenções do repositório que o leitor conseguiria ler no código, repetidas por seção | Nomear a convenção uma vez; apagar as listas |
 | Plano organizado por tipo de trabalho | Todo o trabalho de API, depois todo o de UI, depois todos os testes, de modo que nenhuma seção descreve algo entregável | Reescrever por fatia entregue |
 | Opção rejeitada longa | Parágrafos sobre uma alternativa que não foi escolhida | Reescrever em uma frase: por que não e, se o texto disser, quando ela venceria |
@@ -24,8 +24,9 @@ Cada linha é um sinal, não uma prova. Confirme que o texto não carrega nada a
 | Listas só de rótulos | Itens com rótulo cujo texto repete o rótulo ("**Desempenho:** o desempenho melhora") | Reescrever como frases simples |
 | Preâmbulo e recapitulação | Abertura que anuncia o que vem; fechamento que resume o que acabou de ser dito; uma pergunta que o próprio texto responde em seguida, ou um suspense ou franqueza encenada antes de uma afirmação rotineira | Apagar a moldura; reescrever a preparação como a afirmação direta |
 | Título ecoado | A primeira frase sob um título repete o título | Apagar a frase |
-| Trilha de raciocínio | Como o autor chegou a uma conclusão, quando o leitor precisa só da conclusão | Apagar, a menos que o raciocínio justifique uma decisão em que o leitor precisa confiar |
-| Formatação decorativa | Negrito em frases comuns, emoji em títulos, títulos numa resposta curta, bullets para um raciocínio encadeado que se lê melhor como prosa, apartes rotulados ou uma expressão com dois-pontos encenando uma revelação ("Insight principal:") | Reescrever como texto simples |
+| Trilha de raciocínio | Como o autor chegou a uma conclusão, quando o leitor precisa só da conclusão; numa resposta, um diagnóstico, consulta, comando ou conjunto de números incluído para provar que um plano vai funcionar | Apagar, a menos que o raciocínio justifique uma decisão em que o leitor precisa confiar; a prova pertence ao ticket ou documento que vem depois |
+| Decisão enterrada | A decisão, recomendação ou resposta aparece depois do contexto, da evidência ou da recapitulação, muitas vezes na última seção ou linha | Movê-la para o início; manter só o raciocínio que mudaria se o leitor concorda. Manter o contexto de que um leitor sem a conversa precisa. Numa resposta, cortar também o que o leitor escreveu ou com que concordou e a prova de que um plano funciona, mas só quando a conversa está visível ou o texto é claramente uma resposta |
+| Formatação decorativa | Negrito em frases comuns, emoji em títulos, um título escrito para efeito em vez de nomear o que a seção contém ("A decisão, numa tela"), títulos numa resposta curta, bullets para um raciocínio encadeado que se lê melhor como prosa, apartes rotulados ou uma expressão com dois-pontos encenando uma revelação ("Insight principal:") | Reescrever como texto simples |
 
 ## Frases
 
@@ -33,7 +34,7 @@ Cada linha é um sinal, não uma prova. Confirme que o texto não carrega nada a
 |---|---|---|
 | Frase sem efeito | Removê-la não muda nada do que o leitor sabe ou faz. Em instruções para um agente (skills, prompts, `AGENTS.md`), removê-la não muda nada do que o modelo faria por padrão | Apagar a frase inteira, não aparar palavras |
 | Moldura de contraste | "não X, mas Y"; "não é só X, é Y"; uma cauda truncada ", sem X"; ou o mesmo contraste dividido numa frase de negação e numa de afirmação. Só quando nenhum leitor acredita em X | Reescrever afirmando Y |
-| Metadiscurso | Uma palavra, linha ou oração inicial sobre o texto em vez do assunto: dizer ao leitor o que notar ou quanto peso dar, apresentar um ponto comum como verdade oculta, ou montar um cenário (uma era, um campo) antes do ponto ("vale notar que", "o ponto-chave é", "importante", "em resumo") | Apagar a moldura, manter o conteúdo |
+| Metadiscurso | Uma palavra, linha ou oração inicial sobre o texto em vez do assunto: dizer ao leitor o que notar ou quanto peso dar, apresentar um ponto comum como verdade oculta, ou montar um cenário (uma era, um campo) antes do ponto ("vale notar que", "o ponto-chave é", "importante", "em resumo"); narrar como o texto foi feito ("compilado a partir de", "o que não foi confirmado está sinalizado em vez de adivinhado") ou um layout que o leitor já vê ("a tabela abaixo compara") | Apagar a moldura, manter o conteúdo; manter um crédito de fonte que o leitor pode seguir e uma ressalva que muda o que ele faz |
 | Ressalva vazia | Uma palavra de cautela que não acrescenta informação ("talvez", "pode ser", "possivelmente poderia"), sozinha ou empilhada numa afirmação | Apagar; manter a ressalva que carrega incerteza real, porque apagá-la fabrica confiança |
 | Discutir com ninguém | Refutar uma objeção que o leitor nunca levantou ("uma abordagem tentadora seria…") | Apagar |
 | Afirmação sem fonte | "especialistas concordam", "é sabido que", "as boas práticas dizem" sem nada por trás | Atribuir a fonte ou apagar |
@@ -46,7 +47,7 @@ Cada linha é um sinal, não uma prova. Confirme que o texto não carrega nada a
 | Rodízio de sinônimos (*fraco*) | Um conceito chamado por vários termos alternadamente | Reescrever com um termo só |
 | Palavreado inflado (*fraco*) | "a fim de", "utilizar", "atua como", "alavancar" onde "para", "usar", "é" funcionam; um verbo mais longo no lugar de "é" ou "tem"; um substantivo com verbo fraco onde um verbo basta ("realizar a análise" em vez de "analisar") | Reescrever com a palavra simples |
 | Agente oculto (*fraco*) | Uma frase na voz passiva num plano ou especificação em que o leitor precisa saber quem age | Reescrever nomeando o agente que o texto ou o contexto fornece; se nenhum for dado, listar em Perguntas |
-| Fecho de slogan | Uma linha final que repete o ponto como slogan ou metáfora, ou o mesmo fecho depois de várias seções | Apagar em vez de polir |
+| Fecho de slogan | Uma linha final que repete o ponto como slogan ou metáfora, o mesmo fecho depois de várias seções, ou uma frase depois de um exemplo que nomeia o que ele mostrou ("Isso mostra a importância de…", "A mensagem foi clara:", "Essa distinção importa.") | Apagar em vez de polir; manter uma frase depois de um exemplo que acrescenta um fato ou consequência que o exemplo não mostra |
 
 ## Não sinalize
 
