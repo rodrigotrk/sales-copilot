@@ -1,9 +1,9 @@
 # playbook-configuravel proofs
 
-**HEAD**: 33a3580
+**HEAD**: a155717
 **Tree**: clean
 **Shell**: /bin/sh
-**Result**: 130 pass, 1 fail
+**Result**: 132 pass, 0 fail
 
 | Check | Proof | Result |
 | --- | --- | --- |
@@ -49,7 +49,7 @@
 | C91 | `run web / ✓ [C91] sem cookie XSRF-TOKEN busca o token antes do primeiro POST e o envia` | pass |
 | C27 | `run web / ✓ [C27] rascunho vazio mostra título, subtítulo e os dois jeitos de começar` | pass |
 | C28 | `run web / ✓ [C28] Escrever o playbook mostra os quatro blocos vazios com os botões` | pass |
-| C29 | `browser - abrir /n/<businessId>/playbook com um playbook de exemplo, janela 1440 x 1300, salvar captures/tela-` | **not judged** (screens.md) |
+| C29 | `browser - abrir /n/<businessId>/playbook com um playbook de exemplo, janela 1440 x 1300, salvar captures/tela-` | pass |
 | C30 | `run web / ✓ [C30] + Etapa acrescenta ao fim numerada e salva ao sair do campo` | pass |
 | C31 | `run web / ✓ [C31] setas trocam a etapa, renumeram, salvam e desabilitam nas pontas` | pass |
 | C32 | `run web / ✓ [C32] + Informação acrescenta a linha ao fim do bloco` | pass |
@@ -126,6 +126,7 @@
 | C80 | `run server / PASSED [C80] documento sem itens falha sem mudar o rascunho` | pass |
 | C80 | `run web / ✓ [C74b] mensagens da importação por código de erro` | pass |
 | C81 | `run server / PASSED [C81] três falhas do modelo encerram a tarefa em failed sem mudar o rascunho` | pass |
+| C81 | `run server / PASSED [C81b] resposta do modelo depois do tempo limite conta como falha e repete até 3 vezes` | pass |
 | C81 | `run web / ✓ [C74b] mensagens da importação por código de erro` | pass |
 | C82 | `run server / PASSED [C82] bloco acima do limite importa até o limite e avisa os itens de fora` | pass |
 | C83 | `run server / PASSED [C83] conclusão que não marca a tarefa não grava linhas` | pass |
@@ -144,21 +145,21 @@
 `Run web` - exit 0
 
 ```
- ✓ src/features/playbook/__tests__/playbook.test.ts > tela do playbook > [C52] sem plano a linha do desconto não aparece 8ms
- ✓ src/features/playbook/__tests__/playbook.test.ts > tela do playbook > [C53] sem call registrada a coluna Nas calls não aparece 14ms
- ✓ src/features/playbook/__tests__/playbook.test.ts > tela do playbook > [C54b] após publicar o topo mostra a versão nova 21ms
+ ✓ src/features/playbook/__tests__/playbook.test.ts > tela do playbook > [C52] sem plano a linha do desconto não aparece 9ms
+ ✓ src/features/playbook/__tests__/playbook.test.ts > tela do playbook > [C53] sem call registrada a coluna Nas calls não aparece 13ms
+ ✓ src/features/playbook/__tests__/playbook.test.ts > tela do playbook > [C54b] após publicar o topo mostra a versão nova 19ms
  ✓ src/features/playbook/__tests__/playbook.test.ts > tela do playbook > [C55b] publicar com revision_conflict mostra O playbook foi alterado em outra aba 19ms
- ✓ src/features/playbook/__tests__/playbook.test.ts > tela do playbook > [C56b] publish_minimum mostra a mensagem do mínimo 22ms
+ ✓ src/features/playbook/__tests__/playbook.test.ts > tela do playbook > [C56b] publish_minimum mostra a mensagem do mínimo 21ms
  ✓ src/features/playbook/__tests__/playbook.test.ts > tela do playbook > [C57b] incomplete_rows destaca as linhas e mostra Complete ou remova 19ms
- ✓ src/features/playbook/__tests__/playbook.test.ts > tela do playbook > [C59b] pending_review mostra Confira os valores marcados 19ms
- ✓ src/features/playbook/__tests__/playbook.test.ts > tela do playbook > [C60] alteração pendente desabilita Publicar com Há alterações não salvas 78ms
- ✓ src/features/playbook/__tests__/playbook.test.ts > tela do playbook > [C61b] Alterações não publicadas aparece só com diferença e Publicar desabilita sem ela 27ms
+ ✓ src/features/playbook/__tests__/playbook.test.ts > tela do playbook > [C59b] pending_review mostra Confira os valores marcados 18ms
+ ✓ src/features/playbook/__tests__/playbook.test.ts > tela do playbook > [C60] alteração pendente desabilita Publicar com Há alterações não salvas 75ms
+ ✓ src/features/playbook/__tests__/playbook.test.ts > tela do playbook > [C61b] Alterações não publicadas aparece só com diferença e Publicar desabilita sem ela 81ms
  ✓ src/features/playbook/__tests__/playbook.test.ts > tela do playbook > [C62] sem versão o topo mostra rascunho 8ms
 
  Test Files  5 passed (5)
       Tests  59 passed (59)
-   Start at  15:19:02
-   Duration  3.66s (transform 2.08s, setup 0ms, import 4.76s, tests 3.07s, environment 2.86s)
+   Start at  15:37:43
+   Duration  3.34s (transform 1.75s, setup 0ms, import 3.99s, tests 3.11s, environment 1.93s)
 ```
 
 `Run server` - exit 0
@@ -167,16 +168,16 @@
 PASSED [C82] bloco acima do limite importa até o limite e avisa os itens de fora
 PASSED [C75] arquivo acima de 10 MB responde 413 sem criar tarefa
 PASSED [C89] chamada ao OpenRouter leva provider.zdr true
-[INFO] Tests run: 21, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 2.879 s -- in app.salescopilot.importing.ImportTest
+[INFO] Tests run: 21, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 2.746 s -- in app.salescopilot.importing.ImportTest
 [INFO] 
 [INFO] Results:
 [INFO] 
-[INFO] Tests run: 64, Failures: 0, Errors: 0, Skipped: 0
+[INFO] Tests run: 65, Failures: 0, Errors: 0, Skipped: 0
 [INFO] 
 [INFO] ------------------------------------------------------------------------
 [INFO] BUILD SUCCESS
 [INFO] ------------------------------------------------------------------------
-[INFO] Total time:  14.895 s
-[INFO] Finished at: 2026-11-15T15:19:22-03:00
+[INFO] Total time:  21.800 s
+[INFO] Finished at: 2026-11-15T15:38:09-03:00
 [INFO] ------------------------------------------------------------------------
 ```
