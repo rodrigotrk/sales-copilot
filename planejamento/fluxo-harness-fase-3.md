@@ -18,7 +18,7 @@ O corte segue o PRD, decidido pelo Rodrigo em 15/11/2026: ele revisa cada parte 
 |---|---|---|
 | Produto | `.prd/sales-copilot.md` | Decisão tomada. Não se reabre; o que estiver ambíguo vira pergunta |
 | Telas e regras | `especificacao/design-sales-copilot.md` | Decisão tomada, com os desvios do protótipo já confirmados |
-| Capturas | `especificacao/prototipos/tela-6-metodo.png` e o HTML navegável | Fonte obrigatória da tela da parte 1. As outras telas entram só para a escolha da stack |
+| Capturas | `tela-6-metodo.png` e o HTML navegável, originais em `pesquisas/prototipos-originais/`, fora do git; a cópia sem dados fica em `.specs/features/playbook-configuravel/captures/` | Fonte obrigatória da tela da parte 1. As outras telas entram só para a escolha da stack |
 | Decisões do levantamento | `especificacao/decisoes-levantamento.md` | Contexto: hipóteses de teste e perguntas de tela com destino |
 | Referências | `pesquisas/analise-playbook-sales-copilot.md` e `pesquisas/analise-deal-advisor-kelvin-cleto.md` | Ideia e desenho. O produto não copia código delas |
 | Hipóteses técnicas | `especificacao/notas-tecnicas.md` e os diagramas de arquitetura, fluxo ao vivo e roadmap | Hipótese. O que sobreviver vai para `.specs/STATE.md` ou para o plano |

@@ -1,28 +1,42 @@
 flowchart TB
-  subgraph S["1 · Configurar · dono do negócio"]
+  subgraph C["1 · Configurar · gestor"]
     direction LR
-    S1[Sobe 5 a 10 calls] --> S2[Rascunho do método de venda] --> S3[Ajusta e testa com calls gravadas]
+    C1[Escreve ou importa o playbook] --> C2[Confere os preços importados e publica uma versão]
+    C0[Sem playbook escrito: sobe gravações e revisa o rascunho] --> C2
+    C2 --> C3[Testa com uma call gravada]
+    C4[Ajusta com resultados de venda e dicas úteis] --> C2
   end
-  subgraph A["2 · Antes · SDR"]
+  subgraph T["2 · Treinar · closer"]
     direction LR
-    A1[Agenda] --> A2[Ficha do lead]
+    T1[Escolhe cenário, trecho e dificuldade] --> T2[Conversa por voz com o lead simulado, com ou sem o painel] --> T3[Avaliação por tipo de erro e próximo exercício]
   end
-  subgraph D["3 · Durante · closer"]
+  subgraph A["3 · Antes da call · closer"]
     direction LR
-    D1[Grava e transcreve] --> D2[O que falta descobrir e alertas] --> D3[Sugestões de fala] --> D4[Calculadora de proposta] --> D5[Próximo passo]
+    A1[Primeira call: dados básicos e perfil público do lead] --> A3[Inicia a call: lembrete do aviso de gravação]
+    A2[Call de retorno: histórico da negociação e o que falta descobrir] --> A3
   end
-  subgraph P["4 · Depois · closer e SDR"]
+  subgraph D["4 · Durante a call · closer"]
     direction LR
-    P1[Ata e CRM] --> P2[Confere o que está a confirmar] --> P3[Follow-up] --> P4[Ganho ou perda]
+    D1[Com o copiloto: transcrição e painel com etapa, o que falta descobrir, resposta aprovada, proposta da tabela e alertas] --> D2[Pede ajuda quando a situação não está no playbook]
+    D3[Sem copiloto: o produto não ouve nem transcreve]
   end
-  subgraph T["5 · Fora da call · closer"]
+  subgraph F["5 · Fim da call · closer"]
     direction LR
-    T1[Escolhe o cenário] --> T2[Treina por voz] --> T3[Avaliação e próximo exercício]
+    F1[Com o copiloto: confere a ata, o próximo passo e a transcrição e marca as dicas] --> F3[Registra o resultado da negociação: fechou, perdeu com motivo ou em aberto]
+    F2[Sem copiloto: registra o resultado e o próximo passo à mão] --> F3
+    F3 -. sai sem registrar .-> F4[Call destacada na lista até completar]
   end
-  S3 --> A1
-  A2 --> D1
-  D5 --> P1
-  P4 -- calls viram cenários de treino --> T1
-  P3 -. call de retorno .-> D1
-  P4 -. resultados melhoram o método .-> S2
-  T3 -. treina a próxima call .-> D1
+  subgraph R["6 · Depois · closer"]
+    direction LR
+    R1[O lead responde: atualiza o resultado da negociação] --> R2[Lista de calls e resumo do período, cada negociação contada uma vez]
+  end
+  C2 --> T1
+  C2 --> A1
+  A3 --> D1
+  A3 --> D3
+  D2 --> F1
+  D3 --> F2
+  F3 --> R1
+  R1 -. próxima call .-> A2
+  T3 -. treina a próxima call .-> A3
+  F3 -. resultados e dicas alimentam o ajuste .-> C4
