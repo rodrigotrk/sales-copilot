@@ -1,12 +1,12 @@
 # Playbook configurável screens
 
 **Verifier**: independent sub-agent (author != verifier)
-**Round**: 1
-**HEAD**: 33a3580
+**Round**: 2
+**HEAD**: fa433df
 
 | Screen | Compared with | Verdict | Finding |
 | --- | --- | --- | --- |
-| `captures/tela-6-playbook.running.png` | `captures/tela-6-playbook.png` | diverges | 1 row differs |
+| `captures/tela-6-playbook.running.png` | `captures/tela-6-playbook.png` | matches | no row differs |
 
 ### `captures/tela-6-playbook.running.png`
 
@@ -21,7 +21,7 @@ Both images are 1440 x 1300 and the shared labels (title, block headings, table 
 | menu: horizontal divider before Coach | same | divider between Calls and Coach, which follows from Pipeline leaving the menu |
 | menu: active item (Playbook) on a light purple rounded tile, purple icon and label | same | |
 | menu: Pipeline badge "1" | same | gone with Pipeline, per the Differences |
-| menu: no control at the bottom | differs | "Sair" at the bottom of the menu; criterion 24 asks for it, but `## Differences from the source` does not list it |
+| menu: no control at the bottom | same | "Sair" at the bottom of the menu, per the Differences row "Menu sem controle no rodapé" (AD-059) |
 | top bar: left-aligned text, bottom border | same | "Playbook: Venda consultiva · versão 1", replacing the selo, timer, method text and prototype note per the Differences |
 | title "Playbook", bold, top left of content | same | |
 | subtitle under the title, grey | same | "Cada negócio cadastra o próprio jeito de vender, sem programar." per the Differences |
