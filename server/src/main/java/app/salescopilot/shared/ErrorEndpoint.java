@@ -20,13 +20,14 @@ class ErrorEndpoint implements ErrorController {
 
     @RequestMapping("/error")
     ResponseEntity<ProblemDetail> error(HttpServletRequest request) {
-        Object code = request.getAttribute(RequestDispatcher.ERROR_STATUS_CODE);
-        HttpStatus status = HttpStatus.resolve(code instanceof Integer value ? value : 500);
+        Object statusCode = request.getAttribute(RequestDispatcher.ERROR_STATUS_CODE);
+        HttpStatus status = HttpStatus.resolve(statusCode instanceof Integer value ? value : 500);
         if (status == null || !status.isError()) {
             status = HttpStatus.INTERNAL_SERVER_ERROR;
         }
         Object uri = request.getAttribute(RequestDispatcher.ERROR_REQUEST_URI);
-        ProblemDetail problem = Problems.of(status, Problems.codeForStatus(status.value()), status.getReasonPhrase(),
+        String code = Problems.codeForStatus(status.value());
+        ProblemDetail problem = Problems.of(status, code, Problems.detailFor(code),
                 java.util.List.of(), uri == null ? "/error" : uri.toString());
         return ResponseEntity.status(status).contentType(MediaType.APPLICATION_PROBLEM_JSON).body(problem);
     }

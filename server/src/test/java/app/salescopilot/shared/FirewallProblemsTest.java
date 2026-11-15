@@ -48,6 +48,7 @@ class FirewallProblemsTest extends IntegrationTest {
             assertThat(body.get("code").asString()).as(label).isEqualTo(c[3]);
             assertThat(body.get("type").asString()).as(label).isEqualTo("/problems/" + c[3]);
             assertThat(body.get("instance").asString()).as(label).isEqualTo(c[1]);
+            assertThat(body.get("detail").asString()).as(label).isNotBlank();
         }
 
         // Linha de pedido recusada inteira: não há caminho guardado, e o instance é "/".
@@ -63,31 +64,46 @@ class FirewallProblemsTest extends IntegrationTest {
         try (Socket socket = new Socket("localhost", port)) {
             OutputStream out = socket.getOutputStream();
             out.write((method + " " + path + " HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n\r\n")
-                    .getBytes(StandardCharsets.ISO_8859_1));
+                    .getBytes(StandardCharsets.UTF_8));
             out.flush();
-            String raw = new String(socket.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
-            String head = raw.substring(0, raw.indexOf("\r\n\r\n"));
-            String body = raw.substring(raw.indexOf("\r\n\r\n") + 4);
+            byte[] raw = socket.getInputStream().readAllBytes();
+            int headEnd = indexOf(raw, "\r\n\r\n".getBytes(StandardCharsets.ISO_8859_1), 0);
+            String head = new String(raw, 0, headEnd, StandardCharsets.ISO_8859_1);
+            byte[] body = java.util.Arrays.copyOfRange(raw, headEnd + 4, raw.length);
             if (head.toLowerCase().contains("transfer-encoding: chunked")) {
                 body = unchunk(body);
             }
             String contentType = head.lines().filter(l -> l.toLowerCase().startsWith("content-type:"))
                     .map(l -> l.substring(l.indexOf(':') + 1).strip()).findFirst().orElse("");
-            return new Raw(Integer.parseInt(head.split(" ")[1]), contentType, body);
+            return new Raw(Integer.parseInt(head.split(" ")[1]), contentType, new String(body, StandardCharsets.UTF_8));
         }
     }
 
-    private static String unchunk(String chunked) {
-        StringBuilder body = new StringBuilder();
+    /** O tamanho de cada pedaço vem em bytes, então o corpo é remontado em bytes antes de virar texto. */
+    private static byte[] unchunk(byte[] chunked) {
+        var body = new java.io.ByteArrayOutputStream();
         int at = 0;
         while (true) {
-            int lineEnd = chunked.indexOf("\r\n", at);
-            int size = Integer.parseInt(chunked.substring(at, lineEnd).strip(), 16);
+            int lineEnd = indexOf(chunked, "\r\n".getBytes(StandardCharsets.ISO_8859_1), at);
+            int size = Integer.parseInt(new String(chunked, at, lineEnd - at, StandardCharsets.ISO_8859_1).strip(), 16);
             if (size == 0) {
-                return body.toString();
+                return body.toByteArray();
             }
-            body.append(chunked, lineEnd + 2, lineEnd + 2 + size);
+            body.write(chunked, lineEnd + 2, size);
             at = lineEnd + 2 + size + 2;
         }
+    }
+
+    private static int indexOf(byte[] data, byte[] target, int from) {
+        outer:
+        for (int i = from; i <= data.length - target.length; i++) {
+            for (int j = 0; j < target.length; j++) {
+                if (data[i + j] != target[j]) {
+                    continue outer;
+                }
+            }
+            return i;
+        }
+        throw new IllegalStateException("resposta HTTP incompleta");
     }
 }

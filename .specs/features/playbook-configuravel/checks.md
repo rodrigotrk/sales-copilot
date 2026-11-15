@@ -346,7 +346,7 @@ Proof: run server | PASSED [C95] e-mail válido de até 320 caracteres entra e g
 **C96** - Rascunho nulo ou com item nulo responde `422` com `invalid_document`, e plano com `id` nulo responde `422` com os erros de campo, sem `500`; nada é gravado (AC 37, Surface do PUT)
 Proof: run server | PASSED [C96] rascunho nulo ou com item nulo responde 422 invalid_document sem gravar
 
-**C97** - Erros do próprio Spring (JSON malformado, tipo de conteúdo, método, parâmetro ausente) saem em `application/problem+json` com `code` e `type` (AD-057)
+**C97** - Erros do próprio Spring (JSON malformado, tipo de conteúdo, método, parâmetro ausente) saem em `application/problem+json` com `code`, `type` e `detail` em português (AD-057)
 Proof: run server | PASSED [C97] erros do Spring saem em RFC 9457 com code e type
 
 **C98** - Servidor de e-mail fora do ar faz o pedido de link responder `503` `mail_unavailable` em RFC 9457 (AC 2, AD-057)
@@ -364,10 +364,10 @@ Proof: run web | ✓ [C101] sessão expirada durante a edição leva a /entrar n
 **C102** - Valor de parcela acima de R$ 10.000.000,00 é aceito na tela, como no servidor; o teto vale só para o preço à vista (AC 47)
 Proof: run web | ✓ [C102] parcela acima de R$ 10 milhões é aceita, sem o teto do preço à vista
 
-**C103** - Erro recusado antes do MVC, por HTTP real, sai em `application/problem+json` com `code`, `type` e `instance` igual ao endereço enviado: firewall do Spring Security (`/api//me`, `/api/me;extra`) `400` `request_rejected`; `TRACE` `405` `method_not_allowed`; endereço que o Tomcat recusa (`%2F`, `%00`, `%zz`) `400` `invalid_request`; byte não ASCII cru no caminho `400` `invalid_request` com `instance` `/`, porque o Tomcat recusa a linha do pedido antes de guardar o caminho (AD-057)
+**C103** - Erro recusado antes do MVC, por HTTP real, sai em `application/problem+json` com `code`, `type`, `detail` e `instance` igual ao endereço enviado: firewall do Spring Security (`/api//me`, `/api/me;extra`) `400` `request_rejected`; `TRACE` `405` `method_not_allowed`; endereço que o Tomcat recusa (`%2F`, `%00`, `%zz`) `400` `invalid_request`; byte não ASCII cru no caminho `400` `invalid_request` com `instance` `/`, porque o Tomcat recusa a linha do pedido antes de guardar o caminho (AD-057)
 Proof: run server | PASSED [C103] erro recusado antes do MVC sai em RFC 9457 com code e type
 
-**C104** - O script de papéis cria `migrator`, `app` e `job_claimer` com senhas que têm apóstrofo, aspas e ponto e vírgula, e `migrator` e `app` entram com a própria senha (Landing 1, AD-037)
+**C104** - O script de papéis cria `migrator`, `app` e `job_claimer` com senhas que têm apóstrofo, aspas e ponto e vírgula, e `migrator` e `app` entram com a própria senha; a prova não deixa volume do Postgres para trás (Landing 1, AD-037)
 Proof: `sh deploy/verify-roles.sh`
 
 **C105** - Importação que começa com uma linha em edição fecha a linha, e nenhum campo da tela fica editável (AC 42, AC 66, AD-036)
@@ -375,6 +375,24 @@ Proof: run web | ✓ [C105] importação iniciada em outra aba fecha a linha abe
 
 **C106** - Valor em dinheiro da resposta do modelo chega com todos os dígitos (`90071992547409.91`, `4500.10`), sem passar por ponto flutuante (AD-025, AC 71)
 Proof: run server | PASSED [C106] valor em dinheiro da resposta do modelo chega com todos os dígitos
+
+**C107** - Desconto só existe com plano: a importação não preenche desconto se a tabela fica sem plano e avisa "O documento traz desconto máximo de R$ <valor>; cadastre um plano para informar o desconto."; rascunho gravado sem plano volta com `maxDiscount` e `maxDiscountReview` nulos (AC 52, AD-014, AC 69)
+Proof: run server | PASSED [C107] rascunho gravado sem plano perde o desconto e a marca de conferência
+
+**C108** - Enquanto a publicação está em andamento, nenhuma linha abre para edição e nenhum campo da tela fica editável; depois dela a edição volta (AC 35, AC 54)
+Proof: run web | ✓ [C108] durante a publicação nenhuma linha abre para edição e nada digitado se perde
+
+**C109** - "Desfazer" fica desabilitado enquanto outra gravação está em andamento, e a tela termina igual ao rascunho gravado (AC 40, AC 54)
+Proof: run web | ✓ [C109] Desfazer fica indisponível enquanto outra gravação está em andamento
+
+**C110** - Uma consulta da importação que falha (`503`) não encerra o acompanhamento: a tela consulta de novo e sai de "Importando…" quando a tarefa termina (AC 67, AC 68)
+Proof: run web | ✓ [C110] consulta da importação que falha uma vez continua até a tarefa terminar
+
+**C111** - Voltar um campo ao valor gravado apaga o erro do servidor daquele rascunho e libera "Publicar" e "Importar documento" (AC 37, AC 60)
+Proof: run web | ✓ [C111] voltar o campo ao valor gravado apaga o erro do servidor e libera Publicar
+
+**C24c** - "Sair" aparece na tela de acesso não liberado, na de criação de negócio e na lista de negócios, e leva a `/entrar` (AC 24, AD-059)
+Proof: run web | ✓ [C24c] Sair aparece na tela de acesso não liberado e na lista de negócios e leva a /entrar
 
 ## Coverage
 

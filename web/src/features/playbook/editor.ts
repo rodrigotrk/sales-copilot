@@ -39,6 +39,7 @@ export function createEditor(businessId: string) {
   let lastField: string | null = null
   let watchingImport = false
   let pollTimer: ReturnType<typeof setTimeout> | undefined
+  let disposed = false
 
   const saving = ref(false)
   const saveFailed = ref(false)
@@ -46,6 +47,8 @@ export function createEditor(businessId: string) {
   const serverErrors = ref<Record<string, string>>({})
   const localErrors = ref<Record<string, string>>({})
   const conflict = ref(false)
+  // Durante a publicação o rascunho fica só leitura: o reload ao fim substituiria o que fosse digitado.
+  const publishing = ref(false)
   const editing = ref<string | null>(null)
   const incomplete = ref(new Set<string>())
   const publishError = ref('')
@@ -55,7 +58,7 @@ export function createEditor(businessId: string) {
     const status = state.value?.importJob?.status
     return status === 'queued' || status === 'running'
   })
-  const readOnly = computed(() => importActive.value || conflict.value)
+  const readOnly = computed(() => importActive.value || conflict.value || publishing.value)
   // Importação ou conflito começando com uma linha aberta: a linha fecha, para nada ser digitado
   // num rascunho que não aceita mais gravação.
   watch(readOnly, (blocked) => {
@@ -77,11 +80,20 @@ export function createEditor(businessId: string) {
     if (importActive.value) {
       watchingImport = true
       importResult.value = []
-      pollTimer = setTimeout(reload, POLL_MS)
+      pollTimer = setTimeout(poll, POLL_MS)
     } else if (job && watchingImport) {
       // Só mostra o resultado de uma importação que esta tela acompanhou.
       watchingImport = false
       importResult.value = importResultLines(job)
+    }
+  }
+
+  // Uma consulta que falha (503, rede) não encerra o acompanhamento: tenta de novo no próximo intervalo.
+  async function poll() {
+    try {
+      await reload()
+    } catch {
+      if (!disposed) pollTimer = setTimeout(poll, POLL_MS)
     }
   }
 
@@ -99,7 +111,14 @@ export function createEditor(businessId: string) {
       queued = true
       return
     }
-    if (readOnly.value || !draft.value || same(draft.value, saved)) return
+    if (readOnly.value || !draft.value) return
+    if (same(draft.value, saved)) {
+      // Voltou ao que está gravado: nenhum erro do servidor ou falha de gravação vale mais.
+      serverErrors.value = {}
+      saveFailed.value = false
+      failedField.value = null
+      return
+    }
     saving.value = true
     const sent = clone(draft.value)
     try {
@@ -144,6 +163,8 @@ export function createEditor(businessId: string) {
   }
 
   function undo() {
+    // Com uma gravação em andamento, o rascunho salvo ainda vai mudar; "Desfazer" espera ela terminar.
+    if (saving.value) return
     draft.value = clone(saved)
     saveFailed.value = false
     failedField.value = null
@@ -201,9 +222,11 @@ export function createEditor(businessId: string) {
   async function publish() {
     if (unsaved.value || readOnly.value) return
     publishError.value = ''
+    publishing.value = true
     try {
       await publishVersion(businessId, state.value!.playbookId, revision)
     } catch (e) {
+      publishing.value = false
       if (!(e instanceof ApiError) && !(e instanceof TypeError)) throw e
       const code = e instanceof ApiError ? e.code : ''
       if (code === 'revision_conflict') conflict.value = true
@@ -218,13 +241,18 @@ export function createEditor(businessId: string) {
       return
     }
     incomplete.value = new Set()
-    await reload()
+    try {
+      await reload()
+    } finally {
+      publishing.value = false
+    }
   }
 
   return {
     state,
     draft,
     saving,
+    publishing,
     saveFailed,
     failedField,
     errors,
@@ -247,7 +275,10 @@ export function createEditor(businessId: string) {
     addItem,
     removeItem,
     publish,
-    dispose: () => clearTimeout(pollTimer),
+    dispose: () => {
+      disposed = true
+      clearTimeout(pollTimer)
+    },
   }
 }
 

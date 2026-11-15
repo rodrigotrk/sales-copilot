@@ -69,6 +69,7 @@ public class Problems extends ResponseEntityExceptionHandler {
         String code = codeFor(e);
         problem.setType(URI.create("/problems/" + code));
         problem.setProperty("code", code);
+        problem.setDetail(detailFor(code));
         if (problem.getInstance() == null) {
             problem.setInstance(URI.create(path(request)));
         }
@@ -82,6 +83,22 @@ public class Problems extends ResponseEntityExceptionHandler {
             case HttpRequestMethodNotSupportedException ignored -> "method_not_allowed";
             case HttpMediaTypeNotSupportedException ignored -> "unsupported_media_type";
             default -> "invalid_request";
+        };
+    }
+
+    /** Texto do `detail` para os erros que o contrato não descreve um a um; o Surface exige o membro sempre. */
+    public static String detailFor(String code) {
+        return switch (code) {
+            case "malformed_request" -> "O corpo da requisição não é um JSON válido.";
+            case "missing_parameter" -> "Falta um parâmetro obrigatório.";
+            case "method_not_allowed" -> "Método não permitido neste endereço.";
+            case "unsupported_media_type" -> "Tipo de conteúdo não aceito.";
+            case "unauthenticated" -> "Entre para continuar.";
+            case "forbidden" -> "Sem permissão para esta ação.";
+            case "not_found" -> "Endereço não encontrado.";
+            case "file_too_large" -> "O arquivo passa de 10 MB.";
+            case "internal_error" -> "Erro inesperado. Tente de novo.";
+            default -> "Requisição inválida.";
         };
     }
 

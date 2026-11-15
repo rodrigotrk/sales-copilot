@@ -33,7 +33,7 @@ public class ProblemErrorReportValve extends ErrorReportValve {
         problem.put("type", "/problems/" + code);
         problem.put("title", resolved == null ? "Error" : resolved.getReasonPhrase());
         problem.put("status", status);
-        problem.put("detail", resolved == null ? "Error" : resolved.getReasonPhrase());
+        problem.put("detail", Problems.detailFor(code));
         // O endereço cru, como chegou: decodificá-lo é justamente o que falhou. Quando o Tomcat recusa a
         // própria linha do pedido (byte não ASCII no caminho), nenhum caminho foi guardado e vale "/".
         String uri = request.getRequestURI();

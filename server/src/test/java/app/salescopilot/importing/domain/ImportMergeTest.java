@@ -64,6 +64,19 @@ class ImportMergeTest {
                 "O documento traz desconto máximo de R$ 500; o atual (R$ 300) foi mantido.");
     }
 
+    @Test
+    @DisplayName("[C107] desconto do documento sem plano na tabela não entra e gera aviso")
+    void discountNeedsAPlan() {
+        var extracted = new ExtractedPlaybook(List.of(new ExtractedPlaybook.Stage("Abertura")), List.of(), List.of(),
+                new ExtractedPlaybook.PriceTable(null, new BigDecimal("500"), "Desconto máximo na call: R$ 500.", List.of()));
+        var result = ImportMerge.merge(PlaybookDocument.empty(), extracted, TEXT);
+        PriceTable table = result.draft().priceTable();
+        assertThat(table.maxDiscount()).isNull();
+        assertThat(table.maxDiscountReview()).isNull();
+        assertThat(result.notices()).containsExactly(
+                "O documento traz desconto máximo de R$ 500; cadastre um plano para informar o desconto.");
+    }
+
     private static ImportMerge.Result merge(PlaybookDocument current, ExtractedPlaybook.Plan plan, String column,
             BigDecimal discount) {
         var extracted = new ExtractedPlaybook(List.of(new ExtractedPlaybook.Stage("Abertura")), List.of(), List.of(),

@@ -12,6 +12,6 @@ const { errors, saveFailed, failedField } = editor
   <div v-else-if="saveFailed && failedField === field" class="err flex flex-wrap items-center gap-2" role="alert">
     {{ playbookMessages.saveFailed }}
     <button type="button" class="btn xs" @click.stop="editor.retry()">Tentar de novo</button>
-    <button type="button" class="btn xs" @click.stop="editor.undo()">Desfazer</button>
+    <button type="button" class="btn xs" :disabled="editor.saving.value" @click.stop="editor.undo()">Desfazer</button>
   </div>
 </template>

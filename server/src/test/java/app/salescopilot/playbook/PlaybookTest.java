@@ -68,6 +68,23 @@ class PlaybookTest extends IntegrationTest {
     }
 
     @Test
+    @DisplayName("[C107] rascunho gravado sem plano perde o desconto e a marca de conferência")
+    void discountLeavesWithTheLastPlan() throws Exception {
+        Gestor g = newGestor();
+        UUID id = playbookId(g);
+        var draft = (tools.jackson.databind.node.ObjectNode) json.readTree(Drafts.complete());
+        var table = (tools.jackson.databind.node.ObjectNode) draft.get("priceTable");
+        table.putArray("plans");
+        table.putObject("maxDiscountReview").put("status", "pending").put("excerpt", "Desconto máximo: 300.");
+        String withoutPlans = json.writeValueAsString(draft);
+        save(g, id, withoutPlans, 0).andExpect(status().isOk())
+                .andExpect(jsonPath("$.draft.priceTable.maxDiscount").value(org.hamcrest.Matchers.nullValue()))
+                .andExpect(jsonPath("$.draft.priceTable.maxDiscountReview").value(org.hamcrest.Matchers.nullValue()));
+        save(g, id, Drafts.complete(), 1).andExpect(status().isOk())
+                .andExpect(jsonPath("$.draft.priceTable.maxDiscount").value("300.00"));
+    }
+
+    @Test
     @DisplayName("[C38a] rascunho acima do limite de itens responde 422")
     void itemLimits() throws Exception {
         Gestor g = newGestor();

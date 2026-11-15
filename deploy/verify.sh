@@ -7,8 +7,9 @@ services=$(docker compose -f docker-compose.yml --env-file .env.example config -
 [ "$services" = "caddy postgres server " ] || { echo "serviços inesperados: $services"; exit 1; }
 
 run=verify-deploy-$$
+volumes_before=$(docker volume ls -q | sort)
 cleanup() {
-	docker rm -f "$run-server" "$run-caddy" "$run-client" >/dev/null 2>&1 || true
+	docker rm -f -v "$run-server" "$run-caddy" "$run-client" >/dev/null 2>&1 || true
 	docker network rm "$run" >/dev/null 2>&1 || true
 }
 trap cleanup EXIT
@@ -70,4 +71,7 @@ for path in / /negocios /n/b1/playbook /entrar /entrar/link /entrar/vincular; do
 	got=$(send GET "$path")
 	[ "$got" = app ] || { echo "rota do app não serve o index.html: $path ($got)"; exit 1; }
 done
+# A prova não deixa contêiner, rede nem volume para trás.
+cleanup
+[ "$(docker volume ls -q | sort)" = "$volumes_before" ] || { echo "volume dos contêineres da prova ficou para trás"; exit 1; }
 echo "deploy ok"

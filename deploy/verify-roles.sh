@@ -4,7 +4,8 @@
 set -eu
 cd "$(dirname "$0")"
 name=verify-roles-$$
-trap 'docker rm -f "$name" >/dev/null 2>&1 || true' EXIT
+volumes_before=$(docker volume ls -q | sort)
+trap 'docker rm -f -v "$name" >/dev/null 2>&1 || true' EXIT
 migrator_password="mig'ra\"tor; DROP ROLE x; --"
 app_password="a'p\"p;'"
 docker run -d --name "$name" -e POSTGRES_PASSWORD=admin -e POSTGRES_DB=salescopilot \
@@ -28,4 +29,7 @@ for pair in "migrator:$migrator_password" "app:$app_password"; do
 	got=$(docker exec -e PGPASSWORD="$password" "$name" psql -h 127.0.0.1 -U "$role" -d salescopilot -Atc 'SHOW search_path')
 	[ "$got" = sales_copilot ] || { echo "$role entrou com search_path $got"; exit 1; }
 done
+# A prova não deixa volume do Postgres para trás.
+docker rm -f -v "$name" >/dev/null
+[ "$(docker volume ls -q | sort)" = "$volumes_before" ] || { echo "volume do Postgres ficou para trás"; exit 1; }
 echo "roles ok"

@@ -1,4 +1,4 @@
-import { screen, waitFor, within } from '@testing-library/vue'
+import { cleanup, screen, waitFor, within } from '@testing-library/vue'
 import { describe, expect, it } from 'vitest'
 import { fakeApi, ok, problem, renderApp, type Call } from '@/__tests__/harness'
 import { me as currentUser } from '@/features/auth/session'
@@ -180,5 +180,150 @@ describe('correções da revisão de código', () => {
     await waitFor(() => expect(screen.queryByLabelText('Pergunta sugerida')).toBeNull())
     expect(screen.queryByLabelText('Informação')).toBeNull()
     expect(document.querySelectorAll('main input:not([disabled])')).toHaveLength(0)
+  })
+
+  it('[C108] durante a publicação nenhuma linha abre para edição e nada digitado se perde', async () => {
+    let release: () => void = () => {}
+    const { server, routes } = playbookServer(playbookState())
+    fakeApi({
+      ...routes,
+      'POST /api/businesses/b1/playbook/versions': () =>
+        new Promise((resolve) => {
+          release = () => {
+            server.state.latestVersion = { number: 1, publishedAt: '2026-11-15T12:00:00Z' }
+            server.state.hasUnpublishedChanges = false
+            resolve(ok({ number: 1 }, 201))
+          }
+        }),
+    })
+    const { user } = await renderApp('/n/b1/playbook')
+    await screen.findByText(/^Playbook: /)
+
+    await user.click(button('Publicar'))
+    await user.click(screen.getByText('Abertura'))
+    expect(screen.queryByLabelText('Nome da etapa')).toBeNull()
+    expect(document.querySelectorAll('main input:not([disabled])')).toHaveLength(0)
+
+    release()
+    expect(await screen.findByText(/versão 1/)).toBeTruthy()
+    await user.click(screen.getByText('Abertura'))
+    expect(screen.getByLabelText('Nome da etapa')).toBeTruthy()
+  })
+
+  it('[C109] Desfazer fica indisponível enquanto outra gravação está em andamento', async () => {
+    let release: () => void = () => {}
+    let call = 0
+    const { server, routes, acceptDraft } = playbookServer(playbookState())
+    fakeApi({
+      ...routes,
+      'PUT /api/businesses/b1/playbook/draft': (c: Call) => {
+        call += 1
+        if (call === 1) return problem(503, '')
+        return new Promise((resolve) => (release = () => resolve(acceptDraft(c))))
+      },
+    })
+    const { user } = await renderApp('/n/b1/playbook')
+    await screen.findByText(/^Playbook: /)
+
+    await user.click(screen.getByText('Abertura'))
+    await user.clear(screen.getByLabelText('Nome da etapa'))
+    await user.type(screen.getByLabelText('Nome da etapa'), 'Boas-vindas')
+    await user.click(document.body)
+    expect(await screen.findByText('Não foi possível salvar. Tente de novo.')).toBeTruthy()
+
+    await user.click(screen.getByText('Proposta'))
+    await user.clear(screen.getByLabelText('Nome da etapa'))
+    await user.type(screen.getByLabelText('Nome da etapa'), 'Proposta final')
+    await user.click(document.body)
+    await waitFor(() => expect(call).toBe(2))
+    for (const undo of screen.getAllByRole('button', { name: 'Desfazer' })) {
+      expect((undo as HTMLButtonElement).disabled).toBe(true)
+      await user.click(undo)
+    }
+
+    release()
+    await waitFor(() => expect(screen.queryByText('Não foi possível salvar. Tente de novo.')).toBeNull())
+    expect(server.state.draft.stages.map((st) => st.name)).toEqual(['Boas-vindas', 'Diagnóstico da conta de luz', 'Proposta final'])
+    expect(screen.getByText('Boas-vindas')).toBeTruthy()
+    expect(screen.getByText('Proposta final')).toBeTruthy()
+  })
+
+  it('[C110] consulta da importação que falha uma vez continua até a tarefa terminar', async () => {
+    let gets = 0
+    const running = playbookState()
+    running.importJob = { id: 'j1', status: 'running', counts: null, skipped: 0, notices: [], errorCode: null }
+    const done = playbookState()
+    done.importJob = { id: 'j1', status: 'done', counts: { stages: 1, discovery: 0, objections: 0, plans: 0 }, skipped: 0, notices: [], errorCode: null }
+    fakeApi({
+      'GET /api/me': ok(me()),
+      'GET /api/businesses/b1/playbook': () => {
+        gets += 1
+        if (gets === 1) return ok(running)
+        if (gets === 2) return problem(503, '')
+        return ok(done)
+      },
+    })
+    await renderApp('/n/b1/playbook')
+    expect(await screen.findByText('Importando…')).toBeTruthy()
+
+    await waitFor(() => expect(screen.queryByText('Importando…')).toBeNull(), { timeout: 7000 })
+    expect(gets).toBeGreaterThanOrEqual(3)
+    expect(button('Importar documento').disabled).toBe(false)
+  }, 10000)
+
+  it('[C111] voltar o campo ao valor gravado apaga o erro do servidor e libera Publicar', async () => {
+    const { routes, acceptDraft } = playbookServer(playbookState())
+    fakeApi({
+      ...routes,
+      'PUT /api/businesses/b1/playbook/draft': (c: Call) => {
+        const draft = (c.body as { draft: Draft }).draft
+        if (draft.stages.some((st) => st.name.length > 120)) {
+          return problem(422, 'invalid_draft', [
+            { itemId: 's1', field: 'name', code: 'too_long', message: 'Máximo de 120 caracteres.' },
+          ])
+        }
+        return acceptDraft(c)
+      },
+    })
+    const { user } = await renderApp('/n/b1/playbook')
+    await screen.findByText(/^Playbook: /)
+
+    await user.click(screen.getByText('Abertura'))
+    await user.clear(screen.getByLabelText('Nome da etapa'))
+    await user.type(screen.getByLabelText('Nome da etapa'), 'x'.repeat(121))
+    await user.click(document.body)
+    expect(await screen.findByText('Máximo de 120 caracteres.')).toBeTruthy()
+    expect(button('Publicar').disabled).toBe(true)
+
+    await user.click(screen.getByText('x'.repeat(121)))
+    await user.clear(screen.getByLabelText('Nome da etapa'))
+    await user.type(screen.getByLabelText('Nome da etapa'), 'Abertura')
+    await user.click(document.body)
+
+    await waitFor(() => expect(screen.queryByText('Máximo de 120 caracteres.')).toBeNull())
+    expect(button('Publicar').disabled).toBe(false)
+    expect(button('Importar documento').disabled).toBe(false)
+  })
+
+  it('[C24c] Sair aparece na tela de acesso não liberado e na lista de negócios e leva a /entrar', async () => {
+    const calls = fakeApi({
+      'GET /api/me': ok(me({ businesses: [], lastBusinessId: null, canCreateBusiness: false })),
+      'POST /logout': ok(undefined, 204),
+    })
+    const { router, user } = await renderApp('/')
+    expect(screen.getByText('Seu acesso ainda não foi liberado.')).toBeTruthy()
+    await user.click(screen.getByRole('button', { name: 'Sair' }))
+    await waitFor(() => expect(router.currentRoute.value.path).toBe('/entrar'))
+    expect(calls.some((c) => c.method === 'POST' && c.path === '/logout')).toBe(true)
+    cleanup()
+
+    fakeApi({
+      'GET /api/me': ok(me({ businesses: [{ id: 'b1', name: 'Solar Norte', role: 'gestor' }, { id: 'b2', name: 'Loja Sul', role: 'gestor' }], lastBusinessId: null })),
+      'POST /logout': ok(undefined, 204),
+    })
+    const list = await renderApp('/negocios')
+    expect(await screen.findByText('Escolha o negócio')).toBeTruthy()
+    await list.user.click(screen.getByRole('button', { name: 'Sair' }))
+    await waitFor(() => expect(list.router.currentRoute.value.path).toBe('/entrar'))
   })
 })

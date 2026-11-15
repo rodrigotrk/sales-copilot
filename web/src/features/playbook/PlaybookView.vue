@@ -64,7 +64,7 @@ const canPublish = computed(
         <div v-if="saveFailed && !failedField" class="err flex flex-wrap items-center gap-2" role="alert">
           {{ msg.saveFailed }}
           <button type="button" class="btn xs" @click="editor.retry()">Tentar de novo</button>
-          <button type="button" class="btn xs" @click="editor.undo()">Desfazer</button>
+          <button type="button" class="btn xs" :disabled="editor.saving.value" @click="editor.undo()">Desfazer</button>
         </div>
         <p v-if="importActive" class="notice m-0" role="status">{{ msg.importing }}</p>
         <p v-if="publishError" class="notice m-0" role="alert">{{ publishError }}</p>

@@ -3,6 +3,7 @@ import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { ApiError } from '@/lib/http'
 import { me, playbookPath } from '@/features/auth/session'
+import SignOutButton from '@/features/auth/SignOutButton.vue'
 import { createBusiness } from './api'
 
 const router = useRouter()
@@ -26,7 +27,7 @@ async function create() {
 </script>
 
 <template>
-  <main class="grid min-h-screen place-items-center p-4">
+  <main class="grid min-h-screen place-content-center justify-items-center p-4">
     <div class="card w-full max-w-sm">
       <form v-if="me?.canCreateBusiness" @submit.prevent="create">
         <h1 class="m-0 mb-4 text-[21px] font-bold">Crie o seu negócio</h1>
@@ -39,5 +40,6 @@ async function create() {
       </form>
       <p v-else class="m-0">{{ notAllowed }}</p>
     </div>
+    <SignOutButton />
   </main>
 </template>
