@@ -26,7 +26,7 @@ grilling → tlc-prd → tlc-plan → tlc-implement → spec-driven-eval
   - `Stop` bloqueia o encerramento uma vez e manda um subagente aplicar o `deslop` nesses arquivos (`.claude/hooks/doc_review.py`).
 - As skills `deslop` e `writing-standard` ficam em `.claude/plugins/communication-standard/skills/`. Elas não aparecem como `/skill`: os hooks as leem pelo caminho, e isso é intencional.
 - O `deslop` local é a tradução para PT-BR da versão 0.1.0. A versão 0.2.0, em `~/projetos/anoria/workspace/ANORIA-MARKETPLACE/plugins/anoria-communication/skills/deslop`, acrescenta padrões novos ao `references/prose.md`, como "Decisão enterrada" e metadiscurso sobre como o texto foi feito, e ajusta o `writing-standard/SKILL.md` e o `references/code.md`.
-- O projeto não é um repositório git.
+- O projeto é o repositório git privado `rodrigotrk/sales-copilot`, com a branch `main`.
 - `pesquisas/videos/` ocupa 4,1 GB. Cada pasta de `Diagnosticos/` guarda a gravação `.mov`, a legenda `.srt`, a ata `.md` e o `CRM.txt` de um lead, com nome e dados da call.
 - `pesquisas/repos/playbook-sales-copilot` é um clone de terceiros com o próprio `.git`.
 
@@ -89,14 +89,14 @@ Ele fixa, em poucas linhas:
 
 ### 6. Verificar
 
-Abrir uma sessão nova no projeto e confirmar:
+Abrir uma sessão nova no projeto e confirmar. Os resultados são da verificação de 15/11/2026.
 
-- [ ] `/grilling`, `/tlc-prd`, `/tlc-plan`, `/tlc-implement` e `/spec-driven-eval` aparecem na lista de skills.
-- [ ] O `writing-standard` chega no início da sessão, pelo hook.
-- [ ] O `AGENTS.md` é carregado: perguntar à sessão em que fase o projeto está. Se não for carregado, criar um `CLAUDE.md` com a única linha `@AGENTS.md`.
-- [ ] Escrever um `.md` de teste fora de `.specs/` dispara o `deslop` no Stop, e um dentro de `.specs/` não dispara.
-- [ ] Os `selftest.py` passam.
-- [ ] `git status` limpo e o repositório privado no GitHub com o mesmo conteúdo, sem vídeos.
+- [x] `/grilling`, `/tlc-prd`, `/tlc-plan`, `/tlc-implement` e `/spec-driven-eval` aparecem na lista de skills. As cinco estão em `.claude/skills/`. A `spec-driven-eval` tem `disable-model-invocation: true`: só o usuário a invoca, e ela não aparece na lista do agente.
+- [x] O `writing-standard` chega no início da sessão, pelo hook.
+- [x] O `AGENTS.md` é carregado: perguntar à sessão em que fase o projeto está. Se não for carregado, criar um `CLAUDE.md` com a única linha `@AGENTS.md`. Carregou sem o `CLAUDE.md`.
+- [x] Escrever um `.md` de teste fora de `.specs/` dispara o `deslop` no Stop, e um dentro de `.specs/` não dispara. O disparo fora de `.specs/` foi observado na sessão da Fase 1. O caso de `.specs/` foi conferido na função `is_doc` do hook, sem escrever um arquivo de teste. O hook dispara de novo depois das edições do próprio `deslop` e só limpa a lista no Stop seguinte.
+- [x] Os `selftest.py` passam: `tlc-plan` com 38 mutantes mortos e `tlc-implement` com 45, nenhum sobrevivente.
+- [x] `git status` limpo e o repositório privado no GitHub com o mesmo conteúdo, sem vídeos. Nenhum arquivo de `pesquisas/videos/` está versionado.
 
 ## Fora desta fase
 

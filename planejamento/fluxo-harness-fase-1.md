@@ -2,6 +2,8 @@
 
 A Fase 1 reabre o Sales Copilot desde a ideia com a skill `grilling`. O PRD atual, as notas técnicas e o protótipo entram como hipóteses, não como decisões. As pesquisas e as 12 calls do piloto são a evidência. A fase termina com as decisões registradas em `especificacao/decisoes-levantamento.md`, incluindo o veredito sobre construir, em que forma e para quem. Na Fase 2, a `tlc-prd` recebe esse arquivo como decisão já tomada e escreve o PRD.
 
+A fase terminou em 15/11/2026. O veredito, de 14/11/2026, é construir um produto próprio de copiloto e treino para o closer de venda consultiva de qualquer nicho, com playbook configurável sem programar. A EPC fica fora do produto: as 12 gravações servem só como material de treino e de ajuste do playbook. O plano da fase seguinte está em `planejamento/fluxo-harness-fase-2.md`.
+
 ## Como o `grilling` trabalha
 
 - Monta uma árvore de decisões e pergunta em rodadas. Cada rodada traz todas as perguntas cujos pré-requisitos já estão respondidos, numeradas e com a resposta recomendada.
@@ -23,7 +25,7 @@ O `grilling` recalcula a árvore a cada rodada. As camadas vêm nesta ordem porq
 | Camada | Perguntas | O que a evidência já diz |
 |---|---|---|
 | 1. Situação | O produto é para os closers da mentoria, um produto para vender a outros negócios ou as duas coisas em sequência? O que já está comprometido: prazo, dinheiro, pessoas? Quanto custa errar? | Nada comprometido por escrito. O PRD assume as duas coisas: piloto na EPC e um segundo negócio depois |
-| 2. Problema | Qual dor vem primeiro: vender mais na call, não perder o lead depois, acabar com o trabalho manual ou preço errado? Quanto cada uma custa, em R$ ou horas por semana? | Em 12 calls: 2 fecharam (R$ 16.000) e 1 desistiu depois de pagar. Dinheiro travou 8, "começar depois" 5 e decisor ausente 4. O plano de 6 meses saiu com três preços diferentes. Houve follow-up esquecido e ficha incompleta |
+| 2. Problema | Qual dor vem primeiro: vender mais na call, não perder o lead depois, acabar com o trabalho manual ou preço errado? Quanto cada uma custa, em R$ ou horas por semana? | Em 12 calls: 1 fechou com pagamento (R$ 6.000), 1 fechou R$ 10.000 com R$ 100 pagos e 1 desistiu depois de pagar R$ 2.000 de entrada. Dinheiro pesou em 9 a 10 calls, "começar depois" em 5 e decisor ausente em 5. O plano de 6 meses saiu por R$ 12.000, R$ 7.000, 6x R$ 1.100 e 6x R$ 1.000. Em três calls, o prazo que o lead deu para responder venceu sem registro de follow-up, e as fichas têm campos faltando |
 | 3. Substitutos | O que resolve isso hoje sem o produto: planilha, CRM, roteiro impresso, a Luana? Por que não basta? | O pós-call é manual: gravar, transcrever, escrever a ata e montar a ficha. Parte já é automatizada pelas skills de ata desta máquina |
 | 4. Caminhos mais baratos | Um roteiro com tabela de preços e um checklist de follow-up resolveria a maior parte? Dá para comprar ou adaptar o que existe? | O Deal Advisor é fechado. O playbook-sales-copilot é aberto, mas não tem pós-call e o playbook está no código |
 | 5. Veredito | Construir agora, menor ou diferente, depois de quê, ou não construir? Qual parte vem primeiro: ao vivo, pós-call ou treino? | O PRD propõe as três partes. As notas técnicas estimam menos de US$ 0,30 por call |
@@ -64,11 +66,11 @@ Commit do arquivo de decisões e push para `rodrigotrk/sales-copilot`, com sua c
 
 ## Pronto quando
 
-- [ ] As camadas 1 a 5 estão decididas, com veredito datado.
-- [ ] Se o veredito é construir: as camadas 6 e 7 estão decididas e as perguntas de tela têm destino.
-- [ ] Se o veredito é "não agora" ou "não construir": o arquivo diz o que precisaria mudar para reabrir.
-- [ ] O arquivo não tem nome nem dado pessoal de lead.
-- [ ] O arquivo passou pelo `deslop` e está no GitHub.
+- [x] As camadas 1 a 5 estão decididas, com veredito datado.
+- [x] Se o veredito é construir: as camadas 6 e 7 estão decididas e as perguntas de tela têm destino.
+- [x] Se o veredito é "não agora" ou "não construir": o arquivo diz o que precisaria mudar para reabrir. Não se aplica, porque o veredito é construir.
+- [x] O arquivo não tem nome nem dado pessoal de lead.
+- [x] O arquivo passou pelo `deslop` e está no GitHub.
 
 ## Fora desta fase
 
