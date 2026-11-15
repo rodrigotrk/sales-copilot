@@ -47,6 +47,22 @@ class PlaybookTest extends IntegrationTest {
     }
 
     @Test
+    @DisplayName("[C96] rascunho nulo ou com item nulo responde 422 invalid_document sem gravar")
+    void nullDraftIsRefused() throws Exception {
+        Gestor g = newGestor();
+        UUID id = playbookId(g);
+        mvc.perform(put("/api/businesses/" + g.businessId() + "/playbook/draft").cookie(g.session()).with(csrf())
+                .contentType(MediaType.APPLICATION_JSON).content("{\"playbookId\":\"" + id + "\",\"draft\":null,\"revision\":0}"))
+                .andExpect(status().isUnprocessableContent())
+                .andExpect(header().string("Content-Type", "application/problem+json"))
+                .andExpect(jsonPath("$.errors[0].code").value("invalid_document"));
+        save(g, id, empty().replace("\"stages\":[]", "\"stages\":[null]"), 0)
+                .andExpect(status().isUnprocessableContent())
+                .andExpect(jsonPath("$.errors[0].code").value("invalid_document"));
+        assertThat(playbook(g).get("revision").asLong()).isZero();
+    }
+
+    @Test
     @DisplayName("[C38a] rascunho acima do limite de itens responde 422")
     void itemLimits() throws Exception {
         Gestor g = newGestor();

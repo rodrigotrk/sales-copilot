@@ -10,12 +10,14 @@ import java.util.Locale;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.apache.tika.exception.WriteLimitReachedException;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.parser.AutoDetectParser;
 import org.apache.tika.parser.ParseContext;
 import org.apache.tika.sax.BodyContentHandler;
 import org.apache.tika.sax.TeeContentHandler;
 import org.apache.tika.sax.ToXMLContentHandler;
+import org.apache.tika.sax.WriteOutContentHandler;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.stereotype.Component;
@@ -30,6 +32,8 @@ class DocumentText {
 
     record Extracted(String forModel, String plain) {
     }
+
+    private static final int MAX_TEXT = ImportWorker.MAX_TEXT;
 
     private static final Pattern GOOGLE_DOC = Pattern.compile("^https://docs\\.google\\.com/document/d/([A-Za-z0-9_-]+)(/.*)?$");
 
@@ -93,10 +97,13 @@ class DocumentText {
     private static Extracted parse(InputStream in) throws IOException, ImportFailure {
         ToXMLContentHandler xhtml = new ToXMLContentHandler();
         BodyContentHandler plain = new BodyContentHandler(-1);
+        // Para de ler ao passar do limite de texto: um documento enorme ou uma bomba de compressão
+        // não chega a ser acumulado inteiro na memória.
+        WriteOutContentHandler limited = new WriteOutContentHandler(new TeeContentHandler(xhtml, plain), MAX_TEXT + 1);
         try {
-            new AutoDetectParser().parse(in, new TeeContentHandler(xhtml, plain), new Metadata(), new ParseContext());
-        } catch (org.apache.tika.exception.TikaException | org.xml.sax.SAXException e) {
-            throw new ImportFailure("import_failed", e);
+            new AutoDetectParser().parse(in, limited, new Metadata(), new ParseContext());
+        } catch (org.xml.sax.SAXException | org.apache.tika.exception.TikaException e) {
+            throw new ImportFailure(WriteLimitReachedException.isWriteLimitReached(e) ? "text_too_long" : "import_failed", e);
         }
         return new Extracted(xhtml.toString(), plain.toString());
     }

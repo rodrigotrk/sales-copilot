@@ -12,10 +12,19 @@ import org.springframework.mail.SimpleMailMessage;
 public class Mailbox implements MailSender {
 
     private final List<SimpleMailMessage> sent = new CopyOnWriteArrayList<>();
+    private volatile boolean down;
 
     @Override
     public void send(SimpleMailMessage... messages) {
+        if (down) {
+            throw new org.springframework.mail.MailSendException("servidor de e-mail fora do ar (simulado)");
+        }
         sent.addAll(List.of(messages));
+    }
+
+    /** Simula o servidor SMTP fora do ar. */
+    public void setDown(boolean down) {
+        this.down = down;
     }
 
     public List<SimpleMailMessage> to(String email) {
@@ -35,6 +44,7 @@ public class Mailbox implements MailSender {
     }
 
     public void clear() {
+        down = false;
         sent.clear();
     }
 }

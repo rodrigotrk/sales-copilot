@@ -6,3 +6,4 @@ pesquisas/repos/
 pesquisas/videos/
 .agents/*.backup
 pesquisas/prototipos-originais/
+deploy/.env

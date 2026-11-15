@@ -69,10 +69,12 @@ class PlaybookExtraction {
     /** Resposta fora do schema pedido é falha da tentativa, como um erro HTTP (critério 81). */
     ExtractedPlaybook parse(String answer) {
         JsonNode root = json.readTree(answer);
-        for (String block : List.of("stages", "discovery", "objections", "priceTable")) {
-            if (root == null || !root.has(block)) {
-                throw new IllegalArgumentException("resposta sem o bloco " + block);
-            }
+        // Tipo e nulidade são conferidos no JSON bruto: o record transforma bloco nulo em lista vazia.
+        boolean shaped = root != null && root.isObject()
+                && List.of("stages", "discovery", "objections").stream().allMatch(b -> root.path(b).isArray())
+                && root.path("priceTable").isObject() && root.path("priceTable").path("plans").isArray();
+        if (!shaped) {
+            throw new IllegalArgumentException("resposta fora do schema");
         }
         ExtractedPlaybook extracted = json.readerFor(ExtractedPlaybook.class)
                 .with(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)

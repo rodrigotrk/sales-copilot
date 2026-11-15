@@ -289,6 +289,15 @@ class ImportTest extends IntegrationTest {
         assertThat(environment.getProperty("spring.ai.openai.timeout")).isEqualTo("120s");
 
         STUB.reset();
+        STUB.modelAnswers("{\"stages\":null,\"discovery\":null,\"objections\":null,\"priceTable\":null}");
+        STUB.modelAnswers(ANSWER.replace("\"stages\":[{\"name\":\"Abertura\"},{\"name\":\"Diagnóstico\"}]", "\"stages\":\"Abertura\""));
+        STUB.modelAnswers(ANSWER.replaceFirst("\"plans\":\\[", "\"plans\":null,\"x\":["));
+        UUID nullBlocks = jobId(importText(g, DOCUMENT));
+        worker.drain();
+        assertThat(jobRow(nullBlocks)).containsEntry("status", "failed").containsEntry("error_code", "model_failed");
+        assertThat(STUB.modelRequests()).hasSize(3);
+
+        STUB.reset();
         STUB.modelFails(500);
         STUB.modelFails(500);
         STUB.modelAnswers(ANSWER);

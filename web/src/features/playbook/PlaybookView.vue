@@ -15,7 +15,7 @@ provide(editorKey, editor)
 onUnmounted(editor.dispose)
 void editor.reload()
 
-const { state, draft, conflict, unsaved, importActive, publishError, importResult } = editor
+const { state, draft, conflict, unsaved, importActive, publishError, importResult, saveFailed, failedField } = editor
 const writing = ref(false)
 const importOpen = ref(false)
 
@@ -50,7 +50,7 @@ const canPublish = computed(
         <div v-if="state && !showStart" class="grid justify-items-end gap-1">
           <div class="flex items-center gap-2">
             <span v-if="state.hasUnpublishedChanges" class="text-[12.5px] text-muted-foreground">Alterações não publicadas</span>
-            <button type="button" class="btn" :disabled="importActive || conflict" @click="importOpen = true">
+            <button type="button" class="btn" :disabled="importActive || conflict || unsaved" @click="importOpen = true">
               Importar documento
             </button>
             <button type="button" class="btn pri" :disabled="!canPublish" @click="editor.publish()">Publicar</button>
@@ -61,6 +61,11 @@ const canPublish = computed(
 
       <div class="mb-4 grid gap-2 empty:hidden">
         <p v-if="conflict" class="notice m-0" role="alert">{{ msg.conflict }}</p>
+        <div v-if="saveFailed && !failedField" class="err flex flex-wrap items-center gap-2" role="alert">
+          {{ msg.saveFailed }}
+          <button type="button" class="btn xs" @click="editor.retry()">Tentar de novo</button>
+          <button type="button" class="btn xs" @click="editor.undo()">Desfazer</button>
+        </div>
         <p v-if="importActive" class="notice m-0" role="status">{{ msg.importing }}</p>
         <p v-if="publishError" class="notice m-0" role="alert">{{ publishError }}</p>
         <div v-if="importResult.length" class="notice" role="status">

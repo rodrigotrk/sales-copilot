@@ -5,7 +5,7 @@ Run server: `make test-server`
 Run web: `make test-web`
 Plan: `.specs/features/playbook-configuravel/plan.md`
 
-91 checks in 4 slices · 8 one-way doors · 0 open, of which 0 block
+99 checks in 4 slices · 8 one-way doors · 0 open, of which 0 block
 
 ## Checks
 
@@ -329,12 +329,38 @@ Proof: run server | PASSED [C89] chamada ao OpenRouter leva provider.zdr true
 **C90** - Nenhum módulo do servidor usa o interno de outro; só o `api/` é público (Landing 1, AD-055)
 Proof: run server | PASSED [C90] módulos do servidor só usam o api de outros módulos
 
+### Revisão de código (Codex)
+
+**C92** - "Importar documento" fica desabilitado enquanto há campo salvando ou com falha, para a importação não descartar o que não foi salvo (AC 40, AC 66)
+Proof: run web | ✓ [C92] Importar documento fica desabilitado com alteração não salva ou com falha
+
+**C93** - Falha ao gravar uma operação de linha (acrescentar, remover, reordenar) mostra "Não foi possível salvar. Tente de novo." com "Tentar de novo" e "Desfazer" (AC 36, AC 40)
+Proof: run web | ✓ [C93] falha ao remover uma linha mostra a mensagem com Tentar de novo e Desfazer
+
+**C94** - Voltar pelo histórico a outro negócio recria a tela, e as gravações vão para o negócio do endereço (AC 19, AD-045)
+Proof: run web | ✓ [C94] voltar pelo histórico a outro negócio recria a tela e grava no negócio do endereço
+
+**C95** - E-mail válido de até 320 caracteres entra e a sessão é gravada; acima disso, `422` `invalid_email` (AC 5, AC 26)
+Proof: run server | PASSED [C95] e-mail válido de até 320 caracteres entra e grava a sessão
+
+**C96** - Rascunho nulo ou com item nulo responde `422` com `invalid_document` e não grava (AC 37, Surface do PUT)
+Proof: run server | PASSED [C96] rascunho nulo ou com item nulo responde 422 invalid_document sem gravar
+
+**C97** - Erros do próprio Spring (JSON malformado, tipo de conteúdo, método, parâmetro ausente) saem em `application/problem+json` com `code` e `type` (AD-057)
+Proof: run server | PASSED [C97] erros do Spring saem em RFC 9457 com code e type
+
+**C98** - Servidor de e-mail fora do ar faz o pedido de link responder `503` `mail_unavailable` em RFC 9457 (AC 2, AD-057)
+Proof: run server | PASSED [C98] servidor de e-mail fora do ar responde 503 mail_unavailable em RFC 9457
+
+**C99** - `deploy/` tem Docker Compose válido com Postgres, servidor e Caddy, e o Caddyfile das rotas (Landing 1, AD-004, AD-033)
+Proof: `docker compose -f deploy/docker-compose.yml --env-file deploy/.env.example config -q`
+
 ## Coverage
 
 | Set (size) | Member -> proof | Unproven |
 | --- | --- | --- |
 | `GET /oauth2/authorization/google` statuses (1) | 302 C8 | - |
-| `POST /ott/generate` statuses (3) | 200 C2 · 403 sem CSRF C2 · 429 C3 | - |
+| `POST /ott/generate` statuses (5) | 200 C2 · 403 sem CSRF C2 · 422 C95 · 429 C3 · 503 C98 | - |
 | `GET /api/login-links/{token}` statuses (2) | 200 C4 · 404 C6 | - |
 | `POST /login/ott` statuses (3) | 302 C5 · 401 C6 · 403 sem CSRF C5 | - |
 | `GET /api/identity-links/{token}` statuses (2) | 200 C10 · 404 C11 | - |

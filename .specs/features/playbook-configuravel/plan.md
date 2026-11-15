@@ -88,12 +88,12 @@ stateDiagram-v2
 
 ## Surface
 
-Rotas do servidor Spring consumidas pelo app web. Toda resposta de erro segue a RFC 9457 (AD-057): `application/problem+json` com `type`, `title`, `status`, `detail` e `instance`, mais as extensões `code` e, quando o erro é de campo, `errors` como lista de `{itemId, field, code, message}`. Quem não tem sessão recebe `401`; quem não é membro do `businessId` do endereço recebe `404`; quem é membro mas não é `gestor` recebe `403` nas rotas de escrita; um `playbookId` que não pertence ao `businessId` recebe `404`. Rotas de escrita exigem o token CSRF.
+Rotas do servidor Spring consumidas pelo app web. Toda resposta de erro segue a RFC 9457 (AD-057): `application/problem+json` com `type`, `title`, `status`, `detail` e `instance`, mais as extensões `code` e, quando o erro é de campo, `errors` como lista de `{itemId, field, code, message}`. Erros do próprio Spring usam o mesmo formato: `400` `malformed_request`, `400` `missing_parameter`, `400` `invalid_parameter`, `405` `method_not_allowed`, `415` `unsupported_media_type` e `500` `internal_error`. Quem não tem sessão recebe `401`; quem não é membro do `businessId` do endereço recebe `404`; quem é membro mas não é `gestor` recebe `403` nas rotas de escrita; um `playbookId` que não pertence ao `businessId` recebe `404`. Rotas de escrita exigem o token CSRF.
 
 | Route | In | Out | Status | Who |
 | --- | --- | --- | --- | --- |
 | `GET /oauth2/authorization/google` | - | redireciona ao Google | `302` | qualquer pessoa |
-| `POST /ott/generate` | `{username}` (e-mail) | a mesma resposta para qualquer e-mail | `200`, `403` sem token CSRF, `429` `too_many_requests` | qualquer pessoa com o token CSRF da página `/entrar` |
+| `POST /ott/generate` | `{username}` (e-mail) | a mesma resposta para qualquer e-mail | `200`, `403` sem token CSRF, `422` `invalid_email`, `429` `too_many_requests`, `503` `mail_unavailable` | qualquer pessoa com o token CSRF da página `/entrar` |
 | `GET /api/login-links/{token}` | token do link, sem consumir | `{email}` para a página "Entrar como <e-mail>?" | `200`, `404` `invalid_token` | quem recebeu o link |
 | `POST /login/ott` | `token` (formulário) | consome o token, cria a sessão e redireciona ao produto | `302`, `401` `invalid_token`, `403` sem token CSRF | quem recebeu o link |
 | `GET /api/identity-links/{token}` | token do desafio de associação, sem consumir | `{email}` para a página "Entrar como <e-mail>?" | `200`, `404` `invalid_token` | quem recebeu o link de associação |

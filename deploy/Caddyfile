@@ -1,0 +1,16 @@
+# AD-033: o Caddy recebe HTTPS com certificado automático, serve o app Vue e encaminha ao Spring
+# as rotas da API, do login e do logout.
+{$SITE_ADDRESS:localhost} {
+	encode zstd gzip
+
+	@server path /api/* /ott/* /login/ott /login/identity-link /logout /oauth2/* /login/oauth2/*
+	handle @server {
+		reverse_proxy server:8080
+	}
+
+	handle {
+		root * /srv
+		try_files {path} /index.html
+		file_server
+	}
+}

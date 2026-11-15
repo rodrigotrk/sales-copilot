@@ -28,6 +28,11 @@ spring:
     port: ${SMTP_PORT:1025}
     username: ${SMTP_USERNAME:}
     password: ${SMTP_PASSWORD:}
+    properties:
+      # Sem tempo limite, um servidor de e-mail que não responde prende a requisição de login.
+      "[mail.smtp.connectiontimeout]": 10000
+      "[mail.smtp.timeout]": 10000
+      "[mail.smtp.writetimeout]": 10000
   security:
     oauth2:
       client:

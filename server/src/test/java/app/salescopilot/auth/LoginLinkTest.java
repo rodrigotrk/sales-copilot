@@ -147,6 +147,31 @@ class LoginLinkTest extends IntegrationTest {
     }
 
     @Test
+    @DisplayName("[C98] servidor de e-mail fora do ar responde 503 mail_unavailable em RFC 9457")
+    void mailServerDown() throws Exception {
+        mailbox.setDown(true);
+        mvc.perform(post("/ott/generate").param("username", uniqueEmail()).with(csrf()))
+                .andExpect(status().isServiceUnavailable())
+                .andExpect(header().string("Content-Type", "application/problem+json"))
+                .andExpect(jsonPath("$.code").value("mail_unavailable"));
+    }
+
+    @Test
+    @DisplayName("[C95] e-mail válido de até 320 caracteres entra e grava a sessão")
+    void longEmailSignsIn() throws Exception {
+        String email = "a".repeat(100) + "-" + uniqueEmail();
+        assertThat(email.length()).isGreaterThan(100);
+        Cookie session = login(email);
+        mvc.perform(get("/api/me").cookie(session)).andExpect(status().isOk()).andExpect(jsonPath("$.user.email").value(email));
+
+        String tooLong = "c".repeat(310) + "@exemplo.test";
+        assertThat(tooLong.length()).isGreaterThan(320);
+        mvc.perform(post("/ott/generate").param("username", tooLong).with(csrf()))
+                .andExpect(status().isUnprocessableContent())
+                .andExpect(jsonPath("$.code").value("invalid_email"));
+    }
+
+    @Test
     @DisplayName("[C26] sessão gravada no Postgres vale para outra instância do repositório")
     void sessionLivesInPostgres() throws Exception {
         String email = uniqueEmail();

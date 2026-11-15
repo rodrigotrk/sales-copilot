@@ -88,7 +88,8 @@ export function createEditor(businessId: string) {
   }
 
   async function save(key?: string) {
-    if (key) lastField = key
+    // Sem campo (acrescentar, remover, reordenar), a recuperação aparece no topo da tela.
+    lastField = key ?? null
     if (saving.value) {
       queued = true
       return

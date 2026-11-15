@@ -16,6 +16,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.mail.MailException;
 import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.security.authentication.ott.GenerateOneTimeTokenRequest;
 import org.springframework.security.authentication.ott.JdbcOneTimeTokenService;
@@ -56,7 +57,13 @@ class SecurityConfiguration implements WebMvcConfigurer {
             GoogleSignInHandler google, UserAccounts users, SignedInSession session, LoginMail mail, JsonMapper json,
             JdbcClient jdbc, TransactionTemplate transactions, Clock clock) {
         OneTimeTokenGenerationSuccessHandler sendLink = (request, response, token) -> {
-            mail.sendLoginLink(token.getUsername(), token.getTokenValue());
+            try {
+                mail.sendLoginLink(token.getUsername(), token.getTokenValue());
+            } catch (MailException e) {
+                Problems.write(response, json, HttpStatus.SERVICE_UNAVAILABLE, "mail_unavailable",
+                        "Não foi possível enviar o link. Tente de novo.", request.getRequestURI());
+                return;
+            }
             response.setStatus(HttpStatus.OK.value());
         };
         http

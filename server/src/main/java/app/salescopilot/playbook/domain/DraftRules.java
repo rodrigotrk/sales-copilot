@@ -32,9 +32,10 @@ public final class DraftRules {
 
     public static List<FieldProblem> validate(PlaybookDocument draft) {
         List<FieldProblem> problems = new ArrayList<>();
-        if (draft.schemaVersion() != PlaybookDocument.SCHEMA_VERSION || draft.stages() == null
+        if (draft == null || draft.schemaVersion() != PlaybookDocument.SCHEMA_VERSION || draft.stages() == null
                 || draft.discovery() == null || draft.objections() == null || draft.priceTable() == null
-                || draft.priceTable().plans() == null) {
+                || draft.priceTable().plans() == null || hasNull(draft.stages()) || hasNull(draft.discovery())
+                || hasNull(draft.objections()) || hasNull(draft.priceTable().plans())) {
             problems.add(new FieldProblem(null, "draft", "invalid_document", "Documento do playbook inválido."));
             return problems;
         }
@@ -104,6 +105,10 @@ public final class DraftRules {
 
     public static Optional<BigDecimal> lowestCash(PriceTable table) {
         return table.plans().stream().map(Plan::cash).filter(Objects::nonNull).min(BigDecimal::compareTo);
+    }
+
+    private static boolean hasNull(List<?> items) {
+        return items.stream().anyMatch(Objects::isNull);
     }
 
     private static void limit(List<FieldProblem> problems, String block, int size, int max) {
