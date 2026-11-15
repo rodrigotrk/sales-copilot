@@ -7,6 +7,7 @@
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
+  --color-ink2: var(--ink2);
   --font-heading: var(--font-sans);
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
@@ -50,24 +51,24 @@
 
 :root {
   --radius: 0.625rem;
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
+  --background: #f7f8fb;
+  --foreground: #161a23;
+  --card: #ffffff;
+  --card-foreground: #161a23;
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
+  --primary: #5b3fd6;
   --primary-foreground: oklch(0.985 0 0);
   --secondary: oklch(0.97 0 0);
   --secondary-foreground: oklch(0.205 0 0);
   --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
+  --muted-foreground: #7a8194;
   --accent: oklch(0.97 0 0);
   --accent-foreground: oklch(0.205 0 0);
   --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
+  --border: #e8eaf0;
+  --input: #e8eaf0;
+  --ring: #d9cffd;
   --chart-1: oklch(0.646 0.222 41.116);
   --chart-2: oklch(0.6 0.118 184.704);
   --chart-3: oklch(0.398 0.07 227.392);
@@ -81,6 +82,18 @@
   --sidebar-accent-foreground: oklch(0.205 0 0);
   --sidebar-border: oklch(0.922 0 0);
   --sidebar-ring: oklch(0.708 0 0);
+  --ink2: #3b4252;
+  --line2: #f0f1f5;
+  --pur: #5b3fd6;
+  --pur2: #7c5cf0;
+  --pur-bg: #f1edff;
+  --pur-line: #d9cffd;
+  --amb: #9a6200;
+  --amb-bg: #fff3d6;
+  --amb-line: #f3dca2;
+  --red: #c0352f;
+  --red-bg: #fdeceb;
+  --mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
 }
 
 .dark {
@@ -123,5 +136,32 @@
   }
   body {
     @apply bg-background text-foreground;
+    margin: 0;
+    font: 14px/1.5 -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto, sans-serif;
   }
+}
+
+/* Classes do protótipo (pesquisas/prototipos-originais), que a captura da tela segue. */
+@layer components {
+  .card { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 16px 18px; }
+  .lbl { font-family: var(--mono); font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted-foreground); margin: 0 0 10px; }
+  .btn { border: 1px solid var(--border); background: var(--card); border-radius: 9px; padding: 7px 13px; font: inherit; font-size: 13px; color: var(--ink2); cursor: pointer; display: inline-flex; gap: 6px; align-items: center; }
+  .btn:hover:not(:disabled) { border-color: #d3d6df; }
+  .btn:disabled { opacity: .5; cursor: default; }
+  .btn.pri { background: var(--pur); border-color: var(--pur); color: #fff; }
+  .btn.sm { padding: 5px 10px; font-size: 12.5px; }
+  .btn.xs { padding: 1px 6px; font-size: 12px; line-height: 15px; border-radius: 6px; }
+  .tag { font-family: var(--mono); font-size: 10.5px; letter-spacing: .06em; text-transform: uppercase; padding: 3px 8px; border-radius: 6px; border: 1px solid; white-space: nowrap; }
+  .tag.amb { color: var(--amb); background: var(--amb-bg); border-color: var(--amb-line); }
+  .tag.pur { color: var(--pur); background: var(--pur-bg); border-color: var(--pur-line); }
+  .tbl { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .tbl th { text-align: left; font-family: var(--mono); font-size: 10.5px; letter-spacing: .07em; text-transform: uppercase; color: var(--muted-foreground); font-weight: 500; padding: 8px 10px; border-bottom: 1px solid var(--border); }
+  .tbl td { padding: 10px; border-bottom: 1px solid var(--line2); vertical-align: top; }
+  .tbl tr:last-child td { border-bottom: 0; }
+  .f { border: 1px solid var(--border); border-radius: 8px; padding: 4px 8px; font: inherit; font-size: 13px; background: var(--card); color: var(--ink2); width: 100%; }
+  .err { color: var(--red); font-size: 12px; margin-top: 4px; }
+  .incomplete { background: var(--red-bg); }
+  .notice { border-radius: 10px; padding: 8px 12px; font-size: 13px; border: 1px solid var(--amb-line); background: var(--amb-bg); color: var(--amb); }
+  .row-tools { opacity: 0; }
+  .row:hover .row-tools, .row:focus-within .row-tools, .row.editing .row-tools { opacity: 1; }
 }

@@ -12,6 +12,11 @@ export default defineConfig({
     vueDevTools(),
     tailwindcss(),
   ],
+  server: {
+    proxy: Object.fromEntries(
+      ['/api', '/login', '/ott', '/logout', '/oauth2'].map((path) => [path, 'http://localhost:8080']),
+    ),
+  },
   resolve: {
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url)),
