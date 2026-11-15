@@ -128,6 +128,30 @@ Seen once or not yet corroborated. Tracked, not trusted.
 - evidence: Codex r2 8/9, Verifier C99 (deploy)
 - last seen: 2026-11-15T20:32:42Z
 
+### L-020 - When the draft turns read-only, close any open edit row so nothing is typed into a draft that refuses saves.
+- signal: `ac_gap` · recurrence: 1 feature(s) · scope: `web` · harmful: 0
+- features: playbook-configuravel
+- evidence: Codex r3 1 (C105) (web)
+- last seen: 2026-11-15T21:54:37Z
+
+### L-021 - Pass secrets to SQL as client variables, never by shell interpolation, and run role setup in one transaction.
+- signal: `ac_gap` · recurrence: 1 feature(s) · scope: `deploy` · harmful: 0
+- features: playbook-configuravel
+- evidence: Codex r3 2 (C104) (deploy)
+- last seen: 2026-11-15T21:54:37Z
+
+### L-022 - Error contract covers container and proxy layers too: custom /error and the servlet container's error report.
+- signal: `ac_gap` · recurrence: 1 feature(s) · scope: `server` · harmful: 0
+- features: playbook-configuravel
+- evidence: Codex r3 5, Verifier (C103) (server)
+- last seen: 2026-11-15T21:54:37Z
+
+### L-023 - A fake upstream must echo what it received, or the proxy test cannot see rewrites, method changes or body limits.
+- signal: `weak_test` · recurrence: 1 feature(s) · scope: `deploy` · harmful: 0
+- features: playbook-configuravel
+- evidence: Verifier C99 x3 (deploy)
+- last seen: 2026-11-15T21:54:37Z
+
 ## Quarantined (failed when applied - ignore)
 
 A confirmed lesson that recurred alongside failure. Kept for the maintainer to review.

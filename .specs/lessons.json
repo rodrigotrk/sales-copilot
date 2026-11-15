@@ -3,7 +3,7 @@
   "promote_threshold": 2,
   "window_days": 45,
   "quarantine_threshold": 2,
-  "next_id": 20,
+  "next_id": 24,
   "lessons": [
     {
       "id": "L-001",
@@ -346,6 +346,78 @@
       ],
       "created": "2026-11-15T20:32:42Z",
       "last_seen": "2026-11-15T20:32:42Z"
+    },
+    {
+      "id": "L-020",
+      "key": "ac_gap::when the draft turns read only close any open edit row so nothing is typed into a draft that refuses saves",
+      "text": "When the draft turns read-only, close any open edit row so nothing is typed into a draft that refuses saves.",
+      "signal": "ac_gap",
+      "scope": "web",
+      "status": "candidate",
+      "features": [
+        "playbook-configuravel"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "Codex r3 1 (C105) (web)"
+      ],
+      "created": "2026-11-15T21:54:37Z",
+      "last_seen": "2026-11-15T21:54:37Z"
+    },
+    {
+      "id": "L-021",
+      "key": "ac_gap::pass secrets to sql as client variables never by shell interpolation and run role setup in one transaction",
+      "text": "Pass secrets to SQL as client variables, never by shell interpolation, and run role setup in one transaction.",
+      "signal": "ac_gap",
+      "scope": "deploy",
+      "status": "candidate",
+      "features": [
+        "playbook-configuravel"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "Codex r3 2 (C104) (deploy)"
+      ],
+      "created": "2026-11-15T21:54:37Z",
+      "last_seen": "2026-11-15T21:54:37Z"
+    },
+    {
+      "id": "L-022",
+      "key": "ac_gap::error contract covers container and proxy layers too custom error and the servlet container s error report",
+      "text": "Error contract covers container and proxy layers too: custom /error and the servlet container's error report.",
+      "signal": "ac_gap",
+      "scope": "server",
+      "status": "candidate",
+      "features": [
+        "playbook-configuravel"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "Codex r3 5, Verifier (C103) (server)"
+      ],
+      "created": "2026-11-15T21:54:37Z",
+      "last_seen": "2026-11-15T21:54:37Z"
+    },
+    {
+      "id": "L-023",
+      "key": "weak_test::a fake upstream must echo what it received or the proxy test cannot see rewrites method changes or body limits",
+      "text": "A fake upstream must echo what it received, or the proxy test cannot see rewrites, method changes or body limits.",
+      "signal": "weak_test",
+      "scope": "deploy",
+      "status": "candidate",
+      "features": [
+        "playbook-configuravel"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "Verifier C99 x3 (deploy)"
+      ],
+      "created": "2026-11-15T21:54:37Z",
+      "last_seen": "2026-11-15T21:54:37Z"
     }
   ]
 }
