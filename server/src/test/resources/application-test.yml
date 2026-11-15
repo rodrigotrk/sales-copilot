@@ -1,0 +1,11 @@
+app:
+  base-url: http://localhost:5173
+  mail-from: teste@sales-copilot.test
+  import:
+    scheduling-enabled: false
+spring:
+  ai:
+    openai:
+      api-key: test-key
+      chat:
+        model: anthropic/claude-sonnet-test

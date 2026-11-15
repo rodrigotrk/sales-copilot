@@ -371,5 +371,5 @@ Proof: run server | PASSED [C90] módulos do servidor só usam o api de outros m
 
 ## Handoff
 
-- **Settled mid-build:** "Vertical slice + Modulith (Recomendado)"; "Por funcionalidade (Recomendado)"; "Meio-termo (Recomendado)"; "Sim, Makefile (Recomendado)" - registrados em AD-053 a AD-056
+- **Settled mid-build:** "Vertical slice + Modulith (Recomendado)"; "Por funcionalidade (Recomendado)"; "Meio-termo (Recomendado)"; "Sim, Makefile (Recomendado)" - registrados em AD-053 a AD-056; "nao esquece de aplicar o RFC 9457: Problem Details for HTTP APIs" - AD-057; "prefira arquivos yml do que properties" - AD-058
 - **Dispatched:** none
