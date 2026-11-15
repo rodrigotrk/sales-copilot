@@ -1,6 +1,6 @@
 # playbook-configuravel proofs
 
-**HEAD**: f348be9
+**HEAD**: e1aca23
 **Tree**: clean
 **Shell**: /bin/sh
 **Result**: 140 pass, 0 fail
@@ -144,7 +144,7 @@
 | C96 | `run server / PASSED [C96] rascunho nulo ou com item nulo responde 422 invalid_document sem gravar` | pass |
 | C97 | `run server / PASSED [C97] erros do Spring saem em RFC 9457 com code e type` | pass |
 | C98 | `run server / PASSED [C98] servidor de e-mail fora do ar responde 503 mail_unavailable em RFC 9457` | pass |
-| C99 | `docker compose -f deploy/docker-compose.yml --env-file deploy/.env.example config -q` | pass |
+| C99 | `sh deploy/verify.sh` | pass |
 | Build | `make build` | pass |
 | Build | `make lint` | pass |
 
@@ -153,21 +153,21 @@
 `Run web` - exit 0
 
 ```
- ✓ src/features/playbook/__tests__/playbook.test.ts > tela do playbook > [C52] sem plano a linha do desconto não aparece 9ms
- ✓ src/features/playbook/__tests__/playbook.test.ts > tela do playbook > [C53] sem call registrada a coluna Nas calls não aparece 13ms
- ✓ src/features/playbook/__tests__/playbook.test.ts > tela do playbook > [C54b] após publicar o topo mostra a versão nova 21ms
- ✓ src/features/playbook/__tests__/playbook.test.ts > tela do playbook > [C55b] publicar com revision_conflict mostra O playbook foi alterado em outra aba 19ms
- ✓ src/features/playbook/__tests__/playbook.test.ts > tela do playbook > [C56b] publish_minimum mostra a mensagem do mínimo 21ms
+ ✓ src/features/playbook/__tests__/playbook.test.ts > tela do playbook > [C52] sem plano a linha do desconto não aparece 10ms
+ ✓ src/features/playbook/__tests__/playbook.test.ts > tela do playbook > [C53] sem call registrada a coluna Nas calls não aparece 14ms
+ ✓ src/features/playbook/__tests__/playbook.test.ts > tela do playbook > [C54b] após publicar o topo mostra a versão nova 22ms
+ ✓ src/features/playbook/__tests__/playbook.test.ts > tela do playbook > [C55b] publicar com revision_conflict mostra O playbook foi alterado em outra aba 20ms
+ ✓ src/features/playbook/__tests__/playbook.test.ts > tela do playbook > [C56b] publish_minimum mostra a mensagem do mínimo 23ms
  ✓ src/features/playbook/__tests__/playbook.test.ts > tela do playbook > [C57b] incomplete_rows destaca as linhas e mostra Complete ou remova 22ms
- ✓ src/features/playbook/__tests__/playbook.test.ts > tela do playbook > [C59b] pending_review mostra Confira os valores marcados 20ms
- ✓ src/features/playbook/__tests__/playbook.test.ts > tela do playbook > [C60] alteração pendente desabilita Publicar com Há alterações não salvas 81ms
- ✓ src/features/playbook/__tests__/playbook.test.ts > tela do playbook > [C61b] Alterações não publicadas aparece só com diferença e Publicar desabilita sem ela 91ms
- ✓ src/features/playbook/__tests__/playbook.test.ts > tela do playbook > [C62] sem versão o topo mostra rascunho 9ms
+ ✓ src/features/playbook/__tests__/playbook.test.ts > tela do playbook > [C59b] pending_review mostra Confira os valores marcados 21ms
+ ✓ src/features/playbook/__tests__/playbook.test.ts > tela do playbook > [C60] alteração pendente desabilita Publicar com Há alterações não salvas 83ms
+ ✓ src/features/playbook/__tests__/playbook.test.ts > tela do playbook > [C61b] Alterações não publicadas aparece só com diferença e Publicar desabilita sem ela 87ms
+ ✓ src/features/playbook/__tests__/playbook.test.ts > tela do playbook > [C62] sem versão o topo mostra rascunho 10ms
 
  Test Files  6 passed (6)
       Tests  62 passed (62)
-   Start at  16:03:55
-   Duration  3.96s (transform 2.48s, setup 0ms, import 6.05s, tests 3.72s, environment 3.82s)
+   Start at  16:07:31
+   Duration  3.70s (transform 2.50s, setup 0ms, import 5.69s, tests 3.92s, environment 2.54s)
 ```
 
 `Run server` - exit 0
@@ -176,7 +176,7 @@
 PASSED [C82] bloco acima do limite importa até o limite e avisa os itens de fora
 PASSED [C75] arquivo acima de 10 MB responde 413 sem criar tarefa
 PASSED [C89] chamada ao OpenRouter leva provider.zdr true
-[INFO] Tests run: 21, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 2.798 s -- in app.salescopilot.importing.ImportTest
+[INFO] Tests run: 21, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 2.928 s -- in app.salescopilot.importing.ImportTest
 [INFO] 
 [INFO] Results:
 [INFO] 
@@ -185,13 +185,21 @@ PASSED [C89] chamada ao OpenRouter leva provider.zdr true
 [INFO] ------------------------------------------------------------------------
 [INFO] BUILD SUCCESS
 [INFO] ------------------------------------------------------------------------
-[INFO] Total time:  21.699 s
-[INFO] Finished at: 2026-11-15T16:04:21-03:00
+[INFO] Total time:  23.475 s
+[INFO] Finished at: 2026-11-15T16:07:59-03:00
 [INFO] ------------------------------------------------------------------------
 ```
 
-`docker compose -f deploy/docker-compose.yml --env-file deploy/.env.example config -q` - exit 0
+`sh deploy/verify.sh` - exit 0
 
 ```
-(no output)
+Valid configuration
+deploy ok
+{"level":"info","ts":1794769679.7531216,"msg":"using config from file","file":"/etc/caddy/Caddyfile"}
+{"level":"info","ts":1794769679.7539241,"msg":"adapted config to JSON","adapter":"caddyfile"}
+{"level":"info","ts":1794769679.7542992,"logger":"http.auto_https","msg":"server is listening only on the HTTPS port but has no TLS connection policies; adding one to enable TLS","server_name":"srv0","https_port":443}
+{"level":"info","ts":1794769679.7543168,"logger":"http.auto_https","msg":"enabling automatic HTTP->HTTPS redirects","server_name":"srv0"}
+{"level":"info","ts":1794769679.754481,"logger":"tls.cache.maintenance","msg":"started background certificate maintenance","cache":"0x6990badefb00"}
+{"level":"info","ts":1794769679.7608569,"logger":"http","msg":"servers shutting down with eternal grace period"}
+{"level":"info","ts":1794769679.7609153,"logger":"tls.cache.maintenance","msg":"stopped background certificate maintenance","cache":"0x6990badefb00"}
 ```
