@@ -104,6 +104,30 @@ Seen once or not yet corroborated. Tracked, not trusted.
 - evidence: verification.md C92-C99 finding (web)
 - last seen: 2026-11-15T19:10:46Z
 
+### L-016 - Validate model output against the full schema on the raw JSON; record mapping coerces types silently.
+- signal: `ac_gap` · recurrence: 1 feature(s) · scope: `importing` · harmful: 0
+- features: playbook-configuravel
+- evidence: Codex r2 1 (C81) (importing)
+- last seen: 2026-11-15T20:32:42Z
+
+### L-017 - Removing a row must also drop that row's field errors, or the screen stays blocked with no visible cause.
+- signal: `ac_gap` · recurrence: 1 feature(s) · scope: `web` · harmful: 0
+- features: playbook-configuravel
+- evidence: Codex r2 2 (C100) (web)
+- last seen: 2026-11-15T20:32:42Z
+
+### L-018 - Route every protected request's 401 to the sign-in screen, not only the navigation guard.
+- signal: `ac_gap` · recurrence: 1 feature(s) · scope: `web` · harmful: 0
+- features: playbook-configuravel
+- evidence: Codex r2 3 (C101) (web)
+- last seen: 2026-11-15T20:32:42Z
+
+### L-019 - Prove a boundary at its exact value and prove routing by sending requests, not by reading configuration text.
+- signal: `weak_test` · recurrence: 1 feature(s) · scope: `deploy` · harmful: 0
+- features: playbook-configuravel
+- evidence: Codex r2 8/9, Verifier C99 (deploy)
+- last seen: 2026-11-15T20:32:42Z
+
 ## Quarantined (failed when applied - ignore)
 
 A confirmed lesson that recurred alongside failure. Kept for the maintainer to review.

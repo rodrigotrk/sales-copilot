@@ -3,7 +3,7 @@
   "promote_threshold": 2,
   "window_days": 45,
   "quarantine_threshold": 2,
-  "next_id": 16,
+  "next_id": 20,
   "lessons": [
     {
       "id": "L-001",
@@ -274,6 +274,78 @@
       ],
       "created": "2026-11-15T19:10:46Z",
       "last_seen": "2026-11-15T19:10:46Z"
+    },
+    {
+      "id": "L-016",
+      "key": "ac_gap::validate model output against the full schema on the raw json record mapping coerces types silently",
+      "text": "Validate model output against the full schema on the raw JSON; record mapping coerces types silently.",
+      "signal": "ac_gap",
+      "scope": "importing",
+      "status": "candidate",
+      "features": [
+        "playbook-configuravel"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "Codex r2 1 (C81) (importing)"
+      ],
+      "created": "2026-11-15T20:32:42Z",
+      "last_seen": "2026-11-15T20:32:42Z"
+    },
+    {
+      "id": "L-017",
+      "key": "ac_gap::removing a row must also drop that row s field errors or the screen stays blocked with no visible cause",
+      "text": "Removing a row must also drop that row's field errors, or the screen stays blocked with no visible cause.",
+      "signal": "ac_gap",
+      "scope": "web",
+      "status": "candidate",
+      "features": [
+        "playbook-configuravel"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "Codex r2 2 (C100) (web)"
+      ],
+      "created": "2026-11-15T20:32:42Z",
+      "last_seen": "2026-11-15T20:32:42Z"
+    },
+    {
+      "id": "L-018",
+      "key": "ac_gap::route every protected request s 401 to the sign in screen not only the navigation guard",
+      "text": "Route every protected request's 401 to the sign-in screen, not only the navigation guard.",
+      "signal": "ac_gap",
+      "scope": "web",
+      "status": "candidate",
+      "features": [
+        "playbook-configuravel"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "Codex r2 3 (C101) (web)"
+      ],
+      "created": "2026-11-15T20:32:42Z",
+      "last_seen": "2026-11-15T20:32:42Z"
+    },
+    {
+      "id": "L-019",
+      "key": "weak_test::prove a boundary at its exact value and prove routing by sending requests not by reading configuration text",
+      "text": "Prove a boundary at its exact value and prove routing by sending requests, not by reading configuration text.",
+      "signal": "weak_test",
+      "scope": "deploy",
+      "status": "candidate",
+      "features": [
+        "playbook-configuravel"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "Codex r2 8/9, Verifier C99 (deploy)"
+      ],
+      "created": "2026-11-15T20:32:42Z",
+      "last_seen": "2026-11-15T20:32:42Z"
     }
   ]
 }
