@@ -53,8 +53,10 @@ class ImportWorker {
             }
             finished = complete(job, claim.leaseToken(), extracted, text.plain());
         } catch (ImportFailure failure) {
-            finished = tenancy.inBusiness(null, job.businessId(),
-                    () -> jobs.finishFailed(job.id(), claim.leaseToken(), failure.code()) == 1);
+            finished = fail(job, claim.leaseToken(), failure.code());
+        } catch (RuntimeException unexpected) {
+            // Sem isto a tarefa voltaria à fila a cada concessão vencida, sem fim.
+            finished = fail(job, claim.leaseToken(), "import_failed");
         }
         // Execução sem a concessão não apaga nada: o arquivo pertence a quem a assumiu.
         if (finished && job.filePath() != null) {
@@ -80,6 +82,10 @@ class ImportWorker {
         } catch (LeaseLost e) {
             return false;
         }
+    }
+
+    private boolean fail(ImportJobs.Job job, UUID leaseToken, String code) {
+        return tenancy.inBusiness(null, job.businessId(), () -> jobs.finishFailed(job.id(), leaseToken, code) == 1);
     }
 
     private DocumentText.Extracted read(ImportJobs.Job job) throws ImportFailure {

@@ -3,7 +3,6 @@ package app.salescopilot.importing;
 import java.time.Clock;
 import java.time.Duration;
 import java.util.Objects;
-import java.util.Set;
 
 import org.springframework.stereotype.Component;
 
@@ -31,7 +30,7 @@ class ImportFileSweeper {
         var statuses = jobs.statuses(stored.stream().map(ImportFiles.StoredFile::jobId).filter(Objects::nonNull).toList());
         for (var file : stored) {
             String status = file.jobId() == null ? null : statuses.get(file.jobId());
-            boolean finished = Set.of("done", "failed").contains(status);
+            boolean finished = "done".equals(status) || "failed".equals(status);
             boolean orphan = status == null && file.modifiedAt().plus(ORPHAN_AGE).isBefore(clock.instant());
             if (finished || orphan) {
                 files.delete(file.fileName());
