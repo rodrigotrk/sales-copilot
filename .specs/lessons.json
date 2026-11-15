@@ -3,7 +3,7 @@
   "promote_threshold": 2,
   "window_days": 45,
   "quarantine_threshold": 2,
-  "next_id": 7,
+  "next_id": 16,
   "lessons": [
     {
       "id": "L-001",
@@ -112,6 +112,168 @@
       ],
       "created": "2026-11-15T18:39:04Z",
       "last_seen": "2026-11-15T18:39:04Z"
+    },
+    {
+      "id": "L-007",
+      "key": "ac_gap::block any action that reloads the draft while a field is saving or failed so unsaved input is never discarded",
+      "text": "Block any action that reloads the draft while a field is saving or failed, so unsaved input is never discarded.",
+      "signal": "ac_gap",
+      "scope": "web",
+      "status": "candidate",
+      "features": [
+        "playbook-configuravel"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "Codex 1 (C92) (web)"
+      ],
+      "created": "2026-11-15T19:10:45Z",
+      "last_seen": "2026-11-15T19:10:45Z"
+    },
+    {
+      "id": "L-008",
+      "key": "ac_gap::key route views by the resource in the address so a reused component never keeps the previous tenant",
+      "text": "Key route views by the resource in the address so a reused component never keeps the previous tenant.",
+      "signal": "ac_gap",
+      "scope": "web",
+      "status": "candidate",
+      "features": [
+        "playbook-configuravel"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "Codex 2 (C94) (web)"
+      ],
+      "created": "2026-11-15T19:10:45Z",
+      "last_seen": "2026-11-15T19:10:45Z"
+    },
+    {
+      "id": "L-009",
+      "key": "ac_gap::show save recovery for row operations too not only for a focused field",
+      "text": "Show save recovery for row operations too, not only for a focused field.",
+      "signal": "ac_gap",
+      "scope": "web",
+      "status": "candidate",
+      "features": [
+        "playbook-configuravel"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "Codex 3 (C93) (web)"
+      ],
+      "created": "2026-11-15T19:10:45Z",
+      "last_seen": "2026-11-15T19:10:45Z"
+    },
+    {
+      "id": "L-010",
+      "key": "ac_gap::size every column that stores an identifier to the longest value the input validation accepts",
+      "text": "Size every column that stores an identifier to the longest value the input validation accepts.",
+      "signal": "ac_gap",
+      "scope": "database",
+      "status": "candidate",
+      "features": [
+        "playbook-configuravel"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "Codex 4 (C95) (database)"
+      ],
+      "created": "2026-11-15T19:10:45Z",
+      "last_seen": "2026-11-15T19:10:45Z"
+    },
+    {
+      "id": "L-011",
+      "key": "ac_gap::validate the raw model json for types and nulls before mapping it into records that normalize missing data",
+      "text": "Validate the raw model JSON for types and nulls before mapping it into records that normalize missing data.",
+      "signal": "ac_gap",
+      "scope": "importing",
+      "status": "candidate",
+      "features": [
+        "playbook-configuravel"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "Codex 5 (C81) (importing)"
+      ],
+      "created": "2026-11-15T19:10:45Z",
+      "last_seen": "2026-11-15T19:10:45Z"
+    },
+    {
+      "id": "L-012",
+      "key": "spec_precision_gap::give every landing artifact a check whose proof reads the artifact so a promised file cannot go missing",
+      "text": "Give every Landing artifact a check whose proof reads the artifact, so a promised file cannot go missing.",
+      "signal": "spec_precision_gap",
+      "scope": "deploy",
+      "status": "candidate",
+      "features": [
+        "playbook-configuravel"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "Codex 6 (C99) (deploy)"
+      ],
+      "created": "2026-11-15T19:10:45Z",
+      "last_seen": "2026-11-15T19:10:45Z"
+    },
+    {
+      "id": "L-013",
+      "key": "ac_gap::reject null documents and null list items at the api boundary with a structured error",
+      "text": "Reject null documents and null list items at the API boundary with a structured error.",
+      "signal": "ac_gap",
+      "scope": "server",
+      "status": "candidate",
+      "features": [
+        "playbook-configuravel"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "Codex 7 (C96) (server)"
+      ],
+      "created": "2026-11-15T19:10:46Z",
+      "last_seen": "2026-11-15T19:10:46Z"
+    },
+    {
+      "id": "L-014",
+      "key": "ac_gap::route framework and infrastructure errors through the same problem details mapping as business errors",
+      "text": "Route framework and infrastructure errors through the same problem-details mapping as business errors.",
+      "signal": "ac_gap",
+      "scope": "server",
+      "status": "candidate",
+      "features": [
+        "playbook-configuravel"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "Codex 8 (C97, C98) (server)"
+      ],
+      "created": "2026-11-15T19:10:46Z",
+      "last_seen": "2026-11-15T19:10:46Z"
+    },
+    {
+      "id": "L-015",
+      "key": "weak_test::prove each state and operation a criterion lists including in flight states and every row operation",
+      "text": "Prove each state and operation a criterion lists, including in-flight states and every row operation.",
+      "signal": "weak_test",
+      "scope": "web",
+      "status": "candidate",
+      "features": [
+        "playbook-configuravel"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "verification.md C92-C99 finding (web)"
+      ],
+      "created": "2026-11-15T19:10:46Z",
+      "last_seen": "2026-11-15T19:10:46Z"
     }
   ]
 }
