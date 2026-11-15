@@ -28,6 +28,13 @@ async function ensureCsrfCookie(): Promise<string | undefined> {
   return csrfToken()
 }
 
+let onUnauthenticated = () => {}
+
+/** O roteador registra aqui para onde levar a pessoa quando a sessão acaba no meio do uso. */
+export function whenUnauthenticated(handler: () => void) {
+  onUnauthenticated = handler
+}
+
 export async function request(method: string, url: string, body?: unknown): Promise<Response> {
   const headers: Record<string, string> = {}
   const token = method === 'GET' ? undefined : await ensureCsrfCookie()
@@ -43,6 +50,8 @@ export async function request(method: string, url: string, body?: unknown): Prom
   if (res.ok || res.type === 'opaqueredirect') return res
   // Um 502 do proxy chega em HTML, sem `code`; o status basta para a tela.
   const problem = await res.json().catch(() => ({}))
+  // /api/me responde 401 a quem ainda não entrou; o guarda do roteador trata esse caso.
+  if (res.status === 401 && problem.code === 'unauthenticated' && url !== '/api/me') onUnauthenticated()
   throw new ApiError(res.status, problem.code ?? '', problem.errors ?? [])
 }
 

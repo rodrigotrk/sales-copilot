@@ -59,6 +59,11 @@ class PlaybookTest extends IntegrationTest {
         save(g, id, empty().replace("\"stages\":[]", "\"stages\":[null]"), 0)
                 .andExpect(status().isUnprocessableContent())
                 .andExpect(jsonPath("$.errors[0].code").value("invalid_document"));
+        save(g, id, empty().replace("\"plans\":[]", "\"plans\":[{\"id\":null,\"name\":\"Plano\",\"extraValue\":null,"
+                + "\"cash\":\"0.00\",\"installments\":{\"count\":1,\"value\":\"0.00\"}}]"), 0)
+                .andExpect(status().isUnprocessableContent())
+                .andExpect(jsonPath("$.errors[*].code", org.hamcrest.Matchers.containsInAnyOrder(
+                        "invalid_id", "invalid_cash", "invalid_installments")));
         assertThat(playbook(g).get("revision").asLong()).isZero();
     }
 

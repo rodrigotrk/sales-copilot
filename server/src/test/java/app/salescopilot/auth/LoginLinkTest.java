@@ -123,7 +123,11 @@ class LoginLinkTest extends IntegrationTest {
         mvc.perform(get("/api/me").cookie(session))
                 .andExpect(status().isUnauthorized())
                 .andExpect(header().string("Content-Type", "application/problem+json"));
-        mvc.perform(post("/logout").with(csrf())).andExpect(status().isUnauthorized());
+        mvc.perform(post("/logout").with(csrf()))
+                .andExpect(status().isUnauthorized())
+                .andExpect(header().string("Content-Type", "application/problem+json"))
+                .andExpect(jsonPath("$.type").value("/problems/unauthenticated"))
+                .andExpect(jsonPath("$.code").value("unauthenticated"));
     }
 
     @Test
@@ -159,13 +163,17 @@ class LoginLinkTest extends IntegrationTest {
     @Test
     @DisplayName("[C95] e-mail válido de até 320 caracteres entra e grava a sessão")
     void longEmailSignsIn() throws Exception {
-        String email = "a".repeat(100) + "-" + uniqueEmail();
-        assertThat(email.length()).isGreaterThan(100);
+        String suffix = "-" + uniqueEmail();
+        String email = "a".repeat(320 - suffix.length()) + suffix;
+        assertThat(email).hasSize(320);
         Cookie session = login(email);
         mvc.perform(get("/api/me").cookie(session)).andExpect(status().isOk()).andExpect(jsonPath("$.user.email").value(email));
+        String sessionId = new String(Base64.getDecoder().decode(session.getValue()));
+        assertThat(TestDatabase.admin().sql("SELECT principal_name FROM spring_session WHERE session_id = ?")
+                .param(sessionId).query(String.class).single()).isEqualTo(email);
 
-        String tooLong = "c".repeat(310) + "@exemplo.test";
-        assertThat(tooLong.length()).isGreaterThan(320);
+        String tooLong = "c" + email;
+        assertThat(tooLong).hasSize(321);
         mvc.perform(post("/ott/generate").param("username", tooLong).with(csrf()))
                 .andExpect(status().isUnprocessableContent())
                 .andExpect(jsonPath("$.code").value("invalid_email"));

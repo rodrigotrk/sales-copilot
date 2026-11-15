@@ -96,12 +96,12 @@ class DocumentText {
 
     private static Extracted parse(InputStream in) throws IOException, ImportFailure {
         ToXMLContentHandler xhtml = new ToXMLContentHandler();
-        BodyContentHandler plain = new BodyContentHandler(-1);
-        // Para de ler ao passar do limite de texto: um documento enorme ou uma bomba de compressão
-        // não chega a ser acumulado inteiro na memória.
-        WriteOutContentHandler limited = new WriteOutContentHandler(new TeeContentHandler(xhtml, plain), MAX_TEXT + 1);
+        // Para de ler quando o texto do corpo passa do limite: um documento enorme ou uma bomba de
+        // compressão não chega a ser acumulado inteiro na memória. Metadados, como o título, não contam.
+        WriteOutContentHandler plain = new WriteOutContentHandler(MAX_TEXT + 1);
         try {
-            new AutoDetectParser().parse(in, limited, new Metadata(), new ParseContext());
+            new AutoDetectParser().parse(in, new TeeContentHandler(xhtml, new BodyContentHandler(plain)), new Metadata(),
+                    new ParseContext());
         } catch (org.xml.sax.SAXException | org.apache.tika.exception.TikaException e) {
             throw new ImportFailure(WriteLimitReachedException.isWriteLimitReached(e) ? "text_too_long" : "import_failed", e);
         }

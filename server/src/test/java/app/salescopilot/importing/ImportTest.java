@@ -211,6 +211,13 @@ class ImportTest extends IntegrationTest {
         assertThat(jobRow(docxUnderLimit)).containsEntry("status", "done");
         assertThat(STUB.modelRequests()).hasSize(1);
 
+        STUB.modelAnswers(ANSWER);
+        UUID longTitle = jobId(importFile(g, new MockMultipartFile("file", "titulo.docx",
+                "application/vnd.openxmlformats-officedocument.wordprocessingml.document", docxWithTitle("t".repeat(100_001)))));
+        worker.drain();
+        assertThat(jobRow(longTitle)).containsEntry("status", "done");
+        assertThat(STUB.modelRequests()).hasSize(2);
+
         UUID limit = jobId(importText(g, "a".repeat(100_000)));
         STUB.modelAnswers("{\"stages\":[],\"discovery\":[],\"objections\":[],\"priceTable\":{\"extraColumnName\":null,"
                 + "\"maxDiscount\":null,\"maxDiscountExcerpt\":null,\"plans\":[]}}");
@@ -296,6 +303,16 @@ class ImportTest extends IntegrationTest {
         worker.drain();
         assertThat(jobRow(nullBlocks)).containsEntry("status", "failed").containsEntry("error_code", "model_failed");
         assertThat(STUB.modelRequests()).hasSize(3);
+
+        STUB.reset();
+        STUB.modelAnswers(ANSWER.replace("{\"name\":\"Abertura\"}", "{\"name\":123}"));
+        STUB.modelAnswers(ANSWER.replace("\"installmentsCount\":6", "\"installmentsCount\":2.9"));
+        STUB.modelAnswers(ANSWER.replace("\"maxDiscountExcerpt\":\"Desconto máximo na call: R$ 300.\",", ""));
+        UUID wrongTypes = jobId(importText(g, DOCUMENT));
+        worker.drain();
+        assertThat(jobRow(wrongTypes)).containsEntry("status", "failed").containsEntry("error_code", "model_failed");
+        assertThat(STUB.modelRequests()).hasSize(3);
+        assertThat(revision(g)).isEqualTo(revision);
 
         STUB.reset();
         STUB.modelFails(500);
@@ -563,6 +580,16 @@ class ImportTest extends IntegrationTest {
                 document.createParagraph().createRun().setText("a".repeat(size));
                 remaining -= size;
             }
+            document.write(out);
+            return out.toByteArray();
+        }
+    }
+
+    /** Metadados do documento ficam fora do corpo e não contam no limite de texto. */
+    private static byte[] docxWithTitle(String title) throws java.io.IOException {
+        try (var document = new org.apache.poi.xwpf.usermodel.XWPFDocument(); var out = new ByteArrayOutputStream()) {
+            document.getProperties().getCoreProperties().setTitle(title);
+            document.createParagraph().createRun().setText("Abertura");
             document.write(out);
             return out.toByteArray();
         }

@@ -1,6 +1,7 @@
 import { screen, waitFor, within } from '@testing-library/vue'
 import { describe, expect, it } from 'vitest'
 import { fakeApi, ok, problem, renderApp, type Call } from '@/__tests__/harness'
+import { me as currentUser } from '@/features/auth/session'
 import type { Draft } from '../api'
 import { me, playbookServer, playbookState, sampleDraft } from './fixtures'
 
@@ -101,5 +102,61 @@ describe('correções da revisão de código', () => {
     const put = calls.filter((c) => c.method === 'PUT')
     expect(put.map((c) => c.path)).toEqual(['/api/businesses/b1/playbook/draft'])
     expect((put[0]!.body as { playbookId: string }).playbookId).toBe('pb1')
+  })
+
+  it('[C100] remover a linha com erro local libera Publicar e Importar documento', async () => {
+    const { routes } = playbookServer(playbookState())
+    fakeApi(routes)
+    const { user } = await renderApp('/n/b1/playbook')
+    await screen.findByText(/^Playbook: /)
+    const prices = within(screen.getByRole('region', { name: 'Tabela de preços' }))
+
+    await user.click(screen.getByText('Kit 3 kWp'))
+    await user.clear(screen.getByLabelText('À vista'))
+    await user.type(screen.getByLabelText('À vista'), 'abc')
+    await user.click(document.body)
+    expect(screen.getByText('Informe um valor em reais maior que zero.')).toBeTruthy()
+    expect(button('Publicar').disabled).toBe(true)
+    expect(button('Importar documento').disabled).toBe(true)
+
+    await user.click(prices.getAllByRole('button', { name: 'Remover' })[0]!)
+
+    await waitFor(() => expect(button('Importar documento').disabled).toBe(false))
+    expect(button('Publicar').disabled).toBe(false)
+    expect(screen.queryByText('Informe um valor em reais maior que zero.')).toBeNull()
+    expect(screen.queryByRole('button', { name: 'Desfazer' })).toBeNull()
+  })
+
+  it('[C101] sessão expirada durante a edição leva a /entrar na requisição seguinte', async () => {
+    const { routes } = playbookServer(playbookState())
+    fakeApi({ ...routes, 'PUT /api/businesses/b1/playbook/draft': problem(401, 'unauthenticated') })
+    const { router, user } = await renderApp('/n/b1/playbook')
+    await screen.findByText(/^Playbook: /)
+
+    await user.click(screen.getByText('Abertura'))
+    await user.clear(screen.getByLabelText('Nome da etapa'))
+    await user.type(screen.getByLabelText('Nome da etapa'), 'Boas-vindas')
+    await user.click(document.body)
+
+    await waitFor(() => expect(router.currentRoute.value.path).toBe('/entrar'))
+    expect(currentUser.value).toBeNull()
+    expect(screen.queryByText('Não foi possível salvar. Tente de novo.')).toBeNull()
+  })
+
+  it('[C102] parcela acima de R$ 10 milhões é aceita, sem o teto do preço à vista', async () => {
+    const { server, routes } = playbookServer(playbookState())
+    fakeApi(routes)
+    const { user } = await renderApp('/n/b1/playbook')
+    await screen.findByText(/^Playbook: /)
+
+    await user.click(screen.getByText('Kit 3 kWp'))
+    await user.clear(screen.getByLabelText('Valor da parcela'))
+    await user.type(screen.getByLabelText('Valor da parcela'), '10.000.000,01')
+    await user.click(document.body)
+
+    await waitFor(() =>
+      expect(server.state.draft.priceTable.plans[0]!.installments).toEqual({ count: 6, value: '10000000.01' }),
+    )
+    expect(screen.queryByText('Parcelas de 2 a 60, com valor maior que zero.')).toBeNull()
   })
 })

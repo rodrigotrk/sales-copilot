@@ -24,7 +24,7 @@ function leave(event: FocusEvent) {
   const n = count.value.trim()
   const v = amount.value.trim()
   if (!n && !v) return emit('commit', null)
-  const value = parseMoney(v)
+  const value = parseMoney(v, { capped: false })
   const parcels = Number(n)
   if (!/^\d+$/.test(n) || parcels < 2 || parcels > 60 || value === null) return emit('invalid')
   emit('commit', { count: parcels, value })

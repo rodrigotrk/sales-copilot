@@ -28,7 +28,12 @@ export async function loadMe(): Promise<Me | null> {
 }
 
 export async function logout() {
-  await request('POST', '/logout')
+  try {
+    await request('POST', '/logout')
+  } catch (e) {
+    // 401: a sessão já tinha acabado, e sair termina no mesmo lugar.
+    if (!(e instanceof ApiError && e.status === 401)) throw e
+  }
   me.value = null
 }
 

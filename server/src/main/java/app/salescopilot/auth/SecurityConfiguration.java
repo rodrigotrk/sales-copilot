@@ -93,8 +93,14 @@ class SecurityConfiguration implements WebMvcConfigurer {
                         .failureHandler((request, response, e) -> response.sendRedirect("/entrar?erro=google_failed")))
                 .logout(logout -> logout
                         .logoutUrl("/logout")
-                        .logoutSuccessHandler((request, response, authentication) -> response.setStatus(
-                                authentication == null ? HttpStatus.UNAUTHORIZED.value() : HttpStatus.NO_CONTENT.value())))
+                        .logoutSuccessHandler((request, response, authentication) -> {
+                            if (authentication == null) {
+                                Problems.write(response, json, HttpStatus.UNAUTHORIZED, "unauthenticated", "Entre para continuar.",
+                                        request.getRequestURI());
+                            } else {
+                                response.setStatus(HttpStatus.NO_CONTENT.value());
+                            }
+                        }))
                 .exceptionHandling(errors -> errors
                         .authenticationEntryPoint((request, response, e) -> Problems.write(response, json,
                                 HttpStatus.UNAUTHORIZED, "unauthenticated", "Entre para continuar.", request.getRequestURI()))

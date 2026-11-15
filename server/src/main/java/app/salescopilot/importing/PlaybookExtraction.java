@@ -12,7 +12,6 @@ import org.springframework.ai.openai.OpenAiChatOptions;
 import org.springframework.stereotype.Component;
 
 import app.salescopilot.importing.domain.ExtractedPlaybook;
-import tools.jackson.databind.DeserializationFeature;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.json.JsonMapper;
 
@@ -60,29 +59,73 @@ class PlaybookExtraction {
 
     private final ChatModel chat;
     private final JsonMapper json;
+    private final JsonNode schema;
 
     PlaybookExtraction(ChatModel chat, JsonMapper json) {
         this.chat = chat;
         this.json = json;
+        this.schema = json.readTree(SCHEMA);
     }
 
     /** Resposta fora do schema pedido é falha da tentativa, como um erro HTTP (critério 81). */
     ExtractedPlaybook parse(String answer) {
         JsonNode root = json.readTree(answer);
-        // Tipo e nulidade são conferidos no JSON bruto: o record transforma bloco nulo em lista vazia.
-        boolean shaped = root != null && root.isObject()
-                && List.of("stages", "discovery", "objections").stream().allMatch(b -> root.path(b).isArray())
-                && root.path("priceTable").isObject() && root.path("priceTable").path("plans").isArray();
-        if (!shaped) {
+        // O JSON bruto é conferido antes do record, que converteria 123 em "123", 2.9 em 2 e bloco nulo em lista vazia.
+        if (root == null || !matches(root, schema)) {
             throw new IllegalArgumentException("resposta fora do schema");
         }
-        ExtractedPlaybook extracted = json.readerFor(ExtractedPlaybook.class)
-                .with(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
-                .readValue(root);
+        ExtractedPlaybook extracted = json.readerFor(ExtractedPlaybook.class).readValue(root);
         if (!extracted.isWellFormed()) {
             throw new IllegalArgumentException("item sem campo obrigatório do schema");
         }
         return extracted;
+    }
+
+    /**
+     * Confere o subconjunto de JSON Schema que o {@link #SCHEMA} usa: `type`, `required`, `properties`
+     * com `additionalProperties: false` em todo objeto, e `items`.
+     */
+    static boolean matches(JsonNode value, JsonNode schema) {
+        JsonNode type = schema.path("type");
+        boolean typed = type.isArray()
+                ? type.valueStream().anyMatch(t -> hasType(value, t.asString()))
+                : hasType(value, type.asString());
+        if (!typed) {
+            return false;
+        }
+        if (value.isObject()) {
+            for (JsonNode required : schema.path("required")) {
+                if (!value.has(required.asString())) {
+                    return false;
+                }
+            }
+            for (var field : value.properties()) {
+                JsonNode fieldSchema = schema.path("properties").get(field.getKey());
+                if (fieldSchema == null || !matches(field.getValue(), fieldSchema)) {
+                    return false;
+                }
+            }
+        }
+        if (value.isArray()) {
+            for (JsonNode item : value) {
+                if (!matches(item, schema.path("items"))) {
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+
+    private static boolean hasType(JsonNode value, String type) {
+        return switch (type) {
+            case "object" -> value.isObject();
+            case "array" -> value.isArray();
+            case "string" -> value.isString();
+            case "number" -> value.isNumber();
+            case "integer" -> value.isIntegralNumber();
+            case "null" -> value.isNull();
+            default -> false;
+        };
     }
 
     ExtractedPlaybook extract(String documentText) throws ImportFailure {

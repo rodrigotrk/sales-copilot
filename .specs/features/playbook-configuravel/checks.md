@@ -340,10 +340,10 @@ Proof: run web | ✓ [C93] falha ao remover uma linha mostra a mensagem com Tent
 **C94** - Voltar pelo histórico a outro negócio recria a tela, e as gravações vão para o negócio do endereço (AC 19, AD-045)
 Proof: run web | ✓ [C94] voltar pelo histórico a outro negócio recria a tela e grava no negócio do endereço
 
-**C95** - E-mail válido de até 320 caracteres entra e a sessão é gravada; acima disso, `422` `invalid_email` (AC 5, AC 26)
+**C95** - E-mail válido de exatamente 320 caracteres entra e a sessão é gravada com ele; com 321, `422` `invalid_email` (AC 5, AC 26)
 Proof: run server | PASSED [C95] e-mail válido de até 320 caracteres entra e grava a sessão
 
-**C96** - Rascunho nulo ou com item nulo responde `422` com `invalid_document` e não grava (AC 37, Surface do PUT)
+**C96** - Rascunho nulo ou com item nulo responde `422` com `invalid_document`, e plano com `id` nulo responde `422` com os erros de campo, sem `500`; nada é gravado (AC 37, Surface do PUT)
 Proof: run server | PASSED [C96] rascunho nulo ou com item nulo responde 422 invalid_document sem gravar
 
 **C97** - Erros do próprio Spring (JSON malformado, tipo de conteúdo, método, parâmetro ausente) saem em `application/problem+json` com `code` e `type` (AD-057)
@@ -354,6 +354,15 @@ Proof: run server | PASSED [C98] servidor de e-mail fora do ar responde 503 mail
 
 **C99** - `deploy/` tem Docker Compose válido com os serviços `postgres`, `server` e `caddy`, e o Caddyfile é válido e encaminha ao servidor `/api/*`, `/ott/*`, `/login/ott`, `/login/identity-link`, `/logout`, `/oauth2/*` e `/login/oauth2/*` (Landing 1, AD-004, AD-033)
 Proof: `sh deploy/verify.sh`
+
+**C100** - Remover a linha que tem erro local apaga o erro e libera "Publicar" e "Importar documento" depois da gravação (AC 36, AC 46, AC 60)
+Proof: run web | ✓ [C100] remover a linha com erro local libera Publicar e Importar documento
+
+**C101** - Requisição que recebe `401` `unauthenticated` durante a edição leva a pessoa a `/entrar`, sem mostrar falha de gravação (AC 25, AD-039)
+Proof: run web | ✓ [C101] sessão expirada durante a edição leva a /entrar na requisição seguinte
+
+**C102** - Valor de parcela acima de R$ 10.000.000,00 é aceito na tela, como no servidor; o teto vale só para o preço à vista (AC 47)
+Proof: run web | ✓ [C102] parcela acima de R$ 10 milhões é aceita, sem o teto do preço à vista
 
 ## Coverage
 

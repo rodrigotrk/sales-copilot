@@ -185,6 +185,11 @@ export function createEditor(businessId: string) {
       list.findIndex((i) => i.id === id),
       1,
     )
+    // Erro de um campo da linha removida não pode continuar bloqueando Publicar e Importar.
+    const ofOtherRows = (errors: Record<string, string>) =>
+      Object.fromEntries(Object.entries(errors).filter(([key]) => !key.startsWith(`${id}.`)))
+    localErrors.value = ofOtherRows(localErrors.value)
+    serverErrors.value = ofOtherRows(serverErrors.value)
     void save()
   }
 

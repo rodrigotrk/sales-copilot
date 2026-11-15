@@ -20,16 +20,19 @@ export function formatInstallments(installments: { count: number; value: string 
 }
 
 /**
- * Lê o que a pessoa digitou em reais ("4.500,50", "4500", "R$ 4.500") e devolve "4500.50",
- * ou null quando não é um valor entre o mínimo e R$ 10.000.000,00 com até duas casas.
+ * Lê o que a pessoa digitou em reais ("4.500,50", "4500", "R$ 4.500") e devolve "4500.50", ou null
+ * quando não é um valor a partir do mínimo com até duas casas. `capped` limita a R$ 10.000.000,00,
+ * o teto do preço à vista; a parcela não tem teto.
  */
-export function parseMoney(text: string, { allowZero = false } = {}): string | null {
+export function parseMoney(text: string, { allowZero = false, capped = true } = {}): string | null {
   const clean = text.replace(/^R\$\s*/, '').trim()
   if (!/^(\d{1,3}(\.\d{3})+|\d+)(,\d{1,2})?$/.test(clean)) return null
   const [int = '', frac = ''] = clean.replace(/\./g, '').split(',')
-  const cents = Number(int) * 100 + Number(frac.padEnd(2, '0'))
-  if (cents > MAX_CENTS || cents < (allowZero ? 0 : 1)) return null
-  return `${Math.floor(cents / 100)}.${String(cents % 100).padStart(2, '0')}`
+  const whole = int.replace(/^0+(?=\d)/, '')
+  const cents = Number(whole) * 100 + Number(frac.padEnd(2, '0'))
+  if (cents < (allowZero ? 0 : 1) || (capped && cents > MAX_CENTS)) return null
+  // Montado a partir do texto: Number perde precisão em valores grandes.
+  return `${whole}.${frac.padEnd(2, '0')}`
 }
 
 export const toCents = (decimal: string) => Math.round(Number(decimal) * 100)

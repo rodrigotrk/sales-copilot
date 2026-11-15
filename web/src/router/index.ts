@@ -1,5 +1,6 @@
 import { createRouter, createWebHistory, type RouterHistory } from 'vue-router'
-import { landingPath, loadMe } from '@/features/auth/session'
+import { landingPath, loadMe, me } from '@/features/auth/session'
+import { whenUnauthenticated } from '@/lib/http'
 import LoginView from '@/features/auth/LoginView.vue'
 import LinkView from '@/features/auth/LinkView.vue'
 import LandingView from '@/features/business/LandingView.vue'
@@ -26,6 +27,12 @@ export function createAppRouter(history: RouterHistory = createWebHistory(import
     if (!current) return '/entrar'
     if (to.name === 'landing') return landingPath(current) ?? true
     return true
+  })
+
+  // Sessão expirada no meio da edição (AD-039): a próxima requisição leva a /entrar.
+  whenUnauthenticated(() => {
+    me.value = null
+    void router.push('/entrar')
   })
 
   return router

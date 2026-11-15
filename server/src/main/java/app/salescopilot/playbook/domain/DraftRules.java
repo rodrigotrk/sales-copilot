@@ -66,11 +66,11 @@ public final class DraftRules {
             text(problems, plan.id(), "name", plan.name(), SHORT_TEXT);
             text(problems, plan.id(), "extraValue", plan.extraValue(), SHORT_TEXT);
             if (plan.cash() != null && !Money.isValidCash(plan.cash())) {
-                problems.add(new FieldProblem(plan.id().toString(), "cash", "invalid_cash",
+                problems.add(new FieldProblem(key(plan.id()), "cash", "invalid_cash",
                         "Informe um valor em reais maior que zero."));
             }
             if (plan.installments() != null && !isValidInstallments(plan.installments())) {
-                problems.add(new FieldProblem(plan.id().toString(), "installments", "invalid_installments",
+                problems.add(new FieldProblem(key(plan.id()), "installments", "invalid_installments",
                         "Parcelas de 2 a 60, com valor maior que zero."));
             }
         }
@@ -107,6 +107,11 @@ public final class DraftRules {
         return table.plans().stream().map(Plan::cash).filter(Objects::nonNull).min(BigDecimal::compareTo);
     }
 
+    /** Um id nulo já é um problema próprio ("invalid_id"); os demais problemas do item saem sem id. */
+    private static String key(UUID id) {
+        return id == null ? null : id.toString();
+    }
+
     private static boolean hasNull(List<?> items) {
         return items.stream().anyMatch(Objects::isNull);
     }
@@ -119,14 +124,14 @@ public final class DraftRules {
 
     private static void text(List<FieldProblem> problems, UUID itemId, String field, String value, int max) {
         if (value != null && value.length() > max) {
-            problems.add(new FieldProblem(itemId == null ? null : itemId.toString(), field, "too_long",
+            problems.add(new FieldProblem(key(itemId), field, "too_long",
                     "Máximo de " + max + " caracteres."));
         }
     }
 
     private static void id(List<FieldProblem> problems, Set<UUID> ids, UUID id) {
         if (id == null || !ids.add(id)) {
-            problems.add(new FieldProblem(id == null ? null : id.toString(), "id", "invalid_id",
+            problems.add(new FieldProblem(key(id), "id", "invalid_id",
                     "Cada item precisa de um id único."));
         }
     }
