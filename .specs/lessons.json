@@ -1,0 +1,117 @@
+{
+  "schema": 1,
+  "promote_threshold": 2,
+  "window_days": 45,
+  "quarantine_threshold": 2,
+  "next_id": 7,
+  "lessons": [
+    {
+      "id": "L-001",
+      "key": "ac_gap::give each money token in a document a single reading and test thousands separated values against small model answers",
+      "text": "Give each money token in a document a single reading and test thousands-separated values against small model answers.",
+      "signal": "ac_gap",
+      "scope": "importing",
+      "status": "candidate",
+      "features": [
+        "playbook-configuravel"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "verification.md finding 1 (C71) (importing)"
+      ],
+      "created": "2026-11-15T18:39:04Z",
+      "last_seen": "2026-11-15T18:39:04Z"
+    },
+    {
+      "id": "L-002",
+      "key": "ac_gap::validate model output against the requested schema and count a schema violation as a failed attempt",
+      "text": "Validate model output against the requested schema and count a schema violation as a failed attempt.",
+      "signal": "ac_gap",
+      "scope": "importing",
+      "status": "candidate",
+      "features": [
+        "playbook-configuravel"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "verification.md finding 2 (C81) (importing)"
+      ],
+      "created": "2026-11-15T18:39:04Z",
+      "last_seen": "2026-11-15T18:39:04Z"
+    },
+    {
+      "id": "L-003",
+      "key": "ac_gap::apply document size limits to the extracted text not to the markup sent to the model",
+      "text": "Apply document size limits to the extracted text, not to the markup sent to the model.",
+      "signal": "ac_gap",
+      "scope": "importing",
+      "status": "candidate",
+      "features": [
+        "playbook-configuravel"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "verification.md finding 3 (C77) (importing)"
+      ],
+      "created": "2026-11-15T18:39:04Z",
+      "last_seen": "2026-11-15T18:39:04Z"
+    },
+    {
+      "id": "L-004",
+      "key": "weak_test::take derived state like unpublished changes from the server after each save and test an edit that returns to the published content",
+      "text": "Take derived state like unpublished changes from the server after each save and test an edit that returns to the published content.",
+      "signal": "weak_test",
+      "scope": "web",
+      "status": "candidate",
+      "features": [
+        "playbook-configuravel"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "verification.md finding 4 (C61) (web)"
+      ],
+      "created": "2026-11-15T18:39:04Z",
+      "last_seen": "2026-11-15T18:39:04Z"
+    },
+    {
+      "id": "L-005",
+      "key": "weak_test::prove every limit required field and status a rule names not one representative case",
+      "text": "Prove every limit, required field and status a rule names, not one representative case.",
+      "signal": "weak_test",
+      "scope": "",
+      "status": "candidate",
+      "features": [
+        "playbook-configuravel"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "verification.md finding 5 (C38, C40, C56, C57, C59)"
+      ],
+      "created": "2026-11-15T18:39:04Z",
+      "last_seen": "2026-11-15T18:39:04Z"
+    },
+    {
+      "id": "L-006",
+      "key": "spec_deviation::list every control the plan adds to a captured screen in differences from the source before building it",
+      "text": "List every control the plan adds to a captured screen in Differences from the source before building it.",
+      "signal": "spec_deviation",
+      "scope": "screens",
+      "status": "candidate",
+      "features": [
+        "playbook-configuravel"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "verification.md finding 6 (C24) (screens)"
+      ],
+      "created": "2026-11-15T18:39:04Z",
+      "last_seen": "2026-11-15T18:39:04Z"
+    }
+  ]
+}
