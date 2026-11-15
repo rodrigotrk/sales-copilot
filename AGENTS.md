@@ -1,6 +1,6 @@
 # Sales Copilot
 
-Copiloto de vendas consultivas: ajuda o closer durante a call e automatiza o que vem depois. Cada negócio entra como um playbook configurável. A mentoria EPC/MEPC é o primeiro playbook e o piloto.
+Copiloto para o closer de venda consultiva, de qualquer nicho: ajuda durante a call, treina com lead simulado e fecha a call com ata, próximo passo e resultado da venda. Cada negócio configura o próprio playbook sem programar, ou o produto monta um rascunho a partir das gravações. As 12 gravações da mentoria EPC/MEPC servem só como material de treino e de ajuste do playbook, nunca como requisito. As decisões de produto estão em `especificacao/decisoes-levantamento.md`.
 
 O projeto está em levantamento. Código só depois que o PRD estiver fechado e a stack decidida.
 
