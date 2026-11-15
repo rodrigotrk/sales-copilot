@@ -59,16 +59,17 @@ Commit dos arquivos e push para `rodrigotrk/sales-copilot`, com confirmação do
 
 ## Pronto quando
 
-- [ ] `.prd/sales-copilot.md` cobre situação, problema, veredito, sucesso, escopo e jornada, sem tecnologia.
-- [ ] Toda decisão do arquivo de decisões aparece no PRD ou no documento de telas, sem contradição.
-- [ ] Cada desvio entre protótipo e decisões está confirmado e registrado.
-- [ ] As perguntas de tela e as hipóteses de teste estão em "Open questions", com o destino.
-- [ ] Nenhum dos arquivos tem nome ou dado pessoal de lead.
-- [ ] O PRD atual saiu do repositório, e o `AGENTS.md` aponta para os arquivos novos.
-- [ ] O PRD e o documento de telas passaram pelo `deslop`, e tudo está no GitHub.
+- [x] `.prd/sales-copilot.md` cobre situação, problema, veredito, sucesso, escopo e jornada, sem tecnologia.
+- [x] Toda decisão do arquivo de decisões aparece no PRD ou no documento de telas, sem contradição.
+- [x] Cada desvio entre protótipo e decisões está confirmado e registrado.
+- [x] As perguntas de tela e as hipóteses de teste estão em "Open questions", com o destino.
+- [x] Nenhum dos arquivos tem nome ou dado pessoal de lead.
+- [x] O PRD atual saiu do repositório, e o `AGENTS.md` aponta para os arquivos novos.
+- [x] O PRD e o documento de telas passaram pelo `deslop`, e tudo está no GitHub.
 
 ## Fora desta fase
 
 - Escolher a stack e decidir se o produto é um sistema agêntico (Fase 3, com a `tlc-plan`).
 - Testar o protótipo e validar a ajuda ao vivo em call real.
 - Refazer o protótipo. Esta fase só registra os desvios.
+- Redesenhar o diagrama de jornada (`especificacao/diagramas/03-jornada.*`) a partir da tabela Journey do PRD (Fase 3). Ele ainda mostra SDR, agenda, ficha de CRM e follow-up, e não tem a call de retorno nem a marcação das dicas.
