@@ -37,6 +37,7 @@ class FirewallProblemsTest extends IntegrationTest {
                 { "GET", "/api/a%2Fb", "400", "invalid_request" },
                 { "GET", "/api/%00", "400", "invalid_request" },
                 { "GET", "/api/%zz", "400", "invalid_request" },
+
         };
         for (String[] c : cases) {
             Raw response = send(c[0], c[1]);
@@ -48,6 +49,14 @@ class FirewallProblemsTest extends IntegrationTest {
             assertThat(body.get("type").asString()).as(label).isEqualTo("/problems/" + c[3]);
             assertThat(body.get("instance").asString()).as(label).isEqualTo(c[1]);
         }
+
+        // Linha de pedido recusada inteira: não há caminho guardado, e o instance é "/".
+        Raw rawByte = send("GET", "/api/\u00e9");
+        assertThat(rawByte.status()).isEqualTo(400);
+        assertThat(rawByte.contentType()).startsWith("application/problem+json");
+        var rawBody = json.readTree(rawByte.body());
+        assertThat(rawBody.get("code").asString()).isEqualTo("invalid_request");
+        assertThat(rawBody.get("instance").asString()).isEqualTo("/");
     }
 
     private Raw send(String method, String path) throws IOException {

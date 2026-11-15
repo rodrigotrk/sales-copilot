@@ -66,7 +66,7 @@ size=$(docker exec "$run-client" sh -c "curl -fsS -X POST --data-binary @/tmp/up
 expected=$((${#B} + 14 + 9000000))
 [ "$size" -eq "$expected" ] || { echo "upload de 9 MB chegou com $size bytes de resposta, esperado $expected"; exit 1; }
 
-for path in / /negocios /n/b1/playbook /entrar; do
+for path in / /negocios /n/b1/playbook /entrar /entrar/link /entrar/vincular; do
 	got=$(send GET "$path")
 	[ "$got" = app ] || { echo "rota do app não serve o index.html: $path ($got)"; exit 1; }
 done
