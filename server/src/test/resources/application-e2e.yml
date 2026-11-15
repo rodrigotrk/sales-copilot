@@ -1,0 +1,12 @@
+server:
+  servlet:
+    session:
+      cookie:
+        # O app web local roda em http://localhost:5173.
+        secure: false
+app:
+  import:
+    scheduling-enabled: true
+  dev:
+    mail-file: ${java.io.tmpdir}/sales-copilot-mail.txt
+    allowed-email: gestor@exemplo.test
