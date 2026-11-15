@@ -23,11 +23,11 @@ Todo `.md` escrito fora de `.specs/` passa pelo `deslop` antes de a sessão ence
 - `.prd/` e `.specs/` seguem o formato das skills TLC. Os scripts de validação leem linhas literais de `.specs/`, então esses arquivos não passam pelo `deslop`.
 - `especificacao/` guarda as fontes: protótipos, diagramas, notas técnicas e o documento de telas e regras de negócio (`especificacao/design-sales-copilot.md`), que acompanha o PRD em `.prd/sales-copilot.md`.
 - `pesquisas/` guarda as análises das referências. `pesquisas/videos/` (gravações, atas e CRM dos leads) e `pesquisas/repos/` ficam fora do git.
-- `planejamento/` guarda os planos de trabalho do projeto.
+- `planejamento/` guarda os planos de trabalho.
 
 ## Regras
 
-- Os PNGs e o HTML de `especificacao/prototipos/` são fonte obrigatória das telas. Um desvio precisa ser pedido ao usuário e registrado.
+- Os PNGs e o HTML de `especificacao/prototipos/` são fonte obrigatória das telas. Um desvio precisa ser pedido ao usuário e registrado na tabela de desvios da tela, em `especificacao/design-sales-copilot.md`.
 - Documentos em PT-BR. Os títulos de seção da `tlc-prd` ficam em inglês, como a skill exige. Identificadores não são traduzidos.
 - O padrão de escrita (`.claude/plugins/communication-standard/skills/writing-standard/SKILL.md`) vale para chat, documentos e código. Os hooks o injetam em toda sessão e subagente. Se não estiver no contexto, leia o arquivo.
 - Git com a conta pessoal `rodrigotrk`. Push e mudanças fora do repositório pedem confirmação.
