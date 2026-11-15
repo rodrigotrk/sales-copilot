@@ -352,7 +352,7 @@ Proof: run server | PASSED [C97] erros do Spring saem em RFC 9457 com code e typ
 **C98** - Servidor de e-mail fora do ar faz o pedido de link responder `503` `mail_unavailable` em RFC 9457 (AC 2, AD-057)
 Proof: run server | PASSED [C98] servidor de e-mail fora do ar responde 503 mail_unavailable em RFC 9457
 
-**C99** - `deploy/` tem Docker Compose válido com os serviços `postgres`, `server` e `caddy`, e o Caddy rodando com o Caddyfile real entrega ao servidor `/api/*`, `/ott/*`, `/login/ott`, `/login/identity-link`, `/logout`, `/oauth2/*` e `/login/oauth2/*`, em todas as rotas do Surface com o método de cada uma, e em qualquer caminho sob esses prefixos com GET, POST, PUT, PATCH e DELETE, e o `index.html` do app nas demais rotas (Landing 1, AD-004, AD-033)
+**C99** - `deploy/` tem Docker Compose válido com os serviços `postgres`, `server` e `caddy`, e o Caddy rodando com o Caddyfile real entrega ao servidor, com o mesmo método, endereço e corpo, e um upload de 9 MB inteiro, `/api/*`, `/ott/*`, `/login/ott`, `/login/identity-link`, `/logout`, `/oauth2/*` e `/login/oauth2/*`, em todas as rotas do Surface com o método de cada uma, e em qualquer caminho sob esses prefixos com GET, POST, PUT, PATCH e DELETE, e o `index.html` do app nas demais rotas (Landing 1, AD-004, AD-033)
 Proof: `sh deploy/verify.sh`
 
 **C100** - Remover a linha que tem erro local apaga o erro e libera "Publicar" e "Importar documento" depois da gravação (AC 36, AC 46, AC 60)
@@ -364,7 +364,7 @@ Proof: run web | ✓ [C101] sessão expirada durante a edição leva a /entrar n
 **C102** - Valor de parcela acima de R$ 10.000.000,00 é aceito na tela, como no servidor; o teto vale só para o preço à vista (AC 47)
 Proof: run web | ✓ [C102] parcela acima de R$ 10 milhões é aceita, sem o teto do preço à vista
 
-**C103** - Erro recusado antes do MVC, por HTTP real, sai em `application/problem+json` com `code` e `type`: firewall do Spring Security (`/api//me`, `/api/me;extra`) `400` `request_rejected`; `TRACE` `405` `method_not_allowed`; endereço que o Tomcat recusa (`%2F`, `%00`, `%zz`) `400` `invalid_request` (AD-057)
+**C103** - Erro recusado antes do MVC, por HTTP real, sai em `application/problem+json` com `code`, `type` e `instance` igual ao endereço enviado: firewall do Spring Security (`/api//me`, `/api/me;extra`) `400` `request_rejected`; `TRACE` `405` `method_not_allowed`; endereço que o Tomcat recusa (`%2F`, `%00`, `%zz`) `400` `invalid_request` (AD-057)
 Proof: run server | PASSED [C103] erro recusado antes do MVC sai em RFC 9457 com code e type
 
 **C104** - O script de papéis cria `migrator`, `app` e `job_claimer` com senhas que têm apóstrofo, aspas e ponto e vírgula, e `migrator` e `app` entram com a própria senha (Landing 1, AD-037)

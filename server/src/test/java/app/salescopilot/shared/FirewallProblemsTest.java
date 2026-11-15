@@ -46,6 +46,7 @@ class FirewallProblemsTest extends IntegrationTest {
             var body = json.readTree(response.body());
             assertThat(body.get("code").asString()).as(label).isEqualTo(c[3]);
             assertThat(body.get("type").asString()).as(label).isEqualTo("/problems/" + c[3]);
+            assertThat(body.get("instance").asString()).as(label).isEqualTo(c[1]);
         }
     }
 

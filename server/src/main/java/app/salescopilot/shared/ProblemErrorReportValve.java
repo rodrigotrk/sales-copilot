@@ -34,6 +34,9 @@ public class ProblemErrorReportValve extends ErrorReportValve {
         problem.put("title", resolved == null ? "Error" : resolved.getReasonPhrase());
         problem.put("status", status);
         problem.put("detail", resolved == null ? "Error" : resolved.getReasonPhrase());
+        // O endereço cru, como chegou: decodificá-lo é justamente o que falhou.
+        String uri = request.getRequestURI();
+        problem.put("instance", uri == null || uri.isEmpty() ? "/" : uri);
         problem.put("code", code);
         try {
             response.setContentType(MediaType.APPLICATION_PROBLEM_JSON_VALUE);
