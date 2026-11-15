@@ -48,7 +48,7 @@ Teto de gasto mensal e aprender como motivo ficam sem definir. O veredito saiu s
 | Parte | Funciona quando | Decidido por | Data |
 |---|---|---|---|
 | Playbook configurável | A empresa configura o playbook inteiro sem escrever uma linha de código. Obrigatório | Rodrigo | 14/11/2026 |
-| Ajuda ao vivo | Medida em calls reais, porque as gravações não servem para medi-la: (1) a dica aparece enquanto o assunto ainda está em pauta; (2) ao fim da call, o closer marca cada dica como útil ou inútil, e a maioria sai útil; (3) toda proposta mostrada sai da tabela de preços cadastrada, com a conta certa; (4) toda call termina com próximo passo, responsável e data | Rodrigo | 14/11/2026 |
+| Ajuda ao vivo | Medida em calls reais, porque as gravações não servem para medi-la: (1) a dica aparece enquanto o assunto ainda está em pauta; (2) ao fim da call, o closer marca cada dica como útil ou inútil, e a maioria sai útil; (3) toda proposta mostrada sai da tabela de preços cadastrada, com a conta certa; (4) toda call termina com próximo passo, responsável e data, menos a venda perdida, que termina com o motivo da perda | Rodrigo | 15/11/2026 |
 | Fim da call | (1) A ata e o próximo passo ficam prontos ao fim da call sem o closer escrever nada; ele só confere e corrige. (2) Toda call tem o resultado da venda registrado, como definido na linha "Pós-call", e ele pode ser atualizado depois, quando o lead responder | Rodrigo | 15/11/2026 |
 | Treino | (1) Um gestor que ouve uma simulação a julga parecida com uma call real do playbook dele: o lead simulado levanta as objeções cadastradas e reage às respostas do closer. (2) A avaliação aponta os mesmos erros que o gestor apontaria na mesma simulação: etapa pulada, pergunta de qualificação esquecida, objeção mal respondida ou proposta fora da tabela | Rodrigo | 15/11/2026 |
 | Rascunho de playbook | A partir das gravações, o produto gera um playbook que a empresa só revisa, sem escrever do zero | Rodrigo | 14/11/2026 |
@@ -73,7 +73,7 @@ Revisão: o Rodrigo revisa cada parte contra o critério dela antes de começar 
 
 ## Perguntas de tela encaminhadas para teste com o protótipo
 
-Estas perguntas do PRD atual só se respondem com o closer usando o protótipo ou numa call real. Não viram decisão aqui.
+Estas perguntas do PRD atual não viram decisão aqui.
 
 | Pergunta | Destino |
 |---|---|

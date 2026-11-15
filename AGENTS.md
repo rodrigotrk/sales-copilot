@@ -21,7 +21,7 @@ Todo `.md` escrito fora de `.specs/` passa pelo `deslop` antes de a sessão ence
 ## Caminhos
 
 - `.prd/` e `.specs/` seguem o formato das skills TLC. Os scripts de validação leem linhas literais de `.specs/`, então esses arquivos não passam pelo `deslop`.
-- `especificacao/` guarda as fontes: protótipos, diagramas, notas técnicas e o documento de telas e regras de negócio (`especificacao/design-sales-copilot.md`). Esse documento nasce quando a `tlc-prd` reescrever o PRD atual, `especificacao/prd-sales-copilot.md`, que então vai para `.prd/`.
+- `especificacao/` guarda as fontes: protótipos, diagramas, notas técnicas e o documento de telas e regras de negócio (`especificacao/design-sales-copilot.md`), que acompanha o PRD em `.prd/sales-copilot.md`.
 - `pesquisas/` guarda as análises das referências. `pesquisas/videos/` (gravações, atas e CRM dos leads) e `pesquisas/repos/` ficam fora do git.
 - `planejamento/` guarda os planos de trabalho do projeto.
 
