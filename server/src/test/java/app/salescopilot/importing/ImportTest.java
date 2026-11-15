@@ -65,6 +65,9 @@ class ImportTest extends IntegrationTest {
     ImportWorker worker;
 
     @Autowired
+    PlaybookExtraction extraction;
+
+    @Autowired
     ImportJobs jobs;
 
     @Autowired
@@ -321,6 +324,24 @@ class ImportTest extends IntegrationTest {
         UUID third = jobId(importText(g, DOCUMENT));
         worker.drain();
         assertThat(jobRow(third)).containsEntry("status", "done");
+
+        STUB.reset();
+        STUB.modelAnswers(ANSWER.replace("\"installmentsCount\":6", "\"installmentsCount\":6.0"));
+        UUID integerWithDecimalPoint = jobId(importText(g, DOCUMENT));
+        worker.drain();
+        assertThat(jobRow(integerWithDecimalPoint)).containsEntry("status", "done");
+        assertThat(STUB.modelRequests()).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("[C106] valor em dinheiro da resposta do modelo chega com todos os dígitos")
+    void modelMoneyKeepsEveryDigit() {
+        ExtractedPlaybook parsed = extraction.parse(ANSWER
+                .replace("\"installmentsValue\":800", "\"installmentsValue\":90071992547409.91")
+                .replace("\"cash\":4500", "\"cash\":4500.10"));
+        ExtractedPlaybook.Plan plan = parsed.priceTable().plans().get(0);
+        assertThat(plan.installmentsValue().toPlainString()).isEqualTo("90071992547409.91");
+        assertThat(plan.cash().toPlainString()).isEqualTo("4500.10");
     }
 
     @Test

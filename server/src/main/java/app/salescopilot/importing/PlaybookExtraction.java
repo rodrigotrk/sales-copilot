@@ -12,6 +12,7 @@ import org.springframework.ai.openai.OpenAiChatOptions;
 import org.springframework.stereotype.Component;
 
 import app.salescopilot.importing.domain.ExtractedPlaybook;
+import tools.jackson.databind.DeserializationFeature;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.json.JsonMapper;
 
@@ -69,7 +70,8 @@ class PlaybookExtraction {
 
     /** Resposta fora do schema pedido é falha da tentativa, como um erro HTTP (critério 81). */
     ExtractedPlaybook parse(String answer) {
-        JsonNode root = json.readTree(answer);
+        // BigDecimal desde a leitura: double perderia dígitos de valores em dinheiro (AD-025).
+        JsonNode root = json.reader().with(DeserializationFeature.USE_BIG_DECIMAL_FOR_FLOATS).readTree(answer);
         // O JSON bruto é conferido antes do record, que converteria 123 em "123", 2.9 em 2 e bloco nulo em lista vazia.
         if (root == null || !matches(root, schema)) {
             throw new IllegalArgumentException("resposta fora do schema");
@@ -122,7 +124,9 @@ class PlaybookExtraction {
             case "array" -> value.isArray();
             case "string" -> value.isString();
             case "number" -> value.isNumber();
-            case "integer" -> value.isIntegralNumber();
+            // Em JSON Schema, 6.0 é inteiro; 2.9 não é.
+            case "integer" -> value.isIntegralNumber()
+                    || value.isNumber() && value.decimalValue().stripTrailingZeros().scale() <= 0;
             case "null" -> value.isNull();
             default -> false;
         };

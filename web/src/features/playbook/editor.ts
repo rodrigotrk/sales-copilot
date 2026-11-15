@@ -1,4 +1,4 @@
-import { computed, inject, nextTick, ref, type InjectionKey } from 'vue'
+import { computed, inject, nextTick, ref, watch, type InjectionKey } from 'vue'
 import { ApiError, type FieldError } from '@/lib/http'
 import { importResultLines } from '@/features/importing/messages'
 import { getPlaybook, publishVersion, saveDraft, type Draft, type PlaybookState } from './api'
@@ -56,6 +56,11 @@ export function createEditor(businessId: string) {
     return status === 'queued' || status === 'running'
   })
   const readOnly = computed(() => importActive.value || conflict.value)
+  // Importação ou conflito começando com uma linha aberta: a linha fecha, para nada ser digitado
+  // num rascunho que não aceita mais gravação.
+  watch(readOnly, (blocked) => {
+    if (blocked) editing.value = null
+  })
   const errors = computed(() => ({ ...serverErrors.value, ...localErrors.value }))
   const unsaved = computed(
     () => saving.value || saveFailed.value || Object.keys(errors.value).length > 0,

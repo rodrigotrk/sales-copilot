@@ -1,6 +1,6 @@
 #!/bin/sh
 # Prova do C99: o Compose tem Postgres, servidor e Caddy, e o Caddy, rodando com o Caddyfile real,
-# entrega ao servidor as rotas da API, do login e do logout, e entrega o app nas demais.
+# entrega ao servidor todas as rotas da API, do login e do logout, e entrega o app nas demais.
 set -eu
 cd "$(dirname "$0")"
 services=$(docker compose -f docker-compose.yml --env-file .env.example config --services | sort | tr '\n' ' ')
@@ -31,7 +31,12 @@ body() {
 	echo "sem resposta"
 }
 
-for path in /api/me /ott/generate /login/ott /login/identity-link /logout /oauth2/authorization/google /login/oauth2/code/google; do
+# Todas as rotas do Surface do plano, e um caminho qualquer sob cada prefixo, para um matcher
+# estreito demais (só /api/me, por exemplo) não passar.
+B=/api/businesses/b1/playbook
+for path in /api/me /api/businesses $B $B/draft $B/versions $B/imports /api/login-links/t1 /api/identity-links/t1 \
+	/ott/generate /login/ott /login/identity-link /logout /oauth2/authorization/google /login/oauth2/code/google \
+	/api/qualquer/caminho /ott/qualquer /oauth2/qualquer/caminho /login/oauth2/qualquer/caminho; do
 	got=$(body "$path")
 	[ "$got" = servidor ] || { echo "rota não encaminhada ao servidor: $path ($got)"; exit 1; }
 done

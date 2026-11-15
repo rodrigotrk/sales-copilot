@@ -30,6 +30,7 @@ import org.springframework.security.web.authentication.ott.GenerateOneTimeTokenF
 import org.springframework.security.web.authentication.ott.GenerateOneTimeTokenRequestResolver;
 import org.springframework.security.web.authentication.ott.OneTimeTokenGenerationSuccessHandler;
 import org.springframework.security.web.csrf.CsrfFilter;
+import org.springframework.security.web.firewall.RequestRejectedHandler;
 import org.springframework.security.web.csrf.CsrfToken;
 import org.springframework.session.web.http.SessionRepositoryFilter;
 import org.springframework.transaction.support.TransactionTemplate;
@@ -107,6 +108,13 @@ class SecurityConfiguration implements WebMvcConfigurer {
                         .accessDeniedHandler((request, response, e) -> Problems.write(response, json,
                                 HttpStatus.FORBIDDEN, "forbidden", "Sem permissão para esta ação.", request.getRequestURI())));
         return http.build();
+    }
+
+    /** O firewall do Spring Security recusa endereços como `/api//me` antes do MVC; a recusa também sai em RFC 9457. */
+    @Bean
+    RequestRejectedHandler requestRejectedHandler(JsonMapper json) {
+        return (request, response, e) -> Problems.write(response, json, HttpStatus.BAD_REQUEST, "request_rejected",
+                "Endereço de requisição inválido.", request.getRequestURI());
     }
 
     @Bean

@@ -159,4 +159,26 @@ describe('correções da revisão de código', () => {
     )
     expect(screen.queryByText('Parcelas de 2 a 60, com valor maior que zero.')).toBeNull()
   })
+
+  it('[C105] importação iniciada em outra aba fecha a linha aberta e nenhum campo fica editável', async () => {
+    const { server, routes } = playbookServer(playbookState())
+    fakeApi({
+      ...routes,
+      'PUT /api/businesses/b1/playbook/draft': () => {
+        server.state.importJob = { id: 'j1', status: 'running', counts: null, skipped: 0, notices: [], errorCode: null }
+        return problem(409, 'import_running')
+      },
+    })
+    const { user } = await renderApp('/n/b1/playbook')
+    await screen.findByText(/^Playbook: /)
+
+    await user.click(screen.getByText('Consumo mensal'))
+    await user.clear(screen.getByLabelText('Informação'))
+    await user.type(screen.getByLabelText('Informação'), 'Consumo')
+    await user.click(screen.getByLabelText('Pergunta sugerida'))
+
+    await waitFor(() => expect(screen.queryByLabelText('Pergunta sugerida')).toBeNull())
+    expect(screen.queryByLabelText('Informação')).toBeNull()
+    expect(document.querySelectorAll('main input:not([disabled])')).toHaveLength(0)
+  })
 })
