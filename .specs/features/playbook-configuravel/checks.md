@@ -1,0 +1,375 @@
+# Playbook configurável checks
+
+Build: `make build`; `make lint`
+Run server: `make test-server`
+Run web: `make test-web`
+Plan: `.specs/features/playbook-configuravel/plan.md`
+
+90 checks in 4 slices · 8 one-way doors · 0 open, of which 0 block
+
+## Checks
+
+### S1 - A pessoa entra e chega ao negócio certo
+
+**C1** - Sem sessão, qualquer tela leva a `/entrar`, com "Entrar com Google" e o campo de e-mail (AC 1)
+Proof: run web | ✓ [C01] sem sessão qualquer tela vai para /entrar com Google e campo de e-mail
+
+**C2** - Pedir o link envia o e-mail por SMTP, responde igual para e-mail desconhecido, mostra "Enviamos um link de acesso para <e-mail>." e recusa e-mail sem "@" com "Informe um e-mail válido." (AC 2)
+Proof: run server | PASSED [C02a] pedir o link envia o e-mail e responde igual para e-mail desconhecido
+Proof: run web | ✓ [C02b] e-mail sem arroba mostra Informe um e-mail válido e não chama a API
+Proof: run web | ✓ [C02c] pedido aceito mostra Enviamos um link de acesso para o e-mail
+
+**C3** - Segundo pedido do mesmo e-mail em menos de 60 s responde `429` `too_many_requests`, não envia e mostra "Aguarde 1 minuto para pedir outro link." (AC 3)
+Proof: run server | PASSED [C03a] segundo pedido em menos de 60 s responde 429 e não envia
+Proof: run web | ✓ [C03b] resposta 429 mostra Aguarde 1 minuto para pedir outro link
+
+**C4** - Abrir o link mostra "Entrar como <e-mail>?" com "Entrar" e não consome o token (AC 4)
+Proof: run server | PASSED [C04a] ler o link duas vezes não consome o token
+Proof: run web | ✓ [C04b] página do link mostra Entrar como o e-mail e o botão Entrar
+
+**C5** - "Entrar" envia o token em `POST /login/ott`, que o consome e cria a sessão (AC 5)
+Proof: run server | PASSED [C05] POST /login/ott consome o token e cria a sessão
+Proof: run web | ✓ [C05b] Entrar envia o token por POST /login/ott
+
+**C6** - Token consumido ou com mais de 15 minutos não cria sessão e mostra "Este link já foi usado ou expirou. Peça um novo." (AC 6)
+Proof: run server | PASSED [C06a] token aos 14 min entra, reuso e 16 min são recusados
+Proof: run web | ✓ [C06b] link recusado mostra Este link já foi usado ou expirou
+
+**C7** - Conta Google sem e-mail verificado não cria sessão e mostra "Seu e-mail do Google não está verificado." (AC 7)
+Proof: run server | PASSED [C07a] Google sem e-mail verificado não cria sessão
+Proof: run web | ✓ [C07b] erro google_unverified mostra Seu e-mail do Google não está verificado
+
+**C8** - Google com autoridade (`@gmail.com` ou `hd`) entra pelo `google_subject` ou pelo e-mail, gravando o `google_subject` (AC 8)
+Proof: run server | PASSED [C08] Google com gmail ou hd entra e liga a identidade pelo e-mail
+
+**C9** - Google sem autoridade grava o desafio, envia o link e mostra "Confirme seu e-mail: enviamos um link para <e-mail>.", sem sessão nem consulta a `allowed_signups` (AC 9)
+Proof: run server | PASSED [C09a] Google fora do Gmail sem hd grava desafio, envia link e não cria sessão
+Proof: run web | ✓ [C09b] confirmação pendente mostra Confirme seu e-mail
+
+**C10** - Consumir o desafio grava o `google_subject` e cria a sessão na mesma transação; dois consumos simultâneos deixam um só vencedor (AC 10)
+Proof: run server | PASSED [C10a] consumir o desafio grava google_subject e cria a sessão
+Proof: run server | PASSED [C10b] dois consumos simultâneos do desafio têm um só vencedor
+
+**C11** - Link comum para o mesmo e-mail não liga a identidade pendente; desafio vencido ou consumido é recusado sem gravar nada (AC 11)
+Proof: run server | PASSED [C11] link comum não liga identidade pendente e desafio vencido é recusado
+
+**C12** - Pessoa liberada e sem associação cria o negócio (nomes de 1 a 80 caracteres) como `gestor` e abre `/n/<businessId>/playbook` (AC 12)
+Proof: run server | PASSED [C12a] criar negócio liberado cria gestor e playbook e valida 1 a 80 caracteres
+Proof: run web | ✓ [C12b] formulário de criação abre /n/id/playbook
+
+**C13** - Pessoa não liberada vê "Seu acesso ainda não foi liberado." e `POST /api/businesses` responde `403` `signup_not_allowed` (AC 13)
+Proof: run server | PASSED [C13a] e-mail fora da lista responde 403 signup_not_allowed
+Proof: run web | ✓ [C13b] sem liberação mostra Seu acesso ainda não foi liberado
+
+**C14** - Quem já é membro recebe `409` `already_member` ao criar negócio (AC 14)
+Proof: run server | PASSED [C14] membro que cria negócio recebe 409 already_member
+
+**C15** - Duas criações simultâneas da mesma pessoa criam um negócio e um `409` (AC 15)
+Proof: run server | PASSED [C15] duas criações simultâneas criam um negócio e um 409
+
+**C16** - Ao entrar, o produto abre o último negócio usado ainda válido ou o único negócio (AC 16)
+Proof: run server | PASSED [C16a] /api/me devolve o último negócio usado
+Proof: run web | ✓ [C16b] entrada abre o último negócio válido ou o único
+
+**C17** - Membro de mais de um negócio sem último válido vê a lista e abre o escolhido (AC 17)
+Proof: run web | ✓ [C17] mais de um negócio sem último válido mostra a lista e abre o escolhido
+
+**C18** - "Trocar de negócio" aparece só para membro de mais de um negócio e abre a lista (AC 18)
+Proof: run web | ✓ [C18] Trocar de negócio aparece só com mais de um negócio e abre a lista
+
+**C19** - Comando com `businessId` sem associação ou `playbookId` de outro negócio responde `404`; a gravação da aba 1 vai para o negócio do endereço dela (AC 19)
+Proof: run server | PASSED [C19] businessId sem associação ou playbookId de outro negócio responde 404
+
+**C20** - Com o papel `app`, uma consulta só vê o negócio de `app.business_id`; sem a variável, erro e 0 linhas (AC 20)
+Proof: run server | PASSED [C20] RLS do papel app devolve só o negócio da variável
+
+**C21** - Linha filha com `business_id` diferente do playbook é recusada pela chave composta (AC 21)
+Proof: run server | PASSED [C21] chave composta recusa business_id divergente
+
+**C22** - Membro `closer` recebe `403` nas rotas de escrita (AC 22)
+Proof: run server | PASSED [C22] closer recebe 403 nas escritas
+
+**C23** - Menu com Nova call, Ao vivo, Calls, Coach e Playbook, nessa ordem, Playbook em destaque e os quatro primeiros com "Disponível em breve" (AC 23)
+Proof: run web | ✓ [C23] menu com cinco itens na ordem e Disponível em breve
+
+**C24** - "Sair" invalida a sessão e abre `/entrar`; o cookie antigo recebe `401` (AC 24)
+Proof: run server | PASSED [C24a] Sair invalida a sessão e o cookie antigo recebe 401
+Proof: run web | ✓ [C24b] Sair abre /entrar
+
+**C25** - Sessão sem uso por 7 dias ou com 30 dias desde o login é encerrada (AC 25)
+Proof: run server | PASSED [C25] sessão expira com 7 dias sem uso ou 30 dias desde o login
+
+**C26** - A sessão fica no Postgres e continua válida para um servidor novo (AC 26)
+Proof: run server | PASSED [C26] sessão gravada no Postgres vale para outra instância do repositório
+
+### S2 - O gestor escreve e edita o playbook
+
+**C27** - Rascunho vazio sem versão mostra "Playbook", o subtítulo e "Escrever o playbook" e "Importar um documento" (AC 27)
+Proof: run web | ✓ [C27] rascunho vazio mostra título, subtítulo e os dois jeitos de começar
+
+**C28** - "Escrever o playbook" mostra os quatro blocos vazios com "+ Etapa", "+ Informação", "+ Objeção" e "+ Plano" (AC 28)
+Proof: run web | ✓ [C28] Escrever o playbook mostra os quatro blocos vazios com os botões
+
+**C29** - A tela com conteúdo corresponde a `.specs/features/playbook-configuravel/captures/tela-6-playbook.png`, menos as diferenças do plano (AC 29)
+Proof: browser - abrir `/n/<businessId>/playbook` com um playbook de exemplo, janela 1440 x 1300, salvar `captures/tela-6-playbook.running.png`
+
+**C30** - "+ Etapa" acrescenta a etapa ao fim com o número seguinte e salva ao sair do campo (AC 30)
+Proof: run web | ✓ [C30] + Etapa acrescenta ao fim numerada e salva ao sair do campo
+
+**C31** - As setas trocam a etapa com a vizinha, renumeram e salvam; as setas das pontas ficam desabilitadas (AC 31)
+Proof: run web | ✓ [C31] setas trocam a etapa, renumeram, salvam e desabilitam nas pontas
+
+**C32** - "+ Informação" acrescenta a linha com "Informação" e "Pergunta sugerida" ao fim do bloco (AC 32)
+Proof: run web | ✓ [C32] + Informação acrescenta a linha ao fim do bloco
+
+**C33** - "+ Objeção" acrescenta a linha com os três campos; "Como o lead costuma dizer" é opcional (AC 33)
+Proof: run web | ✓ [C33] + Objeção acrescenta a linha com os três campos
+
+**C34** - "+ Plano" acrescenta a linha com plano, coluna extra, à vista e parcelado ao fim da tabela (AC 34)
+Proof: run web | ✓ [C34] + Plano acrescenta a linha ao fim da tabela
+
+**C35** - Clicar numa linha a deixa editável com os valores atuais e cada campo salva ao sair (AC 35)
+Proof: run web | ✓ [C35] clicar numa linha edita no lugar e salva cada campo ao sair
+
+**C36** - "Remover" tira a linha na hora, sem confirmação, e renumera etapas (AC 36)
+Proof: run web | ✓ [C36] Remover tira a linha sem confirmação e renumera as etapas
+
+**C37** - Texto acima do limite (120 ou 500) responde `422` com o erro do campo, mostra "Máximo de <N> caracteres." e mantém o valor salvo (AC 37)
+Proof: run server | PASSED [C37a] texto acima de 120 ou 500 caracteres responde 422 com o campo
+Proof: run web | ✓ [C37b] erro de limite mostra Máximo de N caracteres e mantém o valor salvo
+
+**C38** - Bloco no limite (30, 50, 50, 20) desabilita o "+" com "Limite de <N> itens neste bloco."; o servidor recusa com `422` (AC 38)
+Proof: run server | PASSED [C38a] rascunho acima do limite de itens responde 422
+Proof: run web | ✓ [C38b] bloco no limite desabilita o botão e mostra Limite de N itens
+
+**C39** - Pergunta, fala do lead e sugestão aparecem entre aspas fora da edição e são guardadas sem aspas (AC 39)
+Proof: run web | ✓ [C39] textos aparecem entre aspas e são guardados sem aspas
+
+**C40** - Falha de gravação mantém o valor digitado, mostra "Não foi possível salvar. Tente de novo." e oferece "Tentar de novo" e "Desfazer" (AC 40)
+Proof: run web | ✓ [C40] falha ao salvar mantém o valor e oferece Tentar de novo e Desfazer
+
+**C41** - Revisão desatualizada responde `409` `revision_conflict`, não grava e mostra "O playbook foi alterado em outra aba. Recarregue para continuar." (AC 41)
+Proof: run server | PASSED [C41a] gravação com revisão antiga responde 409 revision_conflict
+Proof: run web | ✓ [C41b] revision_conflict mostra O playbook foi alterado em outra aba
+
+**C42** - Com importação ativa, o rascunho fica só para leitura com "Importando…" e a gravação responde `409` `import_running` (AC 42)
+Proof: run server | PASSED [C42a] gravação com importação ativa responde 409 import_running
+Proof: run web | ✓ [C42b] importação ativa deixa o rascunho só para leitura
+
+**C43** - Gravação e pedido de importação simultâneos nunca deixam uma gravação entrar depois da tarefa criada (AC 43)
+Proof: run server | PASSED [C43] gravação e importação simultâneas nunca gravam depois da tarefa
+
+**C44** - O nome da coluna extra vira o título da coluna entre "Plano" e "À vista" (AC 44)
+Proof: run web | ✓ [C44] nome da coluna extra vira o título entre Plano e À vista
+
+**C45** - Coluna extra sem nome e sem valores some fora da edição (AC 45)
+Proof: run web | ✓ [C45] coluna extra vazia some fora da edição
+
+**C46** - À vista aceita valor em reais maior que zero até R$ 10.000.000,00 com até duas casas, e recusa o resto com "Informe um valor em reais maior que zero." (AC 46)
+Proof: run server | PASSED [C46a] à vista aceita 4500 e 4500,50 e recusa 0, 10000000,01 e três casas
+Proof: run web | ✓ [C46b] campo à vista converte 4.500,50 e recusa abc com a mensagem
+
+**C47** - Parcelado fora de 2 a 60 parcelas ou com valor não positivo é recusado com "Parcelas de 2 a 60, com valor maior que zero."; vazio aparece como "—" (AC 47)
+Proof: run server | PASSED [C47a] parcelado aceita 2 a 60 parcelas positivas e recusa o resto
+Proof: run web | ✓ [C47b] parcelado inválido mostra a mensagem e vazio aparece como travessão
+
+**C48** - À vista aparece "R$ <valor>" e parcelado "<n>x <valor>", com centavos só quando diferentes de zero (AC 48)
+Proof: run web | ✓ [C48] formata R$ 4.500, 6x 1.166,67 e 3x 1.500
+
+**C49** - O desconto máximo é um valor único em reais e aparece "Desconto máximo na call: R$ <valor>" (AC 49)
+Proof: run web | ✓ [C49] desconto informado aparece como Desconto máximo na call R$ valor
+
+**C50** - Sem desconto e com plano, aparece "Desconto máximo na call:" com o selo "a definir" (AC 50)
+Proof: run web | ✓ [C50] sem desconto mostra o selo a definir
+
+**C51** - Desconto negativo ou maior ou igual ao menor à vista é recusado com a mensagem do menor à vista (AC 51)
+Proof: run server | PASSED [C51a] desconto 4499,99 aceito, 4500 recusado e 0 aceito com menor à vista 4500
+Proof: run web | ✓ [C51b] desconto inválido mostra a mensagem com o menor à vista
+
+**C52** - Sem plano, a linha do desconto não aparece (AC 52)
+Proof: run web | ✓ [C52] sem plano a linha do desconto não aparece
+
+**C53** - Sem call registrada, a coluna "Nas calls" não aparece (AC 53)
+Proof: run web | ✓ [C53] sem call registrada a coluna Nas calls não aparece
+
+### S3 - O gestor publica uma versão
+
+**C54** - Publicar na revisão atual, com o mínimo, linhas completas, desconto válido e sem marca, cria a versão N+1 a partir de 1 e o topo mostra "Playbook: <nome> · versão <N+1>" (AC 54)
+Proof: run server | PASSED [C54a] publicar cria a versão N+1 começando em 1
+Proof: run web | ✓ [C54b] após publicar o topo mostra a versão nova
+
+**C55** - Publicar com revisão antiga responde `409` `revision_conflict` e não cria versão (AC 55)
+Proof: run server | PASSED [C55a] publicar com revisão antiga responde 409 e não cria versão
+Proof: run web | ✓ [C55b] publicar com revision_conflict mostra O playbook foi alterado em outra aba
+
+**C56** - Sem etapa, informação ou objeção responde `422` `publish_minimum` com a mensagem; tabela de preços vazia publica (AC 56)
+Proof: run server | PASSED [C56a] sem etapa, informação ou objeção responde 422 publish_minimum e tabela vazia publica
+Proof: run web | ✓ [C56b] publish_minimum mostra a mensagem do mínimo
+
+**C57** - Linha incompleta responde `422` `incomplete_rows` com os `id`, destaca as linhas e mostra "Complete ou remova as linhas destacadas." (AC 57)
+Proof: run server | PASSED [C57a] linha incompleta responde 422 incomplete_rows com os ids
+Proof: run web | ✓ [C57b] incomplete_rows destaca as linhas e mostra Complete ou remova
+
+**C58** - Desconto fora da regra responde `422` `discount_invalid` com a mensagem do desconto (AC 58)
+Proof: run server | PASSED [C58] desconto fora da regra responde 422 discount_invalid
+
+**C59** - Plano ou desconto marcado responde `422` `pending_review` e mostra "Confira os valores marcados "Importado · conferir" antes de publicar." (AC 59)
+Proof: run server | PASSED [C59a] valor marcado a conferir responde 422 pending_review
+Proof: run web | ✓ [C59b] pending_review mostra Confira os valores marcados
+
+**C60** - Campo salvando ou com falha desabilita "Publicar" com "Há alterações não salvas. Salve ou desfaça antes de publicar." (AC 60)
+Proof: run web | ✓ [C60] alteração pendente desabilita Publicar com Há alterações não salvas
+
+**C61** - Rascunho diferente da versão mostra "Alterações não publicadas"; igual, "Publicar" desabilitado e a rota responde `409` `nothing_to_publish` (AC 61)
+Proof: run server | PASSED [C61a] rascunho igual à versão responde 409 nothing_to_publish
+Proof: run web | ✓ [C61b] Alterações não publicadas aparece só com diferença e Publicar desabilita sem ela
+
+**C62** - Sem versão, o topo mostra "Playbook: <nome> · rascunho" (AC 62)
+Proof: run web | ✓ [C62] sem versão o topo mostra rascunho
+
+**C63** - `UPDATE` e `DELETE` em `playbook_versions` com o papel `app` falham por permissão (AC 63)
+Proof: run server | PASSED [C63] UPDATE e DELETE em versões falham para o papel app
+
+**C64** - A versão nova mantém o `id` dos itens que já existiam (AC 64)
+Proof: run server | PASSED [C64] versão nova mantém os ids dos itens
+
+### S4 - O gestor importa o playbook de um documento
+
+**C65** - "Importar documento" oferece arquivo .docx, .pdf, .txt ou .md, texto colado e link do Google Docs (AC 65)
+Proof: run web | ✓ [C65] Importar documento oferece arquivo, texto colado e link do Google Docs
+
+**C66** - Enviar a origem responde `202`, cria a tarefa `queued` e mostra "Importando…" com o rascunho só para leitura e "Importar documento" e "Publicar" desabilitados (AC 66)
+Proof: run server | PASSED [C66a] enviar a origem responde 202 e cria a tarefa queued
+Proof: run web | ✓ [C66b] envio mostra Importando com rascunho só leitura e botões desabilitados
+
+**C67** - Com tarefa `queued` ou `running`, quem abre a tela vê "Importando…" (AC 67)
+Proof: run server | PASSED [C67a] GET do playbook devolve a tarefa ativa
+Proof: run web | ✓ [C67b] tela aberta com tarefa ativa mostra Importando
+
+**C68** - A importação acrescenta ao fim de cada bloco sem mudar o que existia e mostra "Importado: <a> etapas, <b> informações, <c> objeções, <d> planos." (AC 68)
+Proof: run server | PASSED [C68a] importação acrescenta ao fim sem mudar o existente e conta os itens
+Proof: run web | ✓ [C68b] importação concluída mostra Importado com as contagens
+
+**C69** - Plano ou desconto importado chega marcado "Importado · conferir" com o trecho de origem; etapas, informações e objeções sem marca (AC 69)
+Proof: run server | PASSED [C69a] plano e desconto importados chegam marcados com o trecho e o resto sem marca
+Proof: run web | ✓ [C69b] valor marcado mostra Importado · conferir e o trecho
+
+**C70** - "Conferido" ou editar o valor tira a marca do item (AC 70)
+Proof: run web | ✓ [C70] Conferido ou edição tira a marca do item
+
+**C71** - Valor em dinheiro que não aparece no texto é descartado e o campo fica vazio (AC 71)
+Proof: run server | PASSED [C71] valor ausente do texto é descartado e presente é importado
+
+**C72** - Desconto e nome da coluna vazios no rascunho recebem o valor do documento (AC 72)
+Proof: run server | PASSED [C72] desconto e nome da coluna vazios recebem o valor do documento
+
+**C73** - Desconto ou nome da coluna diferentes mantêm o atual e o resultado avisa a divergência (AC 73)
+Proof: run server | PASSED [C73] desconto e coluna diferentes ficam com o atual e geram aviso
+Proof: run web | ✓ [C73b] avisos da importação aparecem na mensagem do resultado
+
+**C74** - Extensão não aceita responde `415` `unsupported_format` com "Formato não aceito. Envie .docx, .pdf, .txt ou .md." (AC 74)
+Proof: run server | PASSED [C74] extensão não aceita responde 415 sem criar tarefa
+Proof: run web | ✓ [C74b] mensagens da importação por código de erro
+
+**C75** - Arquivo acima de 10 MB responde `413` `file_too_large` com "O arquivo passa de 10 MB." (AC 75)
+Proof: run server | PASSED [C75] arquivo acima de 10 MB responde 413 sem criar tarefa
+Proof: run web | ✓ [C74b] mensagens da importação por código de erro
+
+**C76** - Com importação ativa, outro pedido responde `409` `import_running` (AC 76)
+Proof: run server | PASSED [C76] segunda importação com tarefa ativa responde 409
+
+**C77** - Texto extraído acima de 100.000 caracteres encerra em `failed` sem chamar o modelo (AC 77)
+Proof: run server | PASSED [C77] texto acima de 100 mil caracteres falha sem chamar o modelo
+Proof: run web | ✓ [C74b] mensagens da importação por código de erro
+
+**C78** - PDF sem texto selecionável encerra em `failed` sem chamar o modelo (AC 78)
+Proof: run server | PASSED [C78] PDF sem texto falha sem chamar o modelo
+Proof: run web | ✓ [C74b] mensagens da importação por código de erro
+
+**C79** - Link que não é Google Docs ou documento não público encerra em `failed` sem mudar o rascunho (AC 79)
+Proof: run server | PASSED [C79] link que não é Google Docs ou não público falha sem mudar o rascunho
+Proof: run web | ✓ [C74b] mensagens da importação por código de erro
+
+**C80** - Documento sem nenhum item encerra em `failed` sem mudar o rascunho (AC 80)
+Proof: run server | PASSED [C80] documento sem itens falha sem mudar o rascunho
+Proof: run web | ✓ [C74b] mensagens da importação por código de erro
+
+**C81** - Falha, demora acima de 120 s ou JSON fora do schema repete até 3 tentativas e então encerra em `failed` sem mudar o rascunho (AC 81)
+Proof: run server | PASSED [C81] três falhas do modelo encerram a tarefa em failed sem mudar o rascunho
+Proof: run web | ✓ [C74b] mensagens da importação por código de erro
+
+**C82** - Bloco acima do limite importa até o limite, na ordem, e avisa "<n> itens ficaram de fora pelo limite do bloco." (AC 82)
+Proof: run server | PASSED [C82] bloco acima do limite importa até o limite e avisa os itens de fora
+
+**C83** - Linhas importadas, revisão nova e estado final gravam na mesma transação; sem marcar a tarefa, nenhuma linha entra (AC 83)
+Proof: run server | PASSED [C83] conclusão que não marca a tarefa não grava linhas
+
+**C84** - Execução com concessão vencida não altera rascunho nem tarefa depois que outra assumiu (AC 84)
+Proof: run server | PASSED [C84] execução com concessão vencida não conclui depois de outra assumir
+
+**C85** - Tarefa `running` de um servidor reiniciado é reprocessada quando a concessão vence, sem duplicar linhas (AC 85)
+Proof: run server | PASSED [C85] concessão vencida é reprocessada sem duplicar linhas
+
+**C86** - `claim_next_import_job()` entrega tarefas de dois negócios e o papel `app` só vê as do seu negócio (AC 86)
+Proof: run server | PASSED [C86] claim entrega tarefas de dois negócios e o papel app só vê as suas
+
+**C87** - Ao terminar em `done` ou `failed`, o arquivo é apagado depois do commit e o texto extraído não é gravado (AC 87)
+Proof: run server | PASSED [C87] arquivo da tarefa é apagado depois do commit e o texto não é gravado
+
+**C88** - A varredura apaga arquivos de tarefas encerradas e órfãos com mais de 1 hora (AC 88)
+Proof: run server | PASSED [C88] varredura apaga arquivos encerrados e órfãos com mais de 1 hora
+
+**C89** - Toda chamada de importação ao OpenRouter leva `provider.zdr = true` (AC 89)
+Proof: run server | PASSED [C89] chamada ao OpenRouter leva provider.zdr true
+
+**C90** - Nenhum módulo do servidor usa o interno de outro; só o `api/` é público (Landing 1, AD-055)
+Proof: run server | PASSED [C90] módulos do servidor só usam o api de outros módulos
+
+## Coverage
+
+| Set (size) | Member -> proof | Unproven |
+| --- | --- | --- |
+| `GET /oauth2/authorization/google` statuses (1) | 302 C8 | - |
+| `POST /ott/generate` statuses (3) | 200 C2 · 403 sem CSRF C2 · 429 C3 | - |
+| `GET /api/login-links/{token}` statuses (2) | 200 C4 · 404 C6 | - |
+| `POST /login/ott` statuses (3) | 302 C5 · 401 C6 · 403 sem CSRF C5 | - |
+| `GET /api/identity-links/{token}` statuses (2) | 200 C10 · 404 C11 | - |
+| `POST /login/identity-link` statuses (3) | 302 C10 · 401 C11 · 403 sem CSRF C10 | - |
+| `POST /logout` statuses (3) | 204 C24 · 401 C24 · 403 sem CSRF C24 | - |
+| `GET /api/me` statuses (2) | 200 C16 · 401 C24 | - |
+| `POST /api/businesses` statuses (5) | 201 C12 · 401 C12 · 403 C13 · 409 C14 · 422 C12 | - |
+| `GET /api/businesses/{businessId}/playbook` statuses (3) | 200 C67 · 401 C19 · 404 C19 | - |
+| `PUT /api/businesses/{businessId}/playbook/draft` statuses (7) | 200 C30 · 401 C19 · 403 C22 · 404 C19 · 409 revision_conflict C41 · 409 import_running C42 · 422 C37 | - |
+| `POST /api/businesses/{businessId}/playbook/versions` statuses (11) | 201 C54 · 401 C19 · 403 C22 · 404 C19 · 409 revision_conflict C55 · 409 nothing_to_publish C61 · 409 import_running C42 · 422 publish_minimum C56 · 422 incomplete_rows C57 · 422 discount_invalid C58 · 422 pending_review C59 | - |
+| `POST /api/businesses/{businessId}/playbook/imports` statuses (8) | 202 C66 · 401 C19 · 403 C22 · 404 C19 · 409 C76 · 413 C75 · 415 C74 · 422 C66 | - |
+| source controls: tela 6 (2) | "+ Etapa" C30 · "+ Objeção" C33 | - |
+| controls added by Differences (8) | "+ Informação" C32 · "+ Plano" C34 · edição no lugar C35 · "Remover" C36 · setas C31 · "Importar documento" C65 · "Publicar" C54 · "Conferido" C70 · "Trocar de negócio" C18 | - |
+| link expiry, AC 6 (3 examples) | 14 min C6 · reuso C6 · 16 min C6 | - |
+| Google authority, AC 9 (4 examples) | gmail C8 · hd C8 · sem hd C9 · depois da confirmação C10 | - |
+| tab independence, AC 19 (2 examples) | aba 1 grava em A C19 · businessId B com playbookId A C19 | - |
+| RLS, AC 20 (4 examples) | SELECT A C20 · UPDATE B C20 · sem variável C20 · claim de dois negócios C86 | - |
+| cash value, AC 46 (6 examples) | 4500 C46 · 4.500,50 C46 · 0 C46 · abc C46 · 10.000.000,01 C46 · três casas C46 | - |
+| format, AC 48 (3 examples) | R$ 4.500 C48 · 6x 1.166,67 C48 · 3x 1.500 C48 | - |
+| discount, AC 51 (3 examples) | 4.499,99 C51 · 4.500 C51 · 0 C51 | - |
+| publish rules (5 codes) | publish_minimum C56 · incomplete_rows C57 · discount_invalid C58 · pending_review C59 · revision_conflict C55 | - |
+| import failure codes (8) | unsupported_format C74 · file_too_large C75 · text_too_long C77 · pdf_without_text C78 · google_docs_unavailable C79 · nothing_found C80 · model_failed C81 · import_running C76 | - |
+| money in text, AC 71 (2 examples) | 7000 presente C71 · 6600 ausente C71 | - |
+| scalar conflicts, AC 72-73 (4 cases) | desconto vazio C72 · coluna vazia C72 · desconto diferente C73 · coluna diferente C73 | - |
+| startup config: roles and session (2 assemblies) | app entry point C26 · test harness C20 | - |
+
+## Swept
+
+- validation: C2, C12, C37, C38, C46, C47, C51, C74, C75, C79
+- failure modes: C40, C81, C83
+- idempotency: C6, C10, C85
+- authorization: C13, C19, C20, C22, C63, C86
+- concurrency: C10, C15, C41, C43, C55, C84
+- data lifecycle: C25, C87, C88
+- dependency failure: C79, C81
+- state transitions: C54, C61, C66, C85
+- observability: n/a - o plano não pede log, métrica nem rastreamento nesta parte
+
+## Handoff
+
+- **Settled mid-build:** "Vertical slice + Modulith (Recomendado)"; "Por funcionalidade (Recomendado)"; "Meio-termo (Recomendado)"; "Sim, Makefile (Recomendado)" - registrados em AD-053 a AD-056
+- **Dispatched:** none
