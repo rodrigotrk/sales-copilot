@@ -85,6 +85,20 @@ public class Problems extends ResponseEntityExceptionHandler {
         };
     }
 
+    /** Código do contrato para um erro que só traz o status, como os despachados ao /error ou recusados pelo Tomcat. */
+    public static String codeForStatus(int status) {
+        return switch (status) {
+            case 400 -> "invalid_request";
+            case 401 -> "unauthenticated";
+            case 403 -> "forbidden";
+            case 404 -> "not_found";
+            case 405 -> "method_not_allowed";
+            case 413 -> "file_too_large";
+            case 415 -> "unsupported_media_type";
+            default -> status >= 500 ? "internal_error" : "invalid_request";
+        };
+    }
+
     private static String path(WebRequest request) {
         return request.getDescription(false).replaceFirst("^uri=", "");
     }
