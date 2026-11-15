@@ -5,7 +5,7 @@ Run server: `make test-server`
 Run web: `make test-web`
 Plan: `.specs/features/playbook-configuravel/plan.md`
 
-90 checks in 4 slices · 8 one-way doors · 0 open, of which 0 block
+91 checks in 4 slices · 8 one-way doors · 0 open, of which 0 block
 
 ## Checks
 
@@ -101,6 +101,9 @@ Proof: run server | PASSED [C25] sessão expira com 7 dias sem uso ou 30 dias de
 
 **C26** - A sessão fica no Postgres e continua válida para um servidor novo (AC 26)
 Proof: run server | PASSED [C26] sessão gravada no Postgres vale para outra instância do repositório
+
+**C91** - Sem o cookie `XSRF-TOKEN`, o app web pede o token ao servidor antes do primeiro POST e o envia em `X-XSRF-TOKEN` (AC 2, AC 5; achado na construção: a tela `/entrar` não faz GET antes de pedir o link)
+Proof: run web | ✓ [C91] sem cookie XSRF-TOKEN busca o token antes do primeiro POST e o envia
 
 ### S2 - O gestor escreve e edita o playbook
 

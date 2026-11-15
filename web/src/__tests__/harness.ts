@@ -25,6 +25,9 @@ export const problem = (status: number, code: string, errors?: unknown[]): Reply
 /** Troca o fetch por respostas por "MÉTODO caminho" e devolve a lista de chamadas feitas. */
 export function fakeApi(routes: Record<string, Route>): Call[] {
   const calls: Call[] = []
+  // O cookie que o servidor emite na primeira resposta; a busca dele quando falta é provada em http.test.ts.
+  if (!document.cookie.includes('XSRF-TOKEN=')) document.cookie = 'XSRF-TOKEN=token-de-teste'
+
   vi.stubGlobal('fetch', async (url: string, init: RequestInit = {}) => {
     const method = init.method ?? 'GET'
     let body = init.body as unknown

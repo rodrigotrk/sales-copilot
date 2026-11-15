@@ -21,9 +21,16 @@ function csrfToken(): string | undefined {
   return cookie && decodeURIComponent(cookie.slice('XSRF-TOKEN='.length))
 }
 
+// O Spring emite o cookie XSRF-TOKEN em qualquer resposta; a tela /entrar não faz GET antes do
+// primeiro POST, então o cliente pede o cookie quando ele ainda não existe.
+async function ensureCsrfCookie(): Promise<string | undefined> {
+  if (!csrfToken()) await fetch('/api/me', { credentials: 'same-origin' })
+  return csrfToken()
+}
+
 export async function request(method: string, url: string, body?: unknown): Promise<Response> {
   const headers: Record<string, string> = {}
-  const token = method === 'GET' ? undefined : csrfToken()
+  const token = method === 'GET' ? undefined : await ensureCsrfCookie()
   if (token) headers['X-XSRF-TOKEN'] = token
   let payload: BodyInit | undefined
   if (body instanceof FormData || body instanceof URLSearchParams) payload = body
