@@ -12,6 +12,8 @@ import org.springframework.ai.openai.OpenAiChatOptions;
 import org.springframework.stereotype.Component;
 
 import app.salescopilot.importing.domain.ExtractedPlaybook;
+import tools.jackson.databind.DeserializationFeature;
+import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.json.JsonMapper;
 
 /**
@@ -64,6 +66,23 @@ class PlaybookExtraction {
         this.json = json;
     }
 
+    /** Resposta fora do schema pedido é falha da tentativa, como um erro HTTP (critério 81). */
+    ExtractedPlaybook parse(String answer) {
+        JsonNode root = json.readTree(answer);
+        for (String block : List.of("stages", "discovery", "objections", "priceTable")) {
+            if (root == null || !root.has(block)) {
+                throw new IllegalArgumentException("resposta sem o bloco " + block);
+            }
+        }
+        ExtractedPlaybook extracted = json.readerFor(ExtractedPlaybook.class)
+                .with(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
+                .readValue(root);
+        if (!extracted.isWellFormed()) {
+            throw new IllegalArgumentException("item sem campo obrigatório do schema");
+        }
+        return extracted;
+    }
+
     ExtractedPlaybook extract(String documentText) throws ImportFailure {
         var options = OpenAiChatOptions.builder()
                 .responseFormat(ResponseFormat.builder()
@@ -78,7 +97,7 @@ class PlaybookExtraction {
         for (int attempt = 1; attempt <= ATTEMPTS; attempt++) {
             try {
                 String answer = chat.call(prompt).getResult().getOutput().getText();
-                return json.readValue(answer, ExtractedPlaybook.class);
+                return parse(answer);
             } catch (RuntimeException e) {
                 last = e;
             }

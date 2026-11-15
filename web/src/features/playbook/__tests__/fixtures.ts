@@ -74,7 +74,7 @@ export function playbookServer(initial: PlaybookState) {
     const body = call.body as { draft: Draft }
     server.state.draft = body.draft
     server.state.revision += 1
-    return ok({ draft: body.draft, revision: server.state.revision })
+    return ok({ draft: body.draft, revision: server.state.revision, hasUnpublishedChanges: true })
   }
   const routes = {
     'GET /api/me': ok(me()),

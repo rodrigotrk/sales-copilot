@@ -44,7 +44,8 @@ class ImportWorker {
         boolean finished;
         try {
             DocumentText.Extracted text = read(job);
-            if (text.forModel().length() > MAX_TEXT) {
+            // O limite é sobre o texto do documento; o XHTML que vai ao modelo é maior por causa das tags.
+            if (text.plain().length() > MAX_TEXT) {
                 throw new ImportFailure("text_too_long");
             }
             ExtractedPlaybook extracted = extraction.extract(text.forModel());

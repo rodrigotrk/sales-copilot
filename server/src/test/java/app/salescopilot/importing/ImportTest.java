@@ -76,6 +76,9 @@ class ImportTest extends IntegrationTest {
     @Autowired
     Tenancy tenancy;
 
+    @Autowired
+    org.springframework.core.env.Environment environment;
+
     /** Tarefas deixadas por outras classes de teste não podem consumir as respostas programadas do modelo. */
     @BeforeEach
     void closeOtherJobs() {
@@ -195,6 +198,19 @@ class ImportTest extends IntegrationTest {
         assertThat(jobRow(jobId)).containsEntry("status", "failed").containsEntry("error_code", "text_too_long");
         assertThat(STUB.modelRequests()).isEmpty();
 
+        UUID longDocx = jobId(importFile(g, new MockMultipartFile("file", "longo.docx",
+                "application/vnd.openxmlformats-officedocument.wordprocessingml.document", docx(100_001))));
+        worker.drain();
+        assertThat(jobRow(longDocx)).containsEntry("error_code", "text_too_long");
+        assertThat(STUB.modelRequests()).isEmpty();
+
+        STUB.modelAnswers(ANSWER);
+        UUID docxUnderLimit = jobId(importFile(g, new MockMultipartFile("file", "quase.docx",
+                "application/vnd.openxmlformats-officedocument.wordprocessingml.document", docx(97_000))));
+        worker.drain();
+        assertThat(jobRow(docxUnderLimit)).containsEntry("status", "done");
+        assertThat(STUB.modelRequests()).hasSize(1);
+
         UUID limit = jobId(importText(g, "a".repeat(100_000)));
         STUB.modelAnswers("{\"stages\":[],\"discovery\":[],\"objections\":[],\"priceTable\":{\"extraColumnName\":null,"
                 + "\"maxDiscount\":null,\"maxDiscountExcerpt\":null,\"plans\":[]}}");
@@ -260,6 +276,17 @@ class ImportTest extends IntegrationTest {
         assertThat(jobRow(jobId)).containsEntry("status", "failed").containsEntry("error_code", "model_failed");
         assertThat(STUB.modelRequests()).hasSize(3);
         assertThat(revision(g)).isEqualTo(revision);
+
+        STUB.reset();
+        STUB.modelAnswers("{\"etapas\":[{\"nome\":\"Abertura\"}]}");
+        STUB.modelAnswers(ANSWER.replace("{\"name\":\"Abertura\"}", "{\"name\":null}"));
+        STUB.modelAnswers(ANSWER.replace("\"stages\":", "\"extra\":1,\"stages\":"));
+        UUID outsideSchema = jobId(importText(g, DOCUMENT));
+        worker.drain();
+        assertThat(jobRow(outsideSchema)).containsEntry("status", "failed").containsEntry("error_code", "model_failed");
+        assertThat(STUB.modelRequests()).hasSize(3);
+        assertThat(revision(g)).isEqualTo(revision);
+        assertThat(environment.getProperty("spring.ai.openai.timeout")).isEqualTo("120s");
 
         STUB.reset();
         STUB.modelFails(500);
@@ -381,6 +408,12 @@ class ImportTest extends IntegrationTest {
         assertThat(row).doesNotContain("MARCADOR-DO-DOCUMENTO");
         String draft = admin.sql("SELECT draft::text FROM playbooks WHERE business_id = ?").param(g.businessId()).query(String.class).single();
         assertThat(draft).doesNotContain("MARCADOR-DO-DOCUMENTO");
+
+        UUID failing = jobId(importText(g, "x".repeat(100_001)));
+        String failingFile = (String) jobRow(failing).get("file_path");
+        worker.drain();
+        assertThat(jobRow(failing)).containsEntry("status", "failed");
+        assertThat(Files.exists(IMPORT_DIRECTORY.resolve(failingFile))).isFalse();
     }
 
     @Test
@@ -507,6 +540,23 @@ class ImportTest extends IntegrationTest {
 
     private void expireLease(UUID jobId) {
         admin.sql("UPDATE import_jobs SET lease_expires_at = now() - interval '1 minute' WHERE id = ?").param(jobId).update();
+    }
+
+    /** Um .docx com tabela e o número de caracteres de texto pedido, para medir o limite sobre o texto e não sobre o XHTML. */
+    private static byte[] docx(int characters) throws java.io.IOException {
+        try (var document = new org.apache.poi.xwpf.usermodel.XWPFDocument(); var out = new ByteArrayOutputStream()) {
+            var table = document.createTable(1, 2);
+            table.getRow(0).getCell(0).setText("Residencial");
+            table.getRow(0).getCell(1).setText("R$ 4.500");
+            int remaining = characters - "Residencial".length() - "R$ 4.500".length();
+            while (remaining > 0) {
+                int size = Math.min(remaining, 1_000);
+                document.createParagraph().createRun().setText("a".repeat(size));
+                remaining -= size;
+            }
+            document.write(out);
+            return out.toByteArray();
+        }
     }
 
     private static ExtractedPlaybook extracted() {

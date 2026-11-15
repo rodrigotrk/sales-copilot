@@ -37,7 +37,7 @@ class PlaybookController {
     record SaveDraft(UUID playbookId, PlaybookDocument draft, Long revision) {
     }
 
-    record SavedDraft(PlaybookDocument draft, long revision) {
+    record SavedDraft(PlaybookDocument draft, long revision, boolean hasUnpublishedChanges) {
     }
 
     record Publish(UUID playbookId, Long revision) {
@@ -58,8 +58,7 @@ class PlaybookController {
         return tenancy.inBusiness(access.userId(), access.businessId(), () -> {
             var playbook = store.current().orElseThrow(ApiException::notFound);
             var latest = store.latestVersion(playbook.id());
-            boolean unpublished = latest.map(v -> !v.content().equals(playbook.draft()))
-                    .orElse(playbook.draft().hasItems());
+            boolean unpublished = hasUnpublishedChanges(playbook.id(), playbook.draft());
             return new PlaybookView(playbook.id(), playbook.name(), playbook.draft(), playbook.revision(),
                     latest.map(v -> new VersionView(v.number(), v.publishedAt())).orElse(null), unpublished,
                     // Calls só passam a existir na parte 2.
@@ -79,7 +78,7 @@ class PlaybookController {
             }
             PlaybookDocument draft = DraftNormalizer.normalize(request.draft());
             long revision = store.updateDraft(playbook.id(), draft);
-            return new SavedDraft(draft, revision);
+            return new SavedDraft(draft, revision, hasUnpublishedChanges(playbook.id(), draft));
         });
     }
 
@@ -103,6 +102,10 @@ class PlaybookController {
             store.insertVersion(playbook, number, access.userId());
             return Map.of("number", number);
         });
+    }
+
+    private boolean hasUnpublishedChanges(UUID playbookId, PlaybookDocument draft) {
+        return store.latestVersion(playbookId).map(v -> !v.content().equals(draft)).orElse(draft.hasItems());
     }
 
     /** A trava comum da AD-050: trava o playbook e só então confere revisão e importação ativa. */

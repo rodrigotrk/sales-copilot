@@ -56,6 +56,21 @@ class PlaybookTest extends IntegrationTest {
                 .andExpect(jsonPath("$.errors[0].message").value("Limite de 30 itens neste bloco."));
         save(g, playbookId(g), empty().replace("\"stages\":[]", "\"stages\":[" + stages(30) + "]"), 0)
                 .andExpect(status().isOk());
+        String discovery = items(51, i -> "{\"id\":\"" + UUID.randomUUID() + "\",\"information\":\"I" + i + "\",\"question\":\"Q\"}");
+        save(g, playbookId(g), empty().replace("\"discovery\":[]", "\"discovery\":[" + discovery + "]"), 1)
+                .andExpect(status().isUnprocessableContent())
+                .andExpect(jsonPath("$.errors[0].message").value("Limite de 50 itens neste bloco."));
+        String objections = items(51, i -> "{\"id\":\"" + UUID.randomUUID() + "\",\"name\":\"O" + i + "\",\"leadSays\":\"\",\"approvedResponse\":\"R\"}");
+        save(g, playbookId(g), empty().replace("\"objections\":[]", "\"objections\":[" + objections + "]"), 1)
+                .andExpect(status().isUnprocessableContent())
+                .andExpect(jsonPath("$.errors[0].message").value("Limite de 50 itens neste bloco."));
+        String plans = items(21, i -> "{\"id\":\"" + UUID.randomUUID() + "\",\"name\":\"P" + i
+                + "\",\"extraValue\":\"\",\"cash\":\"100.00\",\"installments\":null,\"review\":null}");
+        save(g, playbookId(g), empty().replace("\"plans\":[]", "\"plans\":[" + plans + "]"), 1)
+                .andExpect(status().isUnprocessableContent())
+                .andExpect(jsonPath("$.errors[0].message").value("Limite de 20 itens neste bloco."));
+        save(g, playbookId(g), empty().replace("\"plans\":[]", "\"plans\":[" + plans.substring(0, plans.lastIndexOf(",{")) + "]"), 1)
+                .andExpect(status().isOk());
     }
 
     @Test
@@ -117,11 +132,15 @@ class PlaybookTest extends IntegrationTest {
         String withoutObjection = Drafts.complete().replaceAll("\"objections\":\\[.*?\\],\n", "\"objections\":[],\n");
         save(g, id, withoutObjection, 0);
         publish(g, id, 1).andExpect(jsonPath("$.code").value("publish_minimum"));
+        save(g, id, Drafts.complete().replaceAll("\"stages\":\\[[^\\]]*\\]", "\"stages\":[]"), 1);
+        publish(g, id, 2).andExpect(jsonPath("$.code").value("publish_minimum"));
+        save(g, id, Drafts.complete().replaceAll("\"discovery\":\\[[^\\]]*\\]", "\"discovery\":[]"), 2);
+        publish(g, id, 3).andExpect(jsonPath("$.code").value("publish_minimum"));
 
         String noPrices = Drafts.complete().replaceAll("\"plans\":\\[[\\s\\S]*\\]\\}\\}", "\"plans\":[]}}")
                 .replace("\"maxDiscount\":\"300.00\"", "\"maxDiscount\":null");
-        save(g, id, noPrices, 1).andExpect(status().isOk());
-        publish(g, id, 2).andExpect(status().isCreated());
+        save(g, id, noPrices, 3).andExpect(status().isOk());
+        publish(g, id, 4).andExpect(status().isCreated());
     }
 
     @Test
@@ -140,6 +159,21 @@ class PlaybookTest extends IntegrationTest {
                 .andExpect(jsonPath("$.errors.length()").value(2))
                 .andExpect(jsonPath("$.errors[0].itemId").value(blankStage.toString()))
                 .andExpect(jsonPath("$.errors[1].itemId").value(planWithoutCash.toString()));
+
+        UUID noQuestion = UUID.randomUUID();
+        UUID noResponse = UUID.randomUUID();
+        String others = Drafts.complete()
+                .replace("\"discovery\":[", "\"discovery\":[{\"id\":\"" + noQuestion + "\",\"information\":\"Prazo\",\"question\":\"\"},")
+                .replace("\"objections\":[", "\"objections\":[{\"id\":\"" + noResponse
+                        + "\",\"name\":\"Tempo\",\"leadSays\":\"Agora não\",\"approvedResponse\":\" \"},");
+        save(g, id, others, 1).andExpect(status().isOk());
+        publish(g, id, 2).andExpect(jsonPath("$.code").value("incomplete_rows"))
+                .andExpect(jsonPath("$.errors.length()").value(2))
+                .andExpect(jsonPath("$.errors[0].itemId").value(noQuestion.toString()))
+                .andExpect(jsonPath("$.errors[1].itemId").value(noResponse.toString()));
+
+        save(g, id, Drafts.complete().replace("\"leadSays\":\"Está caro\"", "\"leadSays\":\"\""), 2).andExpect(status().isOk());
+        publish(g, id, 3).andExpect(status().isCreated());
     }
 
     @Test
@@ -162,7 +196,10 @@ class PlaybookTest extends IntegrationTest {
         UUID id = playbookId(g);
         save(g, id, Drafts.complete().replaceFirst("\"review\":null",
                 java.util.regex.Matcher.quoteReplacement("\"review\":{\"status\":\"pending\",\"excerpt\":\"R$ 4.500\"}")), 0);
-        publish(g, id, 1).andExpect(status().isUnprocessableContent()).andExpect(jsonPath("$.code").value("pending_review"));
+        String flaggedPlan = playbook(g).get("draft").get("priceTable").get("plans").get(0).get("id").asString();
+        publish(g, id, 1).andExpect(status().isUnprocessableContent()).andExpect(jsonPath("$.code").value("pending_review"))
+                .andExpect(jsonPath("$.errors.length()").value(1))
+                .andExpect(jsonPath("$.errors[0].itemId").value(flaggedPlan));
         save(g, id, Drafts.complete().replace("\"maxDiscountReview\":null",
                 "\"maxDiscountReview\":{\"status\":\"pending\",\"excerpt\":\"desconto de R$ 300\"}"), 1);
         publish(g, id, 2).andExpect(jsonPath("$.code").value("pending_review"));
@@ -249,6 +286,10 @@ class PlaybookTest extends IntegrationTest {
     private static String empty() {
         return "{\"schemaVersion\":1,\"stages\":[],\"discovery\":[],\"objections\":[],\"priceTable\":{\"extraColumnName\":null,"
                 + "\"maxDiscount\":null,\"maxDiscountReview\":null,\"plans\":[]}}";
+    }
+
+    private static String items(int count, java.util.function.IntFunction<String> item) {
+        return String.join(",", java.util.stream.IntStream.range(0, count).mapToObj(item).toList());
     }
 
     private static String stages(int count) {

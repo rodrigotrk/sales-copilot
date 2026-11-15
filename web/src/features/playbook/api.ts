@@ -75,7 +75,7 @@ export const playbookUrl = (businessId: string) => `/api/businesses/${businessId
 export const getPlaybook = (businessId: string) => getJson<PlaybookState>(playbookUrl(businessId))
 
 export function saveDraft(businessId: string, playbookId: string, draft: Draft, revision: number) {
-  return sendJson<{ draft: Draft; revision: number }>('PUT', `${playbookUrl(businessId)}/draft`, {
+  return sendJson<{ draft: Draft; revision: number; hasUnpublishedChanges: boolean }>('PUT', `${playbookUrl(businessId)}/draft`, {
     playbookId,
     draft,
     revision,

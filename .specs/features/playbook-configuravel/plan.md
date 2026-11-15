@@ -102,7 +102,7 @@ Rotas do servidor Spring consumidas pelo app web. Toda resposta de erro segue a 
 | `GET /api/me` | - | `{user: {email}, businesses: [{id, name, role}], lastBusinessId or null, canCreateBusiness}` | `200`, `401` | qualquer pessoa com sessão |
 | `POST /api/businesses` | `{businessName, playbookName}` | `{businessId}` | `201`, `401`, `403` `signup_not_allowed`, `409` `already_member`, `422` | quem tem sessão, e-mail liberado em `allowed_signups` e nenhuma associação |
 | `GET /api/businesses/{businessId}/playbook` | - | `{playbookId, name, draft, revision, latestVersion: {number, publishedAt} or null, hasUnpublishedChanges, hasCalls, importJob: {id, status, counts, skipped, notices, errorCode} or null}` | `200`, `401`, `404` | membro do negócio |
-| `PUT /api/businesses/{businessId}/playbook/draft` | `{playbookId, draft, revision}` (documento inteiro, AD-023) | `{draft, revision}` | `200`, `401`, `403`, `404`, `409` `revision_conflict` / `import_running`, `422` | `gestor` do negócio |
+| `PUT /api/businesses/{businessId}/playbook/draft` | `{playbookId, draft, revision}` (documento inteiro, AD-023) | `{draft, revision, hasUnpublishedChanges}` | `200`, `401`, `403`, `404`, `409` `revision_conflict` / `import_running`, `422` | `gestor` do negócio |
 | `POST /api/businesses/{businessId}/playbook/versions` | `{playbookId, revision}` | `{number}` | `201`, `401`, `403`, `404`, `409` `revision_conflict` / `nothing_to_publish` / `import_running`, `422` `publish_minimum` / `incomplete_rows` / `discount_invalid` / `pending_review` | `gestor` do negócio |
 | `POST /api/businesses/{businessId}/playbook/imports` | `playbookId` e multipart `file`, ou `{playbookId, text}`, ou `{playbookId, googleDocsUrl}` | `{jobId}` | `202`, `401`, `403`, `404`, `409` `import_running`, `413` `file_too_large`, `415` `unsupported_format`, `422` | `gestor` do negócio |
 
@@ -286,7 +286,7 @@ O gestor sobe um documento, a importação roda em segundo plano, as linhas enco
 
 | Assumption | Chosen default | Rationale | Confirmed? |
 | --- | --- | --- | --- |
-| Stack, login, sessão, negócio no endereço, cadastro e concorrência | AD-001 a AD-008, AD-022 a AD-039 e AD-041 a AD-056 em `.specs/STATE.md` | cada uma respondida ou confirmada pelo Rodrigo | y |
+| Stack, login, sessão, negócio no endereço, cadastro e concorrência | AD-001 a AD-008, AD-022 a AD-039 e AD-041 a AD-059 em `.specs/STATE.md` | cada uma respondida ou confirmada pelo Rodrigo | y |
 | Origens da importação | .docx, .pdf, .txt, .md, texto colado e link do Google Docs, um arquivo por vez, até 10 MB; texto extraído até 100 mil caracteres | respostas do Rodrigo: "Arquivos + Google Docs" e "sim" aos defaults da auditoria | y |
 | Google Docs | baixado pelo link de exportação como .docx, de documento compartilhado como "Qualquer pessoa com o link" | respostas do Rodrigo: "Link público (Recomendado)" e "Apache Tika (Recomendado)" | y |
 | Larguras de janela | de 1024 a 1920 px; duas colunas como na captura a partir de 1280 px, blocos empilhados numa coluna entre 1024 e 1279 px; a tabela de objeções rola na horizontal dentro do bloco se não couber | resposta do Rodrigo: "1024 a 1920 px (Recomendado)" | y |
@@ -295,6 +295,7 @@ O gestor sobe um documento, a importação roda em segundo plano, as linhas enco
 | Parcelado | opcional; número de parcelas (2 a 60) e valor da parcela digitados pelo gestor, sem conta automática | na captura o parcelado tem total próprio (12x 1.200 = R$ 14.400 contra R$ 12.000 à vista); resposta do Rodrigo: "sim" aos defaults da auditoria | y |
 | Textos novos | "Escrever o playbook", "Importar um documento", "+ Informação", "+ Plano", "Remover", "Importar documento", "Publicar", "Alterações não publicadas", "Disponível em breve", "Importado · conferir", "Conferido", "Tentar de novo", "Desfazer", "Trocar de negócio" e as mensagens dos critérios, menos as das duas linhas seguintes | a captura não desenha esses estados; resposta do Rodrigo: "sim" aos defaults da auditoria | y |
 | Mensagens do login e da conferência | "Aguarde 1 minuto para pedir outro link.", "Este link já foi usado ou expirou. Peça um novo.", "Seu e-mail do Google não está verificado." e "Confira os valores marcados "Importado · conferir" antes de publicar." | resposta do Rodrigo: "sim confirmo as mensagens" | y |
+| Textos das telas de entrada, negócio, publicação e importação | Login: "Entrar", "ou receba um link por e-mail", "Enviar link de acesso", "Não foi possível enviar o link. Tente de novo."; negócio: "Crie o seu negócio", "Nome do negócio", "Nome do playbook", "Criar", "Informe o nome do negócio e o do playbook, com até 80 caracteres.", "Escolha o negócio"; publicar: "Não foi possível publicar. Tente de novo."; importação: "Arquivo", "Texto colado", "Texto do playbook", "Importar", "Não foi possível enviar a importação. Confira a origem e tente de novo."; tabela: placeholder "Coluna extra" | resposta do Rodrigo: "Sim, confirmo (Recomendado)" | y |
 | Mensagens da confirmação por link | "Entrar como <e-mail>?", "Entrar" e "Confirme seu e-mail: enviamos um link para <e-mail>." | respostas do Rodrigo: "sim" às perguntas sobre o clique de confirmação e o Google fora do Gmail | y |
 | Dados de teste | os testes e fixtures usam um playbook inventado de outro nicho; as gravações da EPC não entram nesta parte e nenhum arquivo traz nome ou dado de lead | pedido do Rodrigo: "As gravações da EPC são só material, nunca requisito, e nenhum arquivo cita nome ou dado pessoal de lead" | y |
 | Captura sem dado de lead | a cópia da captura em `captures/` cobre o nome de lead do seletor "Testar o método", que esta parte não constrói, e é a fonte obrigatória da tela (AD-051) | mesma frase do pedido | y |
@@ -307,6 +308,7 @@ O gestor sobe um documento, a importação roda em segundo plano, as linhas enco
 | --- | --- | --- |
 | Menu com Agenda, Ao vivo, Calls, Pipeline, Coach e Método | Menu com Nova call, Ao vivo, Calls, Coach e Playbook | y - AD-009 |
 | Menu sem troca de negócio | "Trocar de negócio" no menu, só para quem é membro de mais de um negócio | y - AD-045 |
+| Menu sem controle no rodapé | "Sair" no rodapé do menu lateral | y - AD-059 |
 | Título "Método de venda" | Título "Playbook" | y - AD-010 |
 | Subtítulo "Aqui o produto vira genérico: cada negócio cadastra o próprio jeito de vender, sem programar. Abaixo, o método da mentoria EPC." | "Cada negócio cadastra o próprio jeito de vender, sem programar." | y - AD-013 |
 | Selo "Novo: nas duas referências isso fica escrito dentro do código" | nada | y - AD-013 |
@@ -327,7 +329,7 @@ O gestor sobe um documento, a importação roda em segundo plano, as linhas enco
 - `especificacao/design-sales-copilot.md` - binding - termos, navegação, seção 6 com os desvios confirmados em 15/11/2026, regras de negócio 2, 3, 8, 10 e 11
 - ![tela 6 - playbook](captures/tela-6-playbook.png) - binding - cópia de `tela-6-metodo.png` do protótipo original (1440 x 1300 px, 15/11/2026), que fica fora do git em `pesquisas/prototipos-originais/` (AD-051), com o nome de lead do seletor coberto; desenha os quatro blocos, seus rótulos e o visual
 - `pesquisas/prototipos-originais/prototipo-sales-copilot.html`, seção `#metodo`, local e fora do git - binding - texto exato dos rótulos que a captura mostra em maiúsculas por CSS: "Etapas da call", "O que precisa ser descoberto na call", "Objeções e sugestões de fala", "Tabela de preços", "a definir"
-- `.specs/STATE.md`, AD-001 a AD-056 - binding - stack, desvios da tela e respostas desta sessão, incluindo as das duas auditorias
+- `.specs/STATE.md`, AD-001 a AD-059 - binding - stack, desvios da tela e respostas desta sessão, incluindo as das duas auditorias
 - `especificacao/decisoes-levantamento.md` - contexto - a hipótese "o produto deve ser um sistema agêntico", decidida em AD-001
 - `especificacao/notas-tecnicas.md` e diagramas `01-arquitetura`, `02-fluxo-ao-vivo` e `04-roadmap`, retirados do repositório depois da aprovação e recuperáveis pelo histórico do git - hipótese - nada deles vira requisito sem uma AD
 - `pesquisas/analise-playbook-sales-copilot.md` e `pesquisas/analise-deal-advisor-kelvin-cleto.md` - non-binding - user: "Referências | Ideia e desenho. O produto não copia código delas" (`planejamento/fluxo-harness-fase-3.md`) - "o modelo classifica, o código decide", Jev como classificador ao vivo, agente só no "Pedir ajuda"; a do Deal Advisor parte do vídeo, porque o código é fechado

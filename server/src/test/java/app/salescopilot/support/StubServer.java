@@ -30,6 +30,7 @@ public final class StubServer {
     private final ConcurrentLinkedQueue<Reply> modelReplies = new ConcurrentLinkedQueue<>();
     private final List<String> modelRequests = new CopyOnWriteArrayList<>();
     private final Map<String, Reply> documents = new ConcurrentHashMap<>();
+    private volatile long modelDelayMillis;
 
     private StubServer(HttpServer server) {
         this.server = server;
@@ -51,6 +52,7 @@ public final class StubServer {
     }
 
     public void reset() {
+        modelDelayMillis = 0;
         modelReplies.clear();
         modelRequests.clear();
         documents.clear();
@@ -65,6 +67,11 @@ public final class StubServer {
         modelReplies.add(Reply.json(status, "{\"error\":{\"message\":\"falha simulada\"}}"));
     }
 
+    /** Atraso antes de cada resposta do modelo, para provar o tempo limite. */
+    public void modelDelay(java.time.Duration delay) {
+        modelDelayMillis = delay.toMillis();
+    }
+
     public List<String> modelRequests() {
         return modelRequests;
     }
@@ -75,6 +82,13 @@ public final class StubServer {
 
     private void model(HttpExchange exchange) throws IOException {
         modelRequests.add(new String(exchange.getRequestBody().readAllBytes(), StandardCharsets.UTF_8));
+        if (modelDelayMillis > 0) {
+            try {
+                Thread.sleep(modelDelayMillis);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+        }
         Reply reply = modelReplies.poll();
         respond(exchange, reply == null ? Reply.json(500, "{\"error\":{\"message\":\"sem resposta programada\"}}") : reply);
     }

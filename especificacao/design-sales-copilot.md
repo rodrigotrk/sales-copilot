@@ -35,6 +35,8 @@ O menu lateral de ícones fica como no protótipo, com o visual claro e o destaq
 | "Pipeline" sai; a lista de calls entra em "Calls" | Pipeline e lembretes de follow-up ficam fora |
 | "Método" vira "Playbook", no menu e no título da tela | Um termo por conceito, o mesmo do PRD |
 | Entra "Trocar de negócio" no menu, só para quem participa de mais de um negócio; ele abre o endereço do outro negócio | Uma pessoa pode participar de mais de um negócio, e cada aba mostra o negócio do próprio endereço |
+| Entra "Sair" no rodapé do menu, em todas as telas | A pessoa encerra a própria sessão |
+| Nova call, Ao vivo, Calls e Coach mostram o aviso "Disponível em breve" ao serem clicados, enquanto a parte que os constrói não chega | O menu fica completo desde a parte 1 |
 
 ## 1. Antes da call
 

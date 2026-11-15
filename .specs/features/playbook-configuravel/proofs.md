@@ -1,0 +1,182 @@
+# playbook-configuravel proofs
+
+**HEAD**: 33a3580
+**Tree**: clean
+**Shell**: /bin/sh
+**Result**: 130 pass, 1 fail
+
+| Check | Proof | Result |
+| --- | --- | --- |
+| C1 | `run web / ✓ [C01] sem sessão qualquer tela vai para /entrar com Google e campo de e-mail` | pass |
+| C2 | `run server / PASSED [C02a] pedir o link envia o e-mail e responde igual para e-mail desconhecido` | pass |
+| C2 | `run web / ✓ [C02b] e-mail sem arroba mostra Informe um e-mail válido e não chama a API` | pass |
+| C2 | `run web / ✓ [C02c] pedido aceito mostra Enviamos um link de acesso para o e-mail` | pass |
+| C3 | `run server / PASSED [C03a] segundo pedido em menos de 60 s responde 429 e não envia` | pass |
+| C3 | `run web / ✓ [C03b] resposta 429 mostra Aguarde 1 minuto para pedir outro link` | pass |
+| C4 | `run server / PASSED [C04a] ler o link duas vezes não consome o token` | pass |
+| C4 | `run web / ✓ [C04b] página do link mostra Entrar como o e-mail e o botão Entrar` | pass |
+| C5 | `run server / PASSED [C05] POST /login/ott consome o token e cria a sessão` | pass |
+| C5 | `run web / ✓ [C05b] Entrar envia o token por POST /login/ott` | pass |
+| C6 | `run server / PASSED [C06a] token aos 14 min entra, reuso e 16 min são recusados` | pass |
+| C6 | `run web / ✓ [C06b] link recusado mostra Este link já foi usado ou expirou` | pass |
+| C7 | `run server / PASSED [C07a] Google sem e-mail verificado não cria sessão` | pass |
+| C7 | `run web / ✓ [C07b] erro google_unverified mostra Seu e-mail do Google não está verificado` | pass |
+| C8 | `run server / PASSED [C08] Google com gmail ou hd entra e liga a identidade pelo e-mail` | pass |
+| C9 | `run server / PASSED [C09a] Google fora do Gmail sem hd grava desafio, envia link e não cria sessão` | pass |
+| C9 | `run web / ✓ [C09b] confirmação pendente mostra Confirme seu e-mail` | pass |
+| C10 | `run server / PASSED [C10a] consumir o desafio grava google_subject e cria a sessão` | pass |
+| C10 | `run server / PASSED [C10b] dois consumos simultâneos do desafio têm um só vencedor` | pass |
+| C11 | `run server / PASSED [C11] link comum não liga identidade pendente e desafio vencido é recusado` | pass |
+| C12 | `run server / PASSED [C12a] criar negócio liberado cria gestor e playbook e valida 1 a 80 caracteres` | pass |
+| C12 | `run web / ✓ [C12b] formulário de criação abre /n/id/playbook` | pass |
+| C13 | `run server / PASSED [C13a] e-mail fora da lista responde 403 signup_not_allowed` | pass |
+| C13 | `run web / ✓ [C13b] sem liberação mostra Seu acesso ainda não foi liberado` | pass |
+| C14 | `run server / PASSED [C14] membro que cria negócio recebe 409 already_member` | pass |
+| C15 | `run server / PASSED [C15] duas criações simultâneas criam um negócio e um 409` | pass |
+| C16 | `run server / PASSED [C16a] /api/me devolve o último negócio usado` | pass |
+| C16 | `run web / ✓ [C16b] entrada abre o último negócio válido ou o único` | pass |
+| C17 | `run web / ✓ [C17] mais de um negócio sem último válido mostra a lista e abre o escolhido` | pass |
+| C18 | `run web / ✓ [C18] Trocar de negócio aparece só com mais de um negócio e abre a lista` | pass |
+| C19 | `run server / PASSED [C19] businessId sem associação ou playbookId de outro negócio responde 404` | pass |
+| C20 | `run server / PASSED [C20] RLS do papel app devolve só o negócio da variável` | pass |
+| C21 | `run server / PASSED [C21] chave composta recusa business_id divergente` | pass |
+| C22 | `run server / PASSED [C22] closer recebe 403 nas escritas` | pass |
+| C23 | `run web / ✓ [C23] menu com cinco itens na ordem e Disponível em breve` | pass |
+| C24 | `run server / PASSED [C24a] Sair invalida a sessão e o cookie antigo recebe 401` | pass |
+| C24 | `run web / ✓ [C24b] Sair abre /entrar` | pass |
+| C25 | `run server / PASSED [C25] sessão expira com 7 dias sem uso ou 30 dias desde o login` | pass |
+| C26 | `run server / PASSED [C26] sessão gravada no Postgres vale para outra instância do repositório` | pass |
+| C91 | `run web / ✓ [C91] sem cookie XSRF-TOKEN busca o token antes do primeiro POST e o envia` | pass |
+| C27 | `run web / ✓ [C27] rascunho vazio mostra título, subtítulo e os dois jeitos de começar` | pass |
+| C28 | `run web / ✓ [C28] Escrever o playbook mostra os quatro blocos vazios com os botões` | pass |
+| C29 | `browser - abrir /n/<businessId>/playbook com um playbook de exemplo, janela 1440 x 1300, salvar captures/tela-` | **not judged** (screens.md) |
+| C30 | `run web / ✓ [C30] + Etapa acrescenta ao fim numerada e salva ao sair do campo` | pass |
+| C31 | `run web / ✓ [C31] setas trocam a etapa, renumeram, salvam e desabilitam nas pontas` | pass |
+| C32 | `run web / ✓ [C32] + Informação acrescenta a linha ao fim do bloco` | pass |
+| C33 | `run web / ✓ [C33] + Objeção acrescenta a linha com os três campos` | pass |
+| C34 | `run web / ✓ [C34] + Plano acrescenta a linha ao fim da tabela` | pass |
+| C35 | `run web / ✓ [C35] clicar numa linha edita no lugar e salva cada campo ao sair` | pass |
+| C36 | `run web / ✓ [C36] Remover tira a linha sem confirmação e renumera as etapas` | pass |
+| C37 | `run server / PASSED [C37a] texto acima de 120 ou 500 caracteres responde 422 com o campo` | pass |
+| C37 | `run web / ✓ [C37b] erro de limite mostra Máximo de N caracteres e mantém o valor salvo` | pass |
+| C38 | `run server / PASSED [C38a] rascunho acima do limite de itens responde 422` | pass |
+| C38 | `run web / ✓ [C38b] bloco no limite desabilita o botão e mostra Limite de N itens` | pass |
+| C39 | `run web / ✓ [C39] textos aparecem entre aspas e são guardados sem aspas` | pass |
+| C40 | `run web / ✓ [C40] falha ao salvar mantém o valor e oferece Tentar de novo e Desfazer` | pass |
+| C41 | `run server / PASSED [C41a] gravação com revisão antiga responde 409 revision_conflict` | pass |
+| C41 | `run web / ✓ [C41b] revision_conflict mostra O playbook foi alterado em outra aba` | pass |
+| C42 | `run server / PASSED [C42a] gravação com importação ativa responde 409 import_running` | pass |
+| C42 | `run web / ✓ [C42b] importação ativa deixa o rascunho só para leitura` | pass |
+| C43 | `run server / PASSED [C43] gravação e importação simultâneas nunca gravam depois da tarefa` | pass |
+| C44 | `run web / ✓ [C44] nome da coluna extra vira o título entre Plano e À vista` | pass |
+| C45 | `run web / ✓ [C45] coluna extra vazia some fora da edição` | pass |
+| C46 | `run server / PASSED [C46a] à vista aceita 4500 e 4500,50 e recusa 0, 10000000,01 e três casas` | pass |
+| C46 | `run web / ✓ [C46b] campo à vista converte 4.500,50 e recusa abc com a mensagem` | pass |
+| C47 | `run server / PASSED [C47a] parcelado aceita 2 a 60 parcelas positivas e recusa o resto` | pass |
+| C47 | `run web / ✓ [C47b] parcelado inválido mostra a mensagem e vazio aparece como travessão` | pass |
+| C48 | `run web / ✓ [C48] formata R$ 4.500, 6x 1.166,67 e 3x 1.500` | pass |
+| C49 | `run web / ✓ [C49] desconto informado aparece como Desconto máximo na call R$ valor` | pass |
+| C50 | `run web / ✓ [C50] sem desconto mostra o selo a definir` | pass |
+| C51 | `run server / PASSED [C51a] desconto 4499,99 aceito, 4500 recusado e 0 aceito com menor à vista 4500` | pass |
+| C51 | `run web / ✓ [C51b] desconto inválido mostra a mensagem com o menor à vista` | pass |
+| C52 | `run web / ✓ [C52] sem plano a linha do desconto não aparece` | pass |
+| C53 | `run web / ✓ [C53] sem call registrada a coluna Nas calls não aparece` | pass |
+| C54 | `run server / PASSED [C54a] publicar cria a versão N+1 começando em 1` | pass |
+| C54 | `run web / ✓ [C54b] após publicar o topo mostra a versão nova` | pass |
+| C55 | `run server / PASSED [C55a] publicar com revisão antiga responde 409 e não cria versão` | pass |
+| C55 | `run web / ✓ [C55b] publicar com revision_conflict mostra O playbook foi alterado em outra aba` | pass |
+| C56 | `run server / PASSED [C56a] sem etapa, informação ou objeção responde 422 publish_minimum e tabela vazia public` | pass |
+| C56 | `run web / ✓ [C56b] publish_minimum mostra a mensagem do mínimo` | pass |
+| C57 | `run server / PASSED [C57a] linha incompleta responde 422 incomplete_rows com os ids` | pass |
+| C57 | `run web / ✓ [C57b] incomplete_rows destaca as linhas e mostra Complete ou remova` | pass |
+| C58 | `run server / PASSED [C58] desconto fora da regra responde 422 discount_invalid` | pass |
+| C59 | `run server / PASSED [C59a] valor marcado a conferir responde 422 pending_review` | pass |
+| C59 | `run web / ✓ [C59b] pending_review mostra Confira os valores marcados` | pass |
+| C60 | `run web / ✓ [C60] alteração pendente desabilita Publicar com Há alterações não salvas` | pass |
+| C61 | `run server / PASSED [C61a] rascunho igual à versão responde 409 nothing_to_publish` | pass |
+| C61 | `run web / ✓ [C61b] Alterações não publicadas aparece só com diferença e Publicar desabilita sem ela` | pass |
+| C62 | `run web / ✓ [C62] sem versão o topo mostra rascunho` | pass |
+| C63 | `run server / PASSED [C63] UPDATE e DELETE em versões falham para o papel app` | pass |
+| C64 | `run server / PASSED [C64] versão nova mantém os ids dos itens` | pass |
+| C65 | `run web / ✓ [C65] Importar documento oferece arquivo, texto colado e link do Google Docs` | pass |
+| C66 | `run server / PASSED [C66a] enviar a origem responde 202 e cria a tarefa queued` | pass |
+| C66 | `run web / ✓ [C66b] envio mostra Importando com rascunho só leitura e botões desabilitados` | pass |
+| C67 | `run server / PASSED [C67a] GET do playbook devolve a tarefa ativa` | pass |
+| C67 | `run web / ✓ [C67b] tela aberta com tarefa ativa mostra Importando` | pass |
+| C68 | `run server / PASSED [C68a] importação acrescenta ao fim sem mudar o existente e conta os itens` | pass |
+| C68 | `run web / ✓ [C68b] importação concluída mostra Importado com as contagens` | pass |
+| C69 | `run server / PASSED [C69a] plano e desconto importados chegam marcados com o trecho e o resto sem marca` | pass |
+| C69 | `run web / ✓ [C69b] valor marcado mostra Importado · conferir e o trecho` | pass |
+| C70 | `run web / ✓ [C70] Conferido ou edição tira a marca do item` | pass |
+| C71 | `run server / PASSED [C71] valor ausente do texto é descartado e presente é importado` | pass |
+| C72 | `run server / PASSED [C72] desconto e nome da coluna vazios recebem o valor do documento` | pass |
+| C73 | `run server / PASSED [C73] desconto e coluna diferentes ficam com o atual e geram aviso` | pass |
+| C73 | `run web / ✓ [C73b] avisos da importação aparecem na mensagem do resultado` | pass |
+| C74 | `run server / PASSED [C74] extensão não aceita responde 415 sem criar tarefa` | pass |
+| C74 | `run web / ✓ [C74b] mensagens da importação por código de erro` | pass |
+| C75 | `run server / PASSED [C75] arquivo acima de 10 MB responde 413 sem criar tarefa` | pass |
+| C75 | `run web / ✓ [C74b] mensagens da importação por código de erro` | pass |
+| C76 | `run server / PASSED [C76] segunda importação com tarefa ativa responde 409` | pass |
+| C77 | `run server / PASSED [C77] texto acima de 100 mil caracteres falha sem chamar o modelo` | pass |
+| C77 | `run web / ✓ [C74b] mensagens da importação por código de erro` | pass |
+| C78 | `run server / PASSED [C78] PDF sem texto falha sem chamar o modelo` | pass |
+| C78 | `run web / ✓ [C74b] mensagens da importação por código de erro` | pass |
+| C79 | `run server / PASSED [C79] link que não é Google Docs ou não público falha sem mudar o rascunho` | pass |
+| C79 | `run web / ✓ [C74b] mensagens da importação por código de erro` | pass |
+| C80 | `run server / PASSED [C80] documento sem itens falha sem mudar o rascunho` | pass |
+| C80 | `run web / ✓ [C74b] mensagens da importação por código de erro` | pass |
+| C81 | `run server / PASSED [C81] três falhas do modelo encerram a tarefa em failed sem mudar o rascunho` | pass |
+| C81 | `run web / ✓ [C74b] mensagens da importação por código de erro` | pass |
+| C82 | `run server / PASSED [C82] bloco acima do limite importa até o limite e avisa os itens de fora` | pass |
+| C83 | `run server / PASSED [C83] conclusão que não marca a tarefa não grava linhas` | pass |
+| C84 | `run server / PASSED [C84] execução com concessão vencida não conclui depois de outra assumir` | pass |
+| C85 | `run server / PASSED [C85] concessão vencida é reprocessada sem duplicar linhas` | pass |
+| C86 | `run server / PASSED [C86] claim entrega tarefas de dois negócios e o papel app só vê as suas` | pass |
+| C87 | `run server / PASSED [C87] arquivo da tarefa é apagado depois do commit e o texto não é gravado` | pass |
+| C88 | `run server / PASSED [C88] varredura apaga arquivos encerrados e órfãos com mais de 1 hora` | pass |
+| C89 | `run server / PASSED [C89] chamada ao OpenRouter leva provider.zdr true` | pass |
+| C90 | `run server / PASSED [C90] módulos do servidor só usam o api de outros módulos` | pass |
+| Build | `make build` | pass |
+| Build | `make lint` | pass |
+
+## Output
+
+`Run web` - exit 0
+
+```
+ ✓ src/features/playbook/__tests__/playbook.test.ts > tela do playbook > [C52] sem plano a linha do desconto não aparece 8ms
+ ✓ src/features/playbook/__tests__/playbook.test.ts > tela do playbook > [C53] sem call registrada a coluna Nas calls não aparece 14ms
+ ✓ src/features/playbook/__tests__/playbook.test.ts > tela do playbook > [C54b] após publicar o topo mostra a versão nova 21ms
+ ✓ src/features/playbook/__tests__/playbook.test.ts > tela do playbook > [C55b] publicar com revision_conflict mostra O playbook foi alterado em outra aba 19ms
+ ✓ src/features/playbook/__tests__/playbook.test.ts > tela do playbook > [C56b] publish_minimum mostra a mensagem do mínimo 22ms
+ ✓ src/features/playbook/__tests__/playbook.test.ts > tela do playbook > [C57b] incomplete_rows destaca as linhas e mostra Complete ou remova 19ms
+ ✓ src/features/playbook/__tests__/playbook.test.ts > tela do playbook > [C59b] pending_review mostra Confira os valores marcados 19ms
+ ✓ src/features/playbook/__tests__/playbook.test.ts > tela do playbook > [C60] alteração pendente desabilita Publicar com Há alterações não salvas 78ms
+ ✓ src/features/playbook/__tests__/playbook.test.ts > tela do playbook > [C61b] Alterações não publicadas aparece só com diferença e Publicar desabilita sem ela 27ms
+ ✓ src/features/playbook/__tests__/playbook.test.ts > tela do playbook > [C62] sem versão o topo mostra rascunho 8ms
+
+ Test Files  5 passed (5)
+      Tests  59 passed (59)
+   Start at  15:19:02
+   Duration  3.66s (transform 2.08s, setup 0ms, import 4.76s, tests 3.07s, environment 2.86s)
+```
+
+`Run server` - exit 0
+
+```
+PASSED [C82] bloco acima do limite importa até o limite e avisa os itens de fora
+PASSED [C75] arquivo acima de 10 MB responde 413 sem criar tarefa
+PASSED [C89] chamada ao OpenRouter leva provider.zdr true
+[INFO] Tests run: 21, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 2.879 s -- in app.salescopilot.importing.ImportTest
+[INFO] 
+[INFO] Results:
+[INFO] 
+[INFO] Tests run: 64, Failures: 0, Errors: 0, Skipped: 0
+[INFO] 
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD SUCCESS
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time:  14.895 s
+[INFO] Finished at: 2026-11-15T15:19:22-03:00
+[INFO] ------------------------------------------------------------------------
+```

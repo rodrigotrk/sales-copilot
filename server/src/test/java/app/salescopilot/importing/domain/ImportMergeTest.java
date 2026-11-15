@@ -30,6 +30,11 @@ class ImportMergeTest {
         assertThat(invented.cash()).isNull();
         assertThat(invented.installments()).isNull();
         assertThat(invented.review().status()).isEqualTo("pending");
+
+        var seven = merge(PlaybookDocument.empty(), plan(new BigDecimal("7"), null, null), null, null);
+        assertThat(seven.draft().priceTable().plans().getFirst().cash()).isNull();
+        var seventy = merge(PlaybookDocument.empty(), plan(new BigDecimal("70"), null, null), null, null);
+        assertThat(seventy.draft().priceTable().plans().getFirst().cash()).isNull();
     }
 
     @Test

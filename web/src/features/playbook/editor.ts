@@ -101,7 +101,7 @@ export function createEditor(businessId: string) {
       if (same(draft.value, sent)) draft.value = clone(result.draft)
       saved = result.draft
       revision = result.revision
-      state.value!.hasUnpublishedChanges = true
+      state.value!.hasUnpublishedChanges = result.hasUnpublishedChanges
       saveFailed.value = false
       failedField.value = null
       serverErrors.value = {}

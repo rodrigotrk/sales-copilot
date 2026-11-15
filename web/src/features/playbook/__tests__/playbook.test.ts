@@ -34,7 +34,7 @@ const withDraft = (change: (d: Draft) => void, over: Partial<PlaybookState> = {}
 
 describe('tela do playbook', () => {
   it('[C23] menu com cinco itens na ordem e Disponível em breve', async () => {
-    await openPlaybook()
+    const { user } = await openPlaybook()
     const menu = within(screen.getByRole('navigation', { name: 'Menu' }))
     const items = ['Nova call', 'Ao vivo', 'Calls', 'Coach', 'Playbook'].map((label) => menu.getByText(label).closest('a')!)
 
@@ -43,6 +43,10 @@ describe('tela do playbook', () => {
     expect(items.slice(0, 4).map((a) => a.getAttribute('title'))).toEqual(Array(4).fill('Disponível em breve'))
     expect(items[4]!.classList.contains('on')).toBe(true)
     expect(items[4]!.getAttribute('title')).toBeNull()
+
+    expect(screen.queryByRole('status')).toBeNull()
+    await user.click(menu.getByText('Ao vivo'))
+    expect(screen.getByRole('status').textContent).toBe('Disponível em breve')
   })
 
   it('[C27] rascunho vazio mostra título, subtítulo e os dois jeitos de começar', async () => {
@@ -224,6 +228,21 @@ describe('tela do playbook', () => {
     expect((screen.getByRole('button', { name: '+ Etapa' }) as HTMLButtonElement).disabled).toBe(true)
     expect(screen.getByText('Limite de 30 itens neste bloco.')).toBeTruthy()
     expect((screen.getByRole('button', { name: '+ Objeção' }) as HTMLButtonElement).disabled).toBe(false)
+    cleanup()
+
+    await openPlaybook(
+      withDraft((d) => {
+        d.discovery = Array.from({ length: 50 }, (_, i) => ({ id: `d${i}`, information: `I${i}`, question: 'Q' }))
+        d.objections = Array.from({ length: 50 }, (_, i) => ({ id: `o${i}`, name: `O${i}`, leadSays: '', approvedResponse: 'R' }))
+        d.priceTable.plans = Array.from({ length: 20 }, (_, i) => ({
+          id: `p${i}`, name: `P${i}`, extraValue: '', cash: '100.00', installments: null, review: null,
+        }))
+      }),
+    )
+    for (const [button, limit] of [['+ Informação', 50], ['+ Objeção', 50], ['+ Plano', 20]] as const) {
+      expect((screen.getByRole('button', { name: button }) as HTMLButtonElement).disabled).toBe(true)
+      expect(screen.getAllByText(`Limite de ${limit} itens neste bloco.`).length).toBeGreaterThan(0)
+    }
   })
 
   it('[C39] textos aparecem entre aspas e são guardados sem aspas', async () => {
@@ -244,14 +263,14 @@ describe('tela do playbook', () => {
   })
 
   it('[C40] falha ao salvar mantém o valor e oferece Tentar de novo e Desfazer', async () => {
-    let reply: Reply = 'network'
+    let reply: Reply = problem(503, '')
     const { server, calls, user } = await openPlaybook(playbookState(), {
-      [`PUT ${PLAYBOOK_URL}/draft`]: (call) => (reply === 'network' ? reply : acceptLater(call)),
+      [`PUT ${PLAYBOOK_URL}/draft`]: (call) => (reply === 'network' || reply.status >= 500 ? reply : acceptLater(call)),
     })
     const acceptLater = (call: Call) => {
       const body = call.body as { draft: Draft }
       server.state.draft = body.draft
-      return ok({ draft: body.draft, revision: 8 })
+      return ok({ draft: body.draft, revision: 8, hasUnpublishedChanges: true })
     }
 
     await user.click(screen.getByText('Abertura'))
@@ -261,6 +280,9 @@ describe('tela do playbook', () => {
 
     expect(await screen.findByText('Não foi possível salvar. Tente de novo.')).toBeTruthy()
     expect(screen.getByText('Boas-vindas')).toBeTruthy()
+    reply = 'network'
+    await user.click(screen.getByRole('button', { name: 'Tentar de novo' }))
+    expect(await screen.findByText('Não foi possível salvar. Tente de novo.')).toBeTruthy()
 
     reply = ok()
     await user.click(screen.getByRole('button', { name: 'Tentar de novo' }))
@@ -525,6 +547,25 @@ describe('tela do playbook', () => {
       playbookState({ hasUnpublishedChanges: false, latestVersion: { number: 2, publishedAt: '2026-11-15T12:00:00Z' } }),
     )
     expect(screen.queryByText('Alterações não publicadas')).toBeNull()
+    expect((screen.getByRole('button', { name: 'Publicar' }) as HTMLButtonElement).disabled).toBe(true)
+    cleanup()
+
+    let unpublished = true
+    const { user } = await openPlaybook(
+      playbookState({ hasUnpublishedChanges: true, latestVersion: { number: 2, publishedAt: '2026-11-15T12:00:00Z' } }),
+      {
+        [`PUT ${PLAYBOOK_URL}/draft`]: (call) => {
+          const body = call.body as { draft: Draft }
+          return ok({ draft: body.draft, revision: 8, hasUnpublishedChanges: unpublished })
+        },
+      },
+    )
+    unpublished = false
+    await user.click(screen.getByText('Abertura'))
+    await user.clear(screen.getByLabelText('Nome da etapa'))
+    await user.type(screen.getByLabelText('Nome da etapa'), 'Abertura da call')
+    await user.click(document.body)
+    await waitFor(() => expect(screen.queryByText('Alterações não publicadas')).toBeNull())
     expect((screen.getByRole('button', { name: 'Publicar' }) as HTMLButtonElement).disabled).toBe(true)
   })
 

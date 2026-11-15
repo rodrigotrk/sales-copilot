@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { logout, me, playbookPath } from '@/features/auth/session'
 
@@ -16,6 +16,11 @@ const coach = { label: 'Coach', paths: ['M2 9l10-5 10 5-10 5z', 'M6 11v5c3 2 9 2
 const playbookIcon = [
   'M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1L7 17M17 7l2.1-2.1',
 ]
+// AD-059: o menu fica igual à captura e o item ainda não construído avisa ao ser clicado.
+const notice = ref('')
+function soonClicked() {
+  notice.value = 'Disponível em breve'
+}
 const canSwitch = computed(() => (me.value?.businesses.length ?? 0) > 1)
 
 async function signOut() {
@@ -28,7 +33,7 @@ async function signOut() {
   <div class="grid min-h-screen grid-cols-[88px_1fr]">
     <nav class="side" aria-label="Menu">
       <div class="logo"><span>S</span></div>
-      <a v-for="item in soon" :key="item.label" aria-disabled="true" title="Disponível em breve">
+      <a v-for="item in soon" :key="item.label" href="#" aria-disabled="true" title="Disponível em breve" @click.prevent="soonClicked">
         <svg viewBox="0 0 24 24" aria-hidden="true">
           <rect v-if="item.rect" v-bind="item.rect" rx="3" />
           <circle v-if="item.circle" cx="12" cy="12" r="3" />
@@ -37,7 +42,7 @@ async function signOut() {
         <span>{{ item.label }}</span>
       </a>
       <div class="sep"></div>
-      <a aria-disabled="true" title="Disponível em breve">
+      <a href="#" aria-disabled="true" title="Disponível em breve" @click.prevent="soonClicked">
         <svg viewBox="0 0 24 24" aria-hidden="true"><path v-for="d in coach.paths" :key="d" :d="d" /></svg>
         <span>{{ coach.label }}</span>
       </a>
@@ -56,6 +61,7 @@ async function signOut() {
     <div class="min-w-0">
       <header class="top">
         <span class="text-[13px] text-ink2">{{ topText }}</span>
+        <span v-if="notice" class="notice ml-4 text-[13px]" role="status">{{ notice }}</span>
       </header>
       <slot />
     </div>
