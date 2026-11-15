@@ -1,9 +1,9 @@
 # playbook-configuravel proofs
 
-**HEAD**: 8b39ecb
+**HEAD**: f348be9
 **Tree**: clean
 **Shell**: /bin/sh
-**Result**: 132 pass, 0 fail
+**Result**: 140 pass, 0 fail
 
 | Check | Proof | Result |
 | --- | --- | --- |
@@ -137,6 +137,14 @@
 | C88 | `run server / PASSED [C88] varredura apaga arquivos encerrados e órfãos com mais de 1 hora` | pass |
 | C89 | `run server / PASSED [C89] chamada ao OpenRouter leva provider.zdr true` | pass |
 | C90 | `run server / PASSED [C90] módulos do servidor só usam o api de outros módulos` | pass |
+| C92 | `run web / ✓ [C92] Importar documento fica desabilitado com alteração não salva ou com falha` | pass |
+| C93 | `run web / ✓ [C93] falha ao remover uma linha mostra a mensagem com Tentar de novo e Desfazer` | pass |
+| C94 | `run web / ✓ [C94] voltar pelo histórico a outro negócio recria a tela e grava no negócio do endereço` | pass |
+| C95 | `run server / PASSED [C95] e-mail válido de até 320 caracteres entra e grava a sessão` | pass |
+| C96 | `run server / PASSED [C96] rascunho nulo ou com item nulo responde 422 invalid_document sem gravar` | pass |
+| C97 | `run server / PASSED [C97] erros do Spring saem em RFC 9457 com code e type` | pass |
+| C98 | `run server / PASSED [C98] servidor de e-mail fora do ar responde 503 mail_unavailable em RFC 9457` | pass |
+| C99 | `docker compose -f deploy/docker-compose.yml --env-file deploy/.env.example config -q` | pass |
 | Build | `make build` | pass |
 | Build | `make lint` | pass |
 
@@ -145,21 +153,21 @@
 `Run web` - exit 0
 
 ```
- ✓ src/features/playbook/__tests__/playbook.test.ts > tela do playbook > [C52] sem plano a linha do desconto não aparece 8ms
- ✓ src/features/playbook/__tests__/playbook.test.ts > tela do playbook > [C53] sem call registrada a coluna Nas calls não aparece 12ms
- ✓ src/features/playbook/__tests__/playbook.test.ts > tela do playbook > [C54b] após publicar o topo mostra a versão nova 19ms
- ✓ src/features/playbook/__tests__/playbook.test.ts > tela do playbook > [C55b] publicar com revision_conflict mostra O playbook foi alterado em outra aba 18ms
- ✓ src/features/playbook/__tests__/playbook.test.ts > tela do playbook > [C56b] publish_minimum mostra a mensagem do mínimo 19ms
- ✓ src/features/playbook/__tests__/playbook.test.ts > tela do playbook > [C57b] incomplete_rows destaca as linhas e mostra Complete ou remova 18ms
- ✓ src/features/playbook/__tests__/playbook.test.ts > tela do playbook > [C59b] pending_review mostra Confira os valores marcados 18ms
- ✓ src/features/playbook/__tests__/playbook.test.ts > tela do playbook > [C60] alteração pendente desabilita Publicar com Há alterações não salvas 73ms
- ✓ src/features/playbook/__tests__/playbook.test.ts > tela do playbook > [C61b] Alterações não publicadas aparece só com diferença e Publicar desabilita sem ela 83ms
- ✓ src/features/playbook/__tests__/playbook.test.ts > tela do playbook > [C62] sem versão o topo mostra rascunho 8ms
+ ✓ src/features/playbook/__tests__/playbook.test.ts > tela do playbook > [C52] sem plano a linha do desconto não aparece 9ms
+ ✓ src/features/playbook/__tests__/playbook.test.ts > tela do playbook > [C53] sem call registrada a coluna Nas calls não aparece 13ms
+ ✓ src/features/playbook/__tests__/playbook.test.ts > tela do playbook > [C54b] após publicar o topo mostra a versão nova 21ms
+ ✓ src/features/playbook/__tests__/playbook.test.ts > tela do playbook > [C55b] publicar com revision_conflict mostra O playbook foi alterado em outra aba 19ms
+ ✓ src/features/playbook/__tests__/playbook.test.ts > tela do playbook > [C56b] publish_minimum mostra a mensagem do mínimo 21ms
+ ✓ src/features/playbook/__tests__/playbook.test.ts > tela do playbook > [C57b] incomplete_rows destaca as linhas e mostra Complete ou remova 22ms
+ ✓ src/features/playbook/__tests__/playbook.test.ts > tela do playbook > [C59b] pending_review mostra Confira os valores marcados 20ms
+ ✓ src/features/playbook/__tests__/playbook.test.ts > tela do playbook > [C60] alteração pendente desabilita Publicar com Há alterações não salvas 81ms
+ ✓ src/features/playbook/__tests__/playbook.test.ts > tela do playbook > [C61b] Alterações não publicadas aparece só com diferença e Publicar desabilita sem ela 91ms
+ ✓ src/features/playbook/__tests__/playbook.test.ts > tela do playbook > [C62] sem versão o topo mostra rascunho 9ms
 
- Test Files  5 passed (5)
-      Tests  59 passed (59)
-   Start at  15:39:05
-   Duration  3.55s (transform 1.87s, setup 0ms, import 4.13s, tests 3.07s, environment 2.86s)
+ Test Files  6 passed (6)
+      Tests  62 passed (62)
+   Start at  16:03:55
+   Duration  3.96s (transform 2.48s, setup 0ms, import 6.05s, tests 3.72s, environment 3.82s)
 ```
 
 `Run server` - exit 0
@@ -168,16 +176,22 @@
 PASSED [C82] bloco acima do limite importa até o limite e avisa os itens de fora
 PASSED [C75] arquivo acima de 10 MB responde 413 sem criar tarefa
 PASSED [C89] chamada ao OpenRouter leva provider.zdr true
-[INFO] Tests run: 21, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 2.732 s -- in app.salescopilot.importing.ImportTest
+[INFO] Tests run: 21, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 2.798 s -- in app.salescopilot.importing.ImportTest
 [INFO] 
 [INFO] Results:
 [INFO] 
-[INFO] Tests run: 65, Failures: 0, Errors: 0, Skipped: 0
+[INFO] Tests run: 69, Failures: 0, Errors: 0, Skipped: 0
 [INFO] 
 [INFO] ------------------------------------------------------------------------
 [INFO] BUILD SUCCESS
 [INFO] ------------------------------------------------------------------------
-[INFO] Total time:  20.888 s
-[INFO] Finished at: 2026-11-15T15:39:30-03:00
+[INFO] Total time:  21.699 s
+[INFO] Finished at: 2026-11-15T16:04:21-03:00
 [INFO] ------------------------------------------------------------------------
+```
+
+`docker compose -f deploy/docker-compose.yml --env-file deploy/.env.example config -q` - exit 0
+
+```
+(no output)
 ```

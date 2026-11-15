@@ -352,8 +352,8 @@ Proof: run server | PASSED [C97] erros do Spring saem em RFC 9457 com code e typ
 **C98** - Servidor de e-mail fora do ar faz o pedido de link responder `503` `mail_unavailable` em RFC 9457 (AC 2, AD-057)
 Proof: run server | PASSED [C98] servidor de e-mail fora do ar responde 503 mail_unavailable em RFC 9457
 
-**C99** - `deploy/` tem Docker Compose válido com Postgres, servidor e Caddy, e o Caddyfile das rotas (Landing 1, AD-004, AD-033)
-Proof: `docker compose -f deploy/docker-compose.yml --env-file deploy/.env.example config -q`
+**C99** - `deploy/` tem Docker Compose válido com os serviços `postgres`, `server` e `caddy`, e o Caddyfile é válido e encaminha ao servidor `/api/*`, `/ott/*`, `/login/ott`, `/login/identity-link`, `/logout`, `/oauth2/*` e `/login/oauth2/*` (Landing 1, AD-004, AD-033)
+Proof: `sh deploy/verify.sh`
 
 ## Coverage
 
@@ -402,7 +402,7 @@ Proof: `docker compose -f deploy/docker-compose.yml --env-file deploy/.env.examp
 ## Handoff
 
 - **Settled mid-build:** "Vertical slice + Modulith (Recomendado)"; "Por funcionalidade (Recomendado)"; "Meio-termo (Recomendado)"; "Sim, Makefile (Recomendado)" - registrados em AD-053 a AD-056; "nao esquece de aplicar o RFC 9457: Problem Details for HTTP APIs" - AD-057; "prefira arquivos yml do que properties" - AD-058; textos do app web: "Sim, confirmo (Recomendado)"; menu: "Aviso ao clicar (Recomendado)" e "Sim, no rodapé do menu (Recomendado)" - AD-059; validação de telas: "Como a playwright-skill" - AD-060
-- **Dispatched:** Verifier at `33a3580` - returned; screens round 1 at `33a3580` - returned; screens round 2 at `fa433df` - returned
+- **Dispatched:** Verifier at `33a3580` - returned; screens round 1 at `33a3580` - returned; screens round 2 at `fa433df` - returned; Verifier for C92-C99 at `f348be9`; screens round 2 again at `f348be9` after the Codex fixes
 - **Boundary:** C1-C91 closed at `a155717`; gate `validate_verification.py` 0 errors
 - **Abandoned:** suíte Playwright versionada com `toHaveScreenshot` - AD-060 escolheu a caminhada avulsa
 - **Walked:** `make e2e-server` (Postgres de teste com os papéis de produção, e-mails gravados em arquivo) e o app web em `vite`, no Chrome com janela 1440 x 1300. Sem sessão, `/n/qualquer/playbook` levou a `/entrar` com "Entrar com Google" e o campo de e-mail; "Enviar link de acesso" mostrou "Enviamos um link de acesso para gestor@exemplo.test."; o link abriu "Entrar como gestor@exemplo.test?" e "Entrar" criou a sessão; a pessoa liberada viu o formulário de criação, criou o negócio e caiu em `/n/<id>/playbook` vazio; "Escrever o playbook" e "+ Etapa" com digitação e Tab gravaram a etapa (revisão 2); com o playbook de exemplo gravado pela API, clicar em "Garantias" abriu a edição no lugar e a saída do campo gravou "Garantias e suporte"; "Publicar" levou o topo a "Playbook: Venda consultiva · versão 1" e "Publicar" ficou desabilitado. A imagem de C29 foi salva sobre o build de produção (`vite preview`), com o mouse fora das linhas, em `captures/tela-6-playbook.running.png`. O gestor chega a cada estado pelo link de acesso, pela criação do negócio e pelo menu Playbook.

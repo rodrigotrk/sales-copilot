@@ -99,6 +99,14 @@
 | C89 | `ImportTest` `[C89] chamada ao OpenRouter leva provider.zdr true` | yes |
 | C90 | `ModulesTest` `[C90] módulos do servidor só usam o api de outros módulos` | yes |
 | C91 | `http.test.ts` `[C91] sem cookie XSRF-TOKEN busca o token antes do primeiro POST e o envia` | yes |
+| C92 | `review.test.ts` `[C92] Importar documento fica desabilitado com alteração não salva ou com falha` | no - só o estado de falha; com a gravação em andamento ("salvando") o botão não é afirmado, e tirar `saving` de `unsaved` passaria |
+| C93 | `review.test.ts` `[C93] falha ao remover uma linha mostra a mensagem com Tentar de novo e Desfazer` | no - só "Remover"; falha ao acrescentar e ao reordenar não é exercitada |
+| C94 | `review.test.ts` `[C94] voltar pelo histórico a outro negócio recria a tela e grava no negócio do endereço` | yes |
+| C95 | `LoginLinkTest` `[C95] e-mail válido de até 320 caracteres entra e grava a sessão` | yes - o teste usa cerca de 130 e 323 caracteres; exemplo próprio a f348be9: 320 entra e grava a sessão, 321 responde `422` `invalid_email` |
+| C96 | `PlaybookTest` `[C96] rascunho nulo ou com item nulo responde 422 invalid_document sem gravar` | yes - item nulo só em `stages`; `DraftRules.validate` trata os quatro blocos na mesma condição |
+| C97 | `ProblemsTest` `[C97] erros do Spring saem em RFC 9457 com code e type` | yes - `type` e o tipo de conteúdo só afirmados no JSON malformado; os outros três afirmam `code` |
+| C98 | `LoginLinkTest` `[C98] servidor de e-mail fora do ar responde 503 mail_unavailable em RFC 9457` | yes |
+| C99 | `docker compose -f deploy/docker-compose.yml --env-file deploy/.env.example config -q` | no - prova só que o Compose é válido; passaria sem o serviço `postgres`, `server` ou `caddy` e não lê o Caddyfile nem suas rotas |
 
 ## Findings
 
@@ -118,3 +126,4 @@
 | Revisão externa (Codex) 6: faltam Docker Compose e Caddyfile prometidos no Landing 1 | `deploy/` só tinha o script dos papéis | entregar Compose, Caddyfile e imagens | `8f95557` - Compose, Caddyfile, Dockerfiles e `.env.example`, subidos localmente; C99 |
 | Revisão externa (Codex) 7: rascunho nulo provoca `NullPointerException` | `DraftRules.validate` acessava campos sem conferir nulo | responder erro estruturado | `8f95557` - `422` `invalid_document` para rascunho ou item nulo; C96 |
 | Revisão externa (Codex) 8: erros nativos do Spring saem sem `code` e `type` | `Problems` só tratava `ApiException` | uniformizar os erros do Spring | `8f95557` - `Problems` estende `ResponseEntityExceptionHandler`, e a falha de SMTP sai como `503` `mail_unavailable`; C97, C98 |
+| Asserções mais frouxas que o critério em C92, C93 e C99: C92 não afirma o botão desabilitado durante a gravação; C93 só prova a falha de "Remover", sem acrescentar nem reordenar; C99 passa com qualquer Compose válido | `review.test.ts` `[C92]`, `[C93]`; prova de C99 é só `docker compose ... config -q`. O código a f348be9 cobre os casos: `unsaved` inclui `saving` e a recuperação vale para qualquer gravação sem campo | C92: segurar o PUT pendente e afirmar o botão desabilitado; C93: falha em "+ Etapa" e numa seta; C99: acrescentar à prova a lista de serviços (`config --services` igual a `postgres`, `server`, `caddy`) e `caddy validate` do Caddyfile |  `CLOSE` |

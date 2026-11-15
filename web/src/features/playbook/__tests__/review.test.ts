@@ -8,11 +8,26 @@ const button = (name: string) => screen.getByRole('button', { name }) as HTMLBut
 
 describe('correções da revisão de código', () => {
   it('[C92] Importar documento fica desabilitado com alteração não salva ou com falha', async () => {
-    const { routes } = playbookServer(playbookState())
-    fakeApi({ ...routes, 'PUT /api/businesses/b1/playbook/draft': problem(503, '') })
+    let release: () => void = () => {}
+    let pending = true
+    const { routes, acceptDraft } = playbookServer(playbookState())
+    fakeApi({
+      ...routes,
+      'PUT /api/businesses/b1/playbook/draft': (call: Call) =>
+        pending ? new Promise((resolve) => (release = () => resolve(acceptDraft(call)))) : problem(503, ''),
+    })
     const { user } = await renderApp('/n/b1/playbook')
     await screen.findByText(/^Playbook: /)
     expect(button('Importar documento').disabled).toBe(false)
+
+    await user.click(screen.getByText('Diagnóstico da conta de luz'))
+    await user.clear(screen.getByLabelText('Nome da etapa'))
+    await user.type(screen.getByLabelText('Nome da etapa'), 'Diagnóstico')
+    await user.click(document.body)
+    await waitFor(() => expect(button('Importar documento').disabled).toBe(true))
+    pending = false
+    release()
+    await waitFor(() => expect(button('Importar documento').disabled).toBe(false))
 
     await user.click(screen.getByText('Abertura'))
     await user.clear(screen.getByLabelText('Nome da etapa'))
@@ -45,6 +60,20 @@ describe('correções da revisão de código', () => {
     fail = false
     await user.click(await screen.findByRole('button', { name: 'Tentar de novo' }))
     await waitFor(() => expect(server.state.draft.stages.map((s) => s.id)).toEqual(['s2', 's3']))
+
+    fail = true
+    await user.click(stages.getAllByRole('button', { name: 'Descer etapa' })[0]!)
+    expect(await screen.findByText('Não foi possível salvar. Tente de novo.')).toBeTruthy()
+    await user.click(screen.getByRole('button', { name: 'Desfazer' }))
+    await waitFor(() => expect(screen.queryByText('Não foi possível salvar. Tente de novo.')).toBeNull())
+
+    await user.click(screen.getByRole('button', { name: '+ Etapa' }))
+    await user.keyboard('Fechamento')
+    await user.tab()
+    expect(await screen.findByText('Não foi possível salvar. Tente de novo.')).toBeTruthy()
+    fail = false
+    await user.click(screen.getByRole('button', { name: 'Tentar de novo' }))
+    await waitFor(() => expect(server.state.draft.stages.map((s) => s.name)).toContain('Fechamento'))
   })
 
   it('[C94] voltar pelo histórico a outro negócio recria a tela e grava no negócio do endereço', async () => {
