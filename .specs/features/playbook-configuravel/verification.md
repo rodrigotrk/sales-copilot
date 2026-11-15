@@ -31,7 +31,7 @@
 | C21 | `BusinessTest` `[C21] chave composta recusa business_id divergente` | yes |
 | C22 | `BusinessTest` `[C22] closer recebe 403 nas escritas` | yes |
 | C23 | `playbook.test.ts` `[C23] menu com cinco itens na ordem e Disponível em breve` | yes |
-| C24 | `LoginLinkTest` `[C24a] Sair invalida a sessão e o cookie antigo recebe 401`; `auth.test.ts` `[C24b]` | yes |
+| C24 | `LoginLinkTest` `[C24a] Sair invalida a sessão e o cookie antigo recebe 401`; `auth.test.ts` `[C24b]` | yes - a `6793cee`, `[C24a]` afirma `204` no logout, `401` em RFC 9457 no cookie antigo e, sem sessão, `401` com `type` e `code` `unauthenticated` |
 | C25 | `LoginLinkTest` `[C25] sessão expira com 7 dias sem uso ou 30 dias desde o login` | yes |
 | C26 | `LoginLinkTest` `[C26] sessão gravada no Postgres vale para outra instância do repositório` | yes |
 | C27 | `playbook.test.ts` `[C27] rascunho vazio mostra título, subtítulo e os dois jeitos de começar` | yes |
@@ -84,11 +84,11 @@
 | C74 | `ImportTest` `[C74] extensão não aceita responde 415 sem criar tarefa`; `importing.test.ts` `[C74b]` | yes |
 | C75 | `ImportTest` `[C75] arquivo acima de 10 MB responde 413 sem criar tarefa`; `importing.test.ts` `[C74b]` | yes - 10 MB + 1 byte recusa, 10 MB aceita |
 | C76 | `ImportTest` `[C76] segunda importação com tarefa ativa responde 409` | yes |
-| C77 | `ImportTest` `[C77] texto acima de 100 mil caracteres falha sem chamar o modelo`; `importing.test.ts` `[C74b]` | no - só texto colado; num .docx o limite conta o XHTML do Tika, não o texto extraído (achado) |
+| C77 | `ImportTest` `[C77] texto acima de 100 mil caracteres falha sem chamar o modelo`; `importing.test.ts` `[C74b]` | yes - texto colado com 100.000 e 100.001, .docx com 100.001 e 97.000 e .docx com título de 100.001 caracteres; exemplo próprio: .docx com título e descrição de 200.000 cada e corpo de 99.000 passa, corpo de 100.001 dá `text_too_long`. No .docx o limite conta também as quebras de linha do texto extraído |
 | C78 | `ImportTest` `[C78] PDF sem texto falha sem chamar o modelo`; `importing.test.ts` `[C74b]` | yes |
 | C79 | `ImportTest` `[C79] link que não é Google Docs ou não público falha sem mudar o rascunho`; `importing.test.ts` `[C74b]` | yes |
 | C80 | `ImportTest` `[C80] documento sem itens falha sem mudar o rascunho`; `importing.test.ts` `[C74b]` | yes |
-| C81 | `ImportTest` `[C81] três falhas do modelo encerram a tarefa em failed sem mudar o rascunho`; `importing.test.ts` `[C74b]` | no - usa texto que não é JSON; JSON válido fora do schema e a demora acima de 120 s não são exercitados, e o primeiro não é repetido (achado) |
+| C81 | `ImportTest` `[C81] três falhas do modelo encerram a tarefa em failed sem mudar o rascunho`; `importing.test.ts` `[C74b]` | yes - cada uma das três respostas fora do schema (nome numérico, parcelas `2.9`, campo obrigatório ausente) precisa ser recusada, senão a tarefa termina em `done`; exemplo próprio contra `parse`: `cash` em texto, `leadSays` numérico, propriedade extra em `priceTable`, `approvedResponse` nulo, raiz em lista e etapa em texto, todos recusados. A demora de 120 s é provada pelo valor de `spring.ai.openai.timeout`, propriedade que existe no Spring AI 2.0.1, não por uma chamada lenta |
 | C82 | `ImportTest` `[C82] bloco acima do limite importa até o limite e avisa os itens de fora` | yes |
 | C83 | `ImportTest` `[C83] conclusão que não marca a tarefa não grava linhas` | yes |
 | C84 | `ImportTest` `[C84] execução com concessão vencida não conclui depois de outra assumir` | yes |
@@ -102,11 +102,14 @@
 | C92 | `review.test.ts` `[C92] Importar documento fica desabilitado com alteração não salva ou com falha` | no - só o estado de falha; com a gravação em andamento ("salvando") o botão não é afirmado, e tirar `saving` de `unsaved` passaria |
 | C93 | `review.test.ts` `[C93] falha ao remover uma linha mostra a mensagem com Tentar de novo e Desfazer` | no - só "Remover"; falha ao acrescentar e ao reordenar não é exercitada |
 | C94 | `review.test.ts` `[C94] voltar pelo histórico a outro negócio recria a tela e grava no negócio do endereço` | yes |
-| C95 | `LoginLinkTest` `[C95] e-mail válido de até 320 caracteres entra e grava a sessão` | yes - o teste usa cerca de 130 e 323 caracteres; exemplo próprio a f348be9: 320 entra e grava a sessão, 321 responde `422` `invalid_email` |
-| C96 | `PlaybookTest` `[C96] rascunho nulo ou com item nulo responde 422 invalid_document sem gravar` | yes - item nulo só em `stages`; `DraftRules.validate` trata os quatro blocos na mesma condição |
+| C95 | `LoginLinkTest` `[C95] e-mail válido de até 320 caracteres entra e grava a sessão` | yes - 320 caracteres exatos entram e ficam em `spring_session.principal_name`; 321 responde `422` `invalid_email` |
+| C96 | `PlaybookTest` `[C96] rascunho nulo ou com item nulo responde 422 invalid_document sem gravar` | yes - acrescenta plano com `id` nulo, que responde exatamente `invalid_id`, `invalid_cash` e `invalid_installments`, com a revisão em zero; item nulo só em `stages`, e `DraftRules.validate` trata os quatro blocos na mesma condição |
 | C97 | `ProblemsTest` `[C97] erros do Spring saem em RFC 9457 com code e type` | yes - `type` e o tipo de conteúdo só afirmados no JSON malformado; os outros três afirmam `code` |
 | C98 | `LoginLinkTest` `[C98] servidor de e-mail fora do ar responde 503 mail_unavailable em RFC 9457` | yes |
-| C99 | `docker compose -f deploy/docker-compose.yml --env-file deploy/.env.example config -q` | no - prova só que o Compose é válido; passaria sem o serviço `postgres`, `server` ou `caddy` e não lê o Caddyfile nem suas rotas |
+| C99 | `sh deploy/verify.sh` | no - confere os serviços e lê a configuração gerada por `caddy adapt`, mas aceita encaminhamento parcial: com `handle @server { handle /api/health { reverse_proxy server:8080 } respond 404 }` o script imprime `deploy ok`, e as sete rotas respondem 404 (achado). Tirar `/logout` do matcher falha, como esperado |
+| C100 | `review.test.ts` `[C100] remover a linha com erro local libera Publicar e Importar documento` | yes - tirar o filtro de `localErrors` em `removeItem` faz o teste falhar; exemplo próprio: erro na parcela da segunda linha, removida, libera os dois botões e deixa só `p1` no rascunho |
+| C101 | `review.test.ts` `[C101] sessão expirada durante a edição leva a /entrar na requisição seguinte` | yes - sem a chamada a `onUnauthenticated` o teste falha; afirma a rota `/entrar`, a sessão local vazia e a ausência da mensagem de falha |
+| C102 | `review.test.ts` `[C102] parcela acima de R$ 10 milhões é aceita, sem o teto do preço à vista` | yes - com `parseMoney(v)` sem `capped: false` o teste falha; exemplo próprio contra `parseMoney`: `10.000.000,01` recusado com teto e aceito sem, `99999999999999999999,99` sem teto sai exato, `007` vira `7.00`, `0,00` só com `allowZero`. O teto do preço à vista não é afirmado aqui |
 
 ## Findings
 
@@ -136,3 +139,4 @@
 | Revisão externa (Codex, rodada 2) 7: parcela acima de R$ 10 milhões recusada na tela | `parseMoney` aplicava o teto do preço à vista | teto só no preço à vista | `43e63a9` - opção `capped`; C102 |
 | Revisão externa (Codex, rodada 2) 8: C95 passa com a coluna em 200 caracteres | o teste usava e-mail de cerca de 130 caracteres | testar 320 e 321 | `43e63a9` - C95 com 320 gravado em `principal_name` e 321 recusado; mutação para 200 falha |
 | Revisão externa (Codex, rodada 2) 9: `verify.sh` aprova rota só citada em comentário | o script procurava texto no Caddyfile | conferir o encaminhamento na configuração do Caddy | `43e63a9` - `caddy adapt` e leitura das rotas com `reverse_proxy` para `server:8080`; a mutação do Codex falha; C99 |
+| Revisão externa (Codex, rodada 2) 9 fechada só em parte: `verify.sh` aprova Caddyfile que encaminha ao servidor só parte de uma rota | `proxies_to_server` devolve verdadeiro se qualquer rota aninhada faz `reverse_proxy`, sem olhar o matcher dela; com `handle @server { handle /api/health { reverse_proxy server:8080 } respond 404 }` o script imprime `deploy ok` | contar o caminho só quando o `reverse_proxy` está na própria rota ou numa rota aninhada sem matcher de caminho mais estreito | |

@@ -352,7 +352,7 @@ Proof: run server | PASSED [C97] erros do Spring saem em RFC 9457 com code e typ
 **C98** - Servidor de e-mail fora do ar faz o pedido de link responder `503` `mail_unavailable` em RFC 9457 (AC 2, AD-057)
 Proof: run server | PASSED [C98] servidor de e-mail fora do ar responde 503 mail_unavailable em RFC 9457
 
-**C99** - `deploy/` tem Docker Compose válido com os serviços `postgres`, `server` e `caddy`, e o Caddyfile é válido e encaminha ao servidor `/api/*`, `/ott/*`, `/login/ott`, `/login/identity-link`, `/logout`, `/oauth2/*` e `/login/oauth2/*` (Landing 1, AD-004, AD-033)
+**C99** - `deploy/` tem Docker Compose válido com os serviços `postgres`, `server` e `caddy`, e o Caddy rodando com o Caddyfile real entrega ao servidor `/api/*`, `/ott/*`, `/login/ott`, `/login/identity-link`, `/logout`, `/oauth2/*` e `/login/oauth2/*`, e o `index.html` do app nas demais rotas (Landing 1, AD-004, AD-033)
 Proof: `sh deploy/verify.sh`
 
 **C100** - Remover a linha que tem erro local apaga o erro e libera "Publicar" e "Importar documento" depois da gravação (AC 36, AC 46, AC 60)

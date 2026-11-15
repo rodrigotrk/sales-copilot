@@ -1,38 +1,42 @@
 #!/bin/sh
-# Prova do C99: o Compose tem Postgres, servidor e Caddy, e o Caddy, na configuração que ele mesmo
-# gera a partir do Caddyfile, encaminha ao Spring as rotas da API, do login e do logout.
+# Prova do C99: o Compose tem Postgres, servidor e Caddy, e o Caddy, rodando com o Caddyfile real,
+# entrega ao servidor as rotas da API, do login e do logout, e entrega o app nas demais.
 set -eu
 cd "$(dirname "$0")"
 services=$(docker compose -f docker-compose.yml --env-file .env.example config --services | sort | tr '\n' ' ')
 [ "$services" = "caddy postgres server " ] || { echo "serviços inesperados: $services"; exit 1; }
-docker run --rm -v "$PWD/Caddyfile:/etc/caddy/Caddyfile:ro" caddy:2 \
-	caddy adapt --config /etc/caddy/Caddyfile --adapter caddyfile --validate 2>/dev/null |
-	python3 -c '
-import json, sys
 
-required = ["/api/*", "/ott/*", "/login/ott", "/login/identity-link", "/logout", "/oauth2/*", "/login/oauth2/*"]
+run=verify-deploy-$$
+cleanup() {
+	docker rm -f "$run-server" "$run-caddy" >/dev/null 2>&1 || true
+	docker network rm "$run" >/dev/null 2>&1 || true
+}
+trap cleanup EXIT
+docker network create "$run" >/dev/null
+# No lugar do Spring, um servidor que responde "servidor" em qualquer caminho.
+docker run -d --name "$run-server" --network "$run" --network-alias server caddy:2 \
+	caddy respond --listen :8080 --body servidor >/dev/null
+docker run -d --name "$run-caddy" --network "$run" -e SITE_ADDRESS=:80 \
+	-v "$PWD/Caddyfile:/etc/caddy/Caddyfile:ro" caddy:2 >/dev/null
+docker exec "$run-caddy" sh -c 'mkdir -p /srv && echo app > /srv/index.html'
 
-def proxies_to_server(handlers):
-    for handler in handlers:
-        if handler.get("handler") == "reverse_proxy" and any(u.get("dial") == "server:8080" for u in handler.get("upstreams", [])):
-            return True
-        if any(proxies_to_server(route.get("handle", [])) for route in handler.get("routes", [])):
-            return True
-    return False
+body() {
+	for _ in 1 2 3 4 5 6 7 8 9 10; do
+		if out=$(docker exec "$run-caddy" wget -qO- "http://localhost$1" 2>/dev/null); then
+			echo "$out"
+			return
+		fi
+		sleep 1
+	done
+	echo "sem resposta"
+}
 
-def proxied_paths(routes):
-    paths = set()
-    for route in routes:
-        if proxies_to_server(route.get("handle", [])):
-            paths.update(p for m in route.get("match", []) for p in m.get("path", []))
-        for handler in route.get("handle", []):
-            paths |= proxied_paths(handler.get("routes", []))
-    return paths
-
-config = json.load(sys.stdin)
-routes = [r for server in config["apps"]["http"]["servers"].values() for r in server["routes"]]
-missing = [p for p in required if p not in proxied_paths(routes)]
-if missing:
-    sys.exit("rotas sem encaminhamento ao servidor: " + " ".join(missing))
-'
+for path in /api/me /ott/generate /login/ott /login/identity-link /logout /oauth2/authorization/google /login/oauth2/code/google; do
+	got=$(body "$path")
+	[ "$got" = servidor ] || { echo "rota não encaminhada ao servidor: $path ($got)"; exit 1; }
+done
+for path in / /negocios /n/b1/playbook /entrar; do
+	got=$(body "$path")
+	[ "$got" = app ] || { echo "rota do app não serve o index.html: $path ($got)"; exit 1; }
+done
 echo "deploy ok"
