@@ -1,9 +1,9 @@
 # playbook-configuravel proofs
 
-**HEAD**: 1485400
+**HEAD**: f469976
 **Tree**: clean
 **Shell**: /bin/sh
-**Result**: 140 pass, 0 fail
+**Result**: 143 pass, 0 fail
 
 | Check | Proof | Result |
 | --- | --- | --- |
@@ -145,6 +145,9 @@
 | C97 | `run server / PASSED [C97] erros do Spring saem em RFC 9457 com code e type` | pass |
 | C98 | `run server / PASSED [C98] servidor de e-mail fora do ar responde 503 mail_unavailable em RFC 9457` | pass |
 | C99 | `sh deploy/verify.sh` | pass |
+| C100 | `run web / ✓ [C100] remover a linha com erro local libera Publicar e Importar documento` | pass |
+| C101 | `run web / ✓ [C101] sessão expirada durante a edição leva a /entrar na requisição seguinte` | pass |
+| C102 | `run web / ✓ [C102] parcela acima de R$ 10 milhões é aceita, sem o teto do preço à vista` | pass |
 | Build | `make build` | pass |
 | Build | `make lint` | pass |
 
@@ -154,20 +157,20 @@
 
 ```
  ✓ src/features/playbook/__tests__/playbook.test.ts > tela do playbook > [C52] sem plano a linha do desconto não aparece 9ms
- ✓ src/features/playbook/__tests__/playbook.test.ts > tela do playbook > [C53] sem call registrada a coluna Nas calls não aparece 13ms
- ✓ src/features/playbook/__tests__/playbook.test.ts > tela do playbook > [C54b] após publicar o topo mostra a versão nova 20ms
+ ✓ src/features/playbook/__tests__/playbook.test.ts > tela do playbook > [C53] sem call registrada a coluna Nas calls não aparece 12ms
+ ✓ src/features/playbook/__tests__/playbook.test.ts > tela do playbook > [C54b] após publicar o topo mostra a versão nova 21ms
  ✓ src/features/playbook/__tests__/playbook.test.ts > tela do playbook > [C55b] publicar com revision_conflict mostra O playbook foi alterado em outra aba 18ms
- ✓ src/features/playbook/__tests__/playbook.test.ts > tela do playbook > [C56b] publish_minimum mostra a mensagem do mínimo 20ms
- ✓ src/features/playbook/__tests__/playbook.test.ts > tela do playbook > [C57b] incomplete_rows destaca as linhas e mostra Complete ou remova 20ms
- ✓ src/features/playbook/__tests__/playbook.test.ts > tela do playbook > [C59b] pending_review mostra Confira os valores marcados 20ms
- ✓ src/features/playbook/__tests__/playbook.test.ts > tela do playbook > [C60] alteração pendente desabilita Publicar com Há alterações não salvas 79ms
- ✓ src/features/playbook/__tests__/playbook.test.ts > tela do playbook > [C61b] Alterações não publicadas aparece só com diferença e Publicar desabilita sem ela 86ms
+ ✓ src/features/playbook/__tests__/playbook.test.ts > tela do playbook > [C56b] publish_minimum mostra a mensagem do mínimo 21ms
+ ✓ src/features/playbook/__tests__/playbook.test.ts > tela do playbook > [C57b] incomplete_rows destaca as linhas e mostra Complete ou remova 19ms
+ ✓ src/features/playbook/__tests__/playbook.test.ts > tela do playbook > [C59b] pending_review mostra Confira os valores marcados 18ms
+ ✓ src/features/playbook/__tests__/playbook.test.ts > tela do playbook > [C60] alteração pendente desabilita Publicar com Há alterações não salvas 74ms
+ ✓ src/features/playbook/__tests__/playbook.test.ts > tela do playbook > [C61b] Alterações não publicadas aparece só com diferença e Publicar desabilita sem ela 81ms
  ✓ src/features/playbook/__tests__/playbook.test.ts > tela do playbook > [C62] sem versão o topo mostra rascunho 9ms
 
  Test Files  6 passed (6)
-      Tests  62 passed (62)
-   Start at  16:10:46
-   Duration  3.86s (transform 2.42s, setup 0ms, import 5.49s, tests 3.89s, environment 3.85s)
+      Tests  65 passed (65)
+   Start at  17:25:06
+   Duration  3.33s (transform 2.31s, setup 0ms, import 4.98s, tests 3.81s, environment 2.30s)
 ```
 
 `Run server` - exit 0
@@ -176,7 +179,7 @@
 PASSED [C82] bloco acima do limite importa até o limite e avisa os itens de fora
 PASSED [C75] arquivo acima de 10 MB responde 413 sem criar tarefa
 PASSED [C89] chamada ao OpenRouter leva provider.zdr true
-[INFO] Tests run: 21, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 2.944 s -- in app.salescopilot.importing.ImportTest
+[INFO] Tests run: 21, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 2.836 s -- in app.salescopilot.importing.ImportTest
 [INFO] 
 [INFO] Results:
 [INFO] 
@@ -185,21 +188,13 @@ PASSED [C89] chamada ao OpenRouter leva provider.zdr true
 [INFO] ------------------------------------------------------------------------
 [INFO] BUILD SUCCESS
 [INFO] ------------------------------------------------------------------------
-[INFO] Total time:  22.177 s
-[INFO] Finished at: 2026-11-15T16:11:13-03:00
+[INFO] Total time:  21.133 s
+[INFO] Finished at: 2026-11-15T17:25:31-03:00
 [INFO] ------------------------------------------------------------------------
 ```
 
 `sh deploy/verify.sh` - exit 0
 
 ```
-Valid configuration
 deploy ok
-{"level":"info","ts":1794769874.0294518,"msg":"using config from file","file":"/etc/caddy/Caddyfile"}
-{"level":"info","ts":1794769874.0302541,"msg":"adapted config to JSON","adapter":"caddyfile"}
-{"level":"info","ts":1794769874.0305746,"logger":"http.auto_https","msg":"server is listening only on the HTTPS port but has no TLS connection policies; adding one to enable TLS","server_name":"srv0","https_port":443}
-{"level":"info","ts":1794769874.0305905,"logger":"http.auto_https","msg":"enabling automatic HTTP->HTTPS redirects","server_name":"srv0"}
-{"level":"info","ts":1794769874.030614,"logger":"tls.cache.maintenance","msg":"started background certificate maintenance","cache":"0x568834cc0900"}
-{"level":"info","ts":1794769874.0378737,"logger":"http","msg":"servers shutting down with eternal grace period"}
-{"level":"info","ts":1794769874.0379403,"logger":"tls.cache.maintenance","msg":"stopped background certificate maintenance","cache":"0x568834cc0900"}
 ```
