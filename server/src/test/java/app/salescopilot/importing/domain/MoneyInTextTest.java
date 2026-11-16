@@ -15,7 +15,8 @@ class MoneyInTextTest {
     void onlyIsolatedNumbersAuthorize() {
         // Nenhum pedaço destas grafias pode autorizar 1, 3, 7, 10 ou 0.
         for (String text : List.of("R$ 1E\u20103", "R$ 1E\u20113", "R$ 1E\u20123", "R$ 1E\u207B3", "1e\u00B3", "1E\uFF13",
-                "1E+\u22123", "1E 3", "1\u00D710\u00B3", "1x10^3", "R$ 7\u00A0000", "R$ 7\u202F000", "R$ 7'000")) {
+                "1E+\u22123", "1E 3", "1\u00D710\u00B3", "1x10^3", "R$ 7\u00A0000", "R$ 7\u202F000", "R$ 7'000",
+                "R$ 1 \u00D7 10\u00B3", "1,5 x 10^3", "1 E 3", "1E++3", "R$ 7 000")) {
             var money = new MoneyInText(text);
             for (String value : List.of("1", "3", "7", "10", "0")) {
                 assertThat(money.contains(new BigDecimal(value))).as(text + " autoriza " + value).isFalse();
@@ -30,6 +31,12 @@ class MoneyInTextTest {
                 """);
         for (String value : List.of("4500", "6", "800", "4500.50", "12", "1200", "300", "1400", "99", "5")) {
             assertThat(usual.contains(new BigDecimal(value))).as(value).isTrue();
+        }
+        // Listas, tabelas e o "e" de "e também" separam valores.
+        var lists = new MoneyInText("À vista: R$ 4.500\n12x de R$ 450\n1. Plano A: R$ 3.900\n2. Plano B: R$ 5.200\n"
+                + "Ouro\t6.800\t24\t10%\nR$ 2.500 e 10x de R$ 300");
+        for (String value : List.of("4500", "12", "450", "3900", "5200", "6800", "24", "10", "2500", "300")) {
+            assertThat(lists.contains(new BigDecimal(value))).as("lista: " + value).isTrue();
         }
     }
 }

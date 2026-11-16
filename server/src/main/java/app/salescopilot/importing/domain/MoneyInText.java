@@ -74,6 +74,7 @@ public final class MoneyInText {
     private static final String BEFORE = "$([{\"'*•:;,/+-\u2212\uFE63\uFF0D\u2013\u2014";
     /** Depois do número: pontuação e fechamento. Letras e espaço têm regra própria. */
     private static final String AFTER = ".,;:!?)]}\"'*%/";
+    private static final String SIGNS = "+-\u2212\uFE63\uFF0D\u2010\u2011\u2012\u207B";
 
     /**
      * Só um número isolado autoriza um valor (AD-064). Um pedaço de outra grafia nunca entra: "1e³", "1×10³",
@@ -81,15 +82,14 @@ public final class MoneyInText {
      * Valem os delimitadores comuns de preço: "R$ 4.500 à vista", "6x de R$ 800", "R$ 4.500em 6x" (palavra).
      */
     private static boolean isIsolated(String text, int start, int end) {
+        if (groupsThousands(text, start, end) || continuesExponent(text, start) || startsExponent(text, end)) {
+            return false;
+        }
         if (start > 0) {
             char before = text.charAt(start - 1);
             if (isSpace(before)) {
+                // "1E 3" ou "1x 3": a letra colada a um dígito antes do espaço faz deste número a continuação de outro.
                 int previous = skipSpaces(text, start - 1);
-                // "7 000": o espaço separa milhares de outro número, não dois valores.
-                if (previous >= 0 && Character.isDigit(text.charAt(previous))) {
-                    return false;
-                }
-                // "1E 3": a letra colada a um dígito antes do espaço faz deste número a continuação de outro.
                 if (previous >= 1 && Character.isLetter(text.charAt(previous)) && Character.isDigit(text.charAt(previous - 1))) {
                     return false;
                 }
@@ -104,15 +104,8 @@ public final class MoneyInText {
             return true;
         }
         char after = text.charAt(end);
-        if (isSpace(after)) {
-            int next = end;
-            while (next < text.length() && isSpace(text.charAt(next))) {
-                next++;
-            }
-            return next >= text.length() || !Character.isDigit(text.charAt(next));
-        }
-        if (after == '-' || after == '\u2013' || after == '\u2014') {
-            // Faixa ("1.200-1.400") ou separador ("4.500 - à vista").
+        if (isSpace(after) || after == '-' || after == '\u2013' || after == '\u2014') {
+            // Fim de palavra, faixa ("1.200-1.400") ou separador ("4.500 - à vista").
             return true;
         }
         if (AFTER.indexOf(after) >= 0) {
@@ -129,6 +122,64 @@ public final class MoneyInText {
                     || end + 1 >= text.length());
         }
         return false;
+    }
+
+    /**
+     * "7 000" com espaço horizontal: 1 a 3 dígitos e um grupo de exatamente 3 dígitos formam um número só. Quebra
+     * de linha e tabulação separam valores, como numa lista ou numa tabela.
+     */
+    private static boolean groupsThousands(String text, int start, int end) {
+        String token = text.substring(start, end);
+        if (token.matches("\\d{1,3}") && end + 4 <= text.length() && isHorizontalSpace(text.charAt(end))
+                && text.substring(end + 1, end + 4).matches("\\d{3}")
+                && (end + 4 == text.length() || !Character.isDigit(text.charAt(end + 4)))) {
+            return true;
+        }
+        return token.matches("\\d{3}(?:[.,]\\d{1,2})?") && start >= 2 && isHorizontalSpace(text.charAt(start - 1))
+                && Character.isDigit(text.charAt(start - 2));
+    }
+
+    /** O número depois de "E" colado a um dígito ("1E++3", "1e 3") ou de "E" maiúsculo solto ("1 E 3") é expoente. */
+    private static boolean continuesExponent(String text, int start) {
+        int at = start - 1;
+        while (at >= 0 && (isHorizontalSpace(text.charAt(at)) || SIGNS.indexOf(text.charAt(at)) >= 0)) {
+            at--;
+        }
+        if (at < 0 || (text.charAt(at) != 'e' && text.charAt(at) != 'E')) {
+            return false;
+        }
+        boolean glued = at >= 1 && Character.isDigit(text.charAt(at - 1));
+        boolean spacedCapital = text.charAt(at) == 'E' && at >= 2 && isHorizontalSpace(text.charAt(at - 1))
+                && Character.isDigit(text.charAt(skipSpaces(text, at - 1)));
+        return glued || spacedCapital;
+    }
+
+    /** A mantissa de "1 × 10³", "1 x 10^3" ou "1 E 3" não vale sozinha. */
+    private static boolean startsExponent(String text, int end) {
+        int at = end;
+        while (at < text.length() && isHorizontalSpace(text.charAt(at))) {
+            at++;
+        }
+        if (at == end || at >= text.length()) {
+            return false;
+        }
+        char operator = text.charAt(at);
+        int next = at + 1;
+        while (next < text.length() && (isHorizontalSpace(text.charAt(next)) || SIGNS.indexOf(text.charAt(next)) >= 0)) {
+            next++;
+        }
+        if (operator == 'E') {
+            return next < text.length() && Character.isDigit(text.charAt(next)) && next > at + 1;
+        }
+        if ("\u00D7xX*".indexOf(operator) >= 0) {
+            return text.startsWith("10", next) && next + 2 < text.length()
+                    && (text.charAt(next + 2) == '^' || Character.getType(text.charAt(next + 2)) == Character.OTHER_NUMBER);
+        }
+        return false;
+    }
+
+    private static boolean isHorizontalSpace(char c) {
+        return c == ' ' || c == '\u00A0' || c == '\u202F' || c == '\u2009' || c == '\u2007';
     }
 
     /** Inclui o espaço não separável, que a formatação de moeda em pt-BR põe entre "R$" e o número. */
