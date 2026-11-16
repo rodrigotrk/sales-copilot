@@ -50,4 +50,66 @@ class ExtractionTimeoutTest extends IntegrationTest {
         assertThat(jobRow(jobId)).containsEntry("status", "failed").containsEntry("error_code", "import_failed");
         assertThat(output.getAll()).contains("passou de PT0.001S e foi encerrada");
     }
+
+    @Autowired
+    ExtractionProcess extraction;
+
+    @Test
+    @DisplayName("[C127] extração interrompida encerra o processo filho")
+    void interruptedExtractionKillsTheChild() throws Exception {
+        java.nio.file.Path file = java.nio.file.Files.createTempFile("interrompida", ".docx");
+        // Um título de 600 MB num filho com 4 GB: a extração leva vários segundos e é interrompida no meio.
+        byte[] base;
+        try (var document = new org.apache.poi.xwpf.usermodel.XWPFDocument(); var out = new java.io.ByteArrayOutputStream()) {
+            document.createParagraph().createRun().setText("Abertura");
+            document.write(out);
+            base = out.toByteArray();
+        }
+        try (var in = new java.util.zip.ZipInputStream(new java.io.ByteArrayInputStream(base));
+                var zip = new java.util.zip.ZipOutputStream(java.nio.file.Files.newOutputStream(file))) {
+            java.util.zip.ZipEntry entry;
+            while ((entry = in.getNextEntry()) != null) {
+                if (entry.getName().equals("docProps/core.xml")) {
+                    continue;
+                }
+                zip.putNextEntry(new java.util.zip.ZipEntry(entry.getName()));
+                in.transferTo(zip);
+                zip.closeEntry();
+            }
+            zip.putNextEntry(new java.util.zip.ZipEntry("docProps/core.xml"));
+            zip.write(("<cp:coreProperties xmlns:cp=\"http://schemas.openxmlformats.org/package/2006/metadata/core-properties\" "
+                    + "xmlns:dc=\"http://purl.org/dc/elements/1.1/\"><dc:title>").getBytes(java.nio.charset.StandardCharsets.UTF_8));
+            byte[] chunk = "a".repeat(1024 * 1024).getBytes(java.nio.charset.StandardCharsets.UTF_8);
+            for (int i = 0; i < 600; i++) {
+                zip.write(chunk);
+            }
+            zip.write("</dc:title></cp:coreProperties>".getBytes(java.nio.charset.StandardCharsets.UTF_8));
+            zip.closeEntry();
+        }
+        var slow = new ExtractionProcess("4g", java.time.Duration.ofMinutes(5));
+        Thread worker = new Thread(() -> {
+            try {
+                slow.extract(file, TextExtraction.DOCX);
+            } catch (ImportFailure expected) {
+                // A interrupção termina a extração como falha.
+            }
+        });
+        worker.start();
+        long deadline = System.currentTimeMillis() + 10_000;
+        while (ProcessHandle.current().children().noneMatch(ProcessHandle::isAlive)) {
+            assertThat(System.currentTimeMillis()).as("processo filho iniciado").isLessThan(deadline);
+            Thread.sleep(10);
+        }
+        Thread.sleep(1_000);
+        var children = ProcessHandle.current().children().filter(ProcessHandle::isAlive).toList();
+        assertThat(children).as("filho ainda extraindo na hora da interrupção").isNotEmpty();
+        worker.interrupt();
+        worker.join(10_000);
+        for (ProcessHandle child : children) {
+            // Sem encerrar o filho, ele seguiria extraindo por mais alguns segundos.
+            child.onExit().get(500, java.util.concurrent.TimeUnit.MILLISECONDS);
+            assertThat(child.isAlive()).isFalse();
+        }
+        java.nio.file.Files.deleteIfExists(file);
+    }
 }

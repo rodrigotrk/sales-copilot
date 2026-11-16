@@ -479,7 +479,7 @@ class ImportTest extends IntegrationTest {
 
     @Test
     @DisplayName("[C125] PDF com metadados que descompactam para centenas de MB falha com import_failed sem chamar o modelo")
-    void pdfBomb() throws Exception {
+    void pdfBomb(org.springframework.boot.test.system.CapturedOutput output) throws Exception {
         Gestor g = newGestor();
         byte[] pdf;
         try (var document = new org.apache.pdfbox.pdmodel.PDDocument(); var out = new ByteArrayOutputStream()) {
@@ -502,6 +502,7 @@ class ImportTest extends IntegrationTest {
         worker.drain();
         assertThat(jobRow(jobId)).containsEntry("status", "failed").containsEntry("error_code", "import_failed");
         assertThat(STUB.modelRequests()).isEmpty();
+        assertThat(output.getAll()).contains("terminou com código").doesNotContain("falhou com erro inesperado");
     }
 
     @Test

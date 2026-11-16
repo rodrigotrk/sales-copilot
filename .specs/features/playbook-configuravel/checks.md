@@ -433,11 +433,14 @@ Proof: run web | ✓ [C123] e-mail recusado pelo servidor e falha de rede mostra
 **C124** - Arquivo cujo conteúdo não é do tipo da extensão (um zip enviado como `.pdf`) falha com `import_failed` sem chamar o modelo, e um `.docx` embutido em outro não é aberto: o texto dele não chega ao modelo (AC 74, AD-026)
 Proof: run server | PASSED [C124] conteúdo de outro tipo que a extensão falha e documento embutido não é aberto
 
-**C125** - Um PDF de menos de 1 MB cujos metadados XMP descompactam para 300 MB esgota só o processo de extração e a tarefa termina em `import_failed`, sem chamar o modelo (AC 77, AD-063)
+**C125** - Um PDF de menos de 1 MB cujos metadados XMP descompactam para 300 MB esgota só o processo de extração (o log registra o fim do filho, e o servidor não registra erro próprio) e a tarefa termina em `import_failed`, sem chamar o modelo (AC 77, AD-063)
 Proof: run server | PASSED [C125] PDF com metadados que descompactam para centenas de MB falha com import_failed sem chamar o modelo
 
 **C126** - O processo de extração que passa do tempo limite é encerrado, a tarefa termina em `import_failed` e o encerramento fica no log (AD-063)
 Proof: run server | PASSED [C126] extração que passa do tempo limite é encerrada e a tarefa termina em import_failed
+
+**C127** - Uma extração interrompida no meio (como no desligamento do servidor) encerra o processo filho em até 500 ms, em vez de deixá-lo rodando sem tempo limite (AD-063)
+Proof: run server | PASSED [C127] extração interrompida encerra o processo filho
 
 ## Coverage
 

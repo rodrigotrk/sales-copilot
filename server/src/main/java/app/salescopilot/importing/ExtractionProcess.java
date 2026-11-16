@@ -39,13 +39,14 @@ class ExtractionProcess {
 
     DocumentText.Extracted extract(Path file, String expectedType) throws ImportFailure {
         Path out = null;
+        Process process = null;
         try {
             out = Files.createTempDirectory("extracao-");
             List<String> command = new ArrayList<>(List.of(javaBinary(), "-Xmx" + heap, "-XX:+ExitOnOutOfMemoryError",
                     "-Djava.awt.headless=true"));
             command.addAll(launch());
             command.addAll(List.of(file.toAbsolutePath().toString(), expectedType, out.toString()));
-            Process process = new ProcessBuilder(command)
+            process = new ProcessBuilder(command)
                     .redirectOutput(ProcessBuilder.Redirect.DISCARD)
                     .redirectError(out.resolve("stderr.txt").toFile())
                     .start();
@@ -72,6 +73,10 @@ class ExtractionProcess {
             Thread.currentThread().interrupt();
             throw new ImportFailure("import_failed", e);
         } finally {
+            // Em qualquer saída, inclusive interrupção no desligamento, o filho não fica rodando sem tempo limite.
+            if (process != null && process.isAlive()) {
+                process.destroyForcibly();
+            }
             if (out != null) {
                 deleteQuietly(out);
             }
