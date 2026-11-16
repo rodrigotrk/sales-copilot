@@ -206,6 +206,12 @@ Seen once or not yet corroborated. Tracked, not trusted.
 - evidence: Codex r7 2 (C104) (deploy)
 - last seen: 2026-11-16T01:44:38Z
 
+### L-033 - Parse untrusted documents in a memory- and time-limited child process; per-format pre-checks only move the bomb elsewhere.
+- signal: `spec_precision_gap` · recurrence: 1 feature(s) · scope: `importing` · harmful: 0
+- features: playbook-configuravel
+- evidence: Verifier C121-C125, AD-063 (importing)
+- last seen: 2026-11-16T10:52:14Z
+
 ## Quarantined (failed when applied - ignore)
 
 A confirmed lesson that recurred alongside failure. Kept for the maintainer to review.

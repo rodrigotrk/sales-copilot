@@ -3,7 +3,7 @@
   "promote_threshold": 2,
   "window_days": 45,
   "quarantine_threshold": 2,
-  "next_id": 33,
+  "next_id": 34,
   "lessons": [
     {
       "id": "L-001",
@@ -580,6 +580,24 @@
       ],
       "created": "2026-11-16T01:44:38Z",
       "last_seen": "2026-11-16T01:44:38Z"
+    },
+    {
+      "id": "L-033",
+      "key": "spec_precision_gap::parse untrusted documents in a memory and time limited child process per format pre checks only move the bomb elsewhere",
+      "text": "Parse untrusted documents in a memory- and time-limited child process; per-format pre-checks only move the bomb elsewhere.",
+      "signal": "spec_precision_gap",
+      "scope": "importing",
+      "status": "candidate",
+      "features": [
+        "playbook-configuravel"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "Verifier C121-C125, AD-063 (importing)"
+      ],
+      "created": "2026-11-16T10:52:14Z",
+      "last_seen": "2026-11-16T10:52:14Z"
     }
   ]
 }
