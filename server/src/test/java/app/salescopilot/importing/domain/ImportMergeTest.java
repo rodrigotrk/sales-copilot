@@ -28,12 +28,24 @@ class ImportMergeTest {
         assertThat(plan.review().status()).isEqualTo("pending");
         assertThat(plan.review().excerpt()).isEqualTo(PLAN_EXCERPT);
 
-        for (String invalid : List.of("-5", "0", "0.005", "10000000.01")) {
-            var refused = merge(PlaybookDocument.empty(), plan(new BigDecimal(invalid), 6, new BigDecimal(invalid)), null, null)
-                    .draft().priceTable().plans().getFirst();
-            assertThat(refused.cash()).as(invalid).isNull();
-            assertThat(refused.review().status()).as(invalid).isEqualTo("pending");
+        for (String invalid : List.of("-5", "0", "0.005")) {
+            var refused = merge(PlaybookDocument.empty(), plan(new BigDecimal(invalid), 6, new BigDecimal(invalid)), null,
+                    new BigDecimal(invalid)).draft().priceTable();
+            assertThat(refused.plans().getFirst().cash()).as(invalid).isNull();
+            assertThat(refused.plans().getFirst().installments()).as(invalid).isNull();
+            assertThat(refused.plans().getFirst().review().status()).as(invalid).isEqualTo("pending");
+            if (!invalid.equals("0")) {
+                assertThat(refused.maxDiscount()).as(invalid).isNull();
+            }
         }
+        // O teto de R$ 10 milhões vale só para o à vista; a parcela do mesmo valor entra.
+        var aboveCap = merge(PlaybookDocument.empty(), plan(new BigDecimal("10000000.01"), 6, new BigDecimal("10000000.01")),
+                null, null).draft().priceTable().plans().getFirst();
+        assertThat(aboveCap.cash()).isNull();
+        assertThat(aboveCap.installments().value()).isEqualByComparingTo("10000000.01");
+        var tooManyInstallments = merge(PlaybookDocument.empty(), plan(new BigDecimal("7000"), 61, new BigDecimal("100")),
+                null, null).draft().priceTable().plans().getFirst();
+        assertThat(tooManyInstallments.installments()).isNull();
         var oneInstallment = merge(PlaybookDocument.empty(), plan(new BigDecimal("7000"), 1, new BigDecimal("7000")), null, null)
                 .draft().priceTable().plans().getFirst();
         assertThat(oneInstallment.installments()).isNull();

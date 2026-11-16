@@ -121,7 +121,7 @@ public final class ImportMerge {
         return added;
     }
 
-    /** A mesma regra do rascunho (AD-025): um número enorme do documento não chega ao rascunho. */
+    /** A mesma regra do rascunho (AD-025): um valor do modelo maior que numeric(12,2) não chega ao rascunho. */
     private static boolean twoDecimals(BigDecimal value) {
         return BrazilianReais.isExactReais(value);
     }
