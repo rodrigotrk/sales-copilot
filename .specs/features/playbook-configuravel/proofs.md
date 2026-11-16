@@ -1,9 +1,9 @@
 # playbook-configuravel proofs
 
-**HEAD**: 9a1fdcf
+**HEAD**: 822ab7b
 **Tree**: clean
 **Shell**: /bin/sh
-**Result**: 176 pass, 0 fail
+**Result**: 177 pass, 0 fail
 
 | Check | Proof | Result |
 | --- | --- | --- |
@@ -180,6 +180,7 @@
 | C129 | `run server / PASSED [C129] número em dinheiro maior que numeric(12,2) não entra no rascunho, mesmo presente no` | pass |
 | C130 | `run server / PASSED [C130] resultado do filho com status desconhecido ou texto cortado vira import_failed` | pass |
 | C131 | `run server / PASSED [C131] valor negativo do documento não autoriza o positivo, e hífen de lista, separador ou` | pass |
+| C133 | `run server / PASSED [C133] número em notação científica não autoriza nenhum pedaço dele` | pass |
 | C132 | `run web / ✓ [C132] com o envio da importação pendente o diálogo não fecha, e o rascunho não fica editável ante` | pass |
 | Build | `make build` | pass |
 | Build | `make lint` | pass |
@@ -189,40 +190,40 @@
 `Run web` - exit 0
 
 ```
- ✓ src/features/playbook/__tests__/playbook.test.ts > tela do playbook > [C62] sem versão o topo mostra rascunho 11ms
- ✓ src/features/playbook/__tests__/review.test.ts > correções da revisão de código > [C110] consulta da importação que falha uma vez continua até a tarefa terminar 10564ms
- ✓ src/features/playbook/__tests__/review.test.ts > correções da revisão de código > [C111] voltar o campo ao valor gravado apaga o erro do servidor e libera Publicar 332ms
+ ✓ src/features/playbook/__tests__/playbook.test.ts > tela do playbook > [C62] sem versão o topo mostra rascunho 10ms
+ ✓ src/features/playbook/__tests__/review.test.ts > correções da revisão de código > [C110] consulta da importação que falha uma vez continua até a tarefa terminar 10556ms
+ ✓ src/features/playbook/__tests__/review.test.ts > correções da revisão de código > [C111] voltar o campo ao valor gravado apaga o erro do servidor e libera Publicar 329ms
  ✓ src/features/playbook/__tests__/review.test.ts > correções da revisão de código > [C24c] Sair aparece no acesso não liberado, na criação de negócio e na lista e leva a /entrar 27ms
- ✓ src/features/playbook/__tests__/review.test.ts > correções da revisão de código > [C112] remover o último plano apaga o erro do desconto e libera Publicar e Importar documento 81ms
- ✓ src/features/playbook/__tests__/review.test.ts > correções da revisão de código > [C113] importação aceita com 202 fica em Importando e é acompanhada mesmo se a primeira consulta falhar 2106ms
- ✓ src/features/playbook/__tests__/review.test.ts > correções da revisão de código > [C119] gravação de outro campo que termina enquanto a pessoa digita no parcelado não apaga a digitação 187ms
- ✓ src/features/playbook/__tests__/review.test.ts > correções da revisão de código > [C120] 409 import_running ao gravar ou publicar deixa a tela em Importando e acompanha mesmo com a consulta falhando 4167ms
- ✓ src/features/playbook/__tests__/review.test.ts > correções da revisão de código > [C132] com o envio da importação pendente o diálogo não fecha, e o rascunho não fica editável antes do 202 158ms
- ✓ src/features/playbook/__tests__/review.test.ts > correções da revisão de código > [C108b] depois de 409 nothing_to_publish o rascunho só volta a aceitar edição quando o reload termina 62ms
+ ✓ src/features/playbook/__tests__/review.test.ts > correções da revisão de código > [C112] remover o último plano apaga o erro do desconto e libera Publicar e Importar documento 72ms
+ ✓ src/features/playbook/__tests__/review.test.ts > correções da revisão de código > [C113] importação aceita com 202 fica em Importando e é acompanhada mesmo se a primeira consulta falhar 2104ms
+ ✓ src/features/playbook/__tests__/review.test.ts > correções da revisão de código > [C119] gravação de outro campo que termina enquanto a pessoa digita no parcelado não apaga a digitação 191ms
+ ✓ src/features/playbook/__tests__/review.test.ts > correções da revisão de código > [C120] 409 import_running ao gravar ou publicar deixa a tela em Importando e acompanha mesmo com a consulta falhando 4143ms
+ ✓ src/features/playbook/__tests__/review.test.ts > correções da revisão de código > [C132] com o envio da importação pendente o diálogo não fecha, e o rascunho não fica editável antes do 202 134ms
+ ✓ src/features/playbook/__tests__/review.test.ts > correções da revisão de código > [C108b] depois de 409 nothing_to_publish o rascunho só volta a aceitar edição quando o reload termina 47ms
 
  Test Files  6 passed (6)
       Tests  79 passed (79)
-   Start at  09:12:20
-   Duration  20.20s (transform 2.17s, setup 0ms, import 5.27s, tests 22.15s, environment 2.74s)
+   Start at  09:32:51
+   Duration  19.93s (transform 2.08s, setup 0ms, import 4.88s, tests 21.90s, environment 2.29s)
 ```
 
 `Run server` - exit 0
 
 ```
-2026-11-16T09:13:25.153-03:00  WARN 40679 --- [server] [           main] a.s.importing.ExtractionProcess          : Extração de 425b6be8-5091-4577-82ee-b39a115b8a2f.docx passou de PT0.001S e foi encerrada
+2026-11-16T09:33:54.891-03:00  WARN 49444 --- [server] [           main] a.s.importing.ExtractionProcess          : Extração de 26580ff9-7200-4797-8d35-395f66649b96.docx passou de PT0.001S e foi encerrada
 PASSED [C126] extração que passa do tempo limite é encerrada e a tarefa termina em import_failed
 PASSED [C127] extração interrompida encerra o processo filho
-[INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 2.873 s -- in app.salescopilot.importing.ExtractionTimeoutTest
+[INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 2.767 s -- in app.salescopilot.importing.ExtractionTimeoutTest
 [INFO] 
 [INFO] Results:
 [INFO] 
-[INFO] Tests run: 87, Failures: 0, Errors: 0, Skipped: 0
+[INFO] Tests run: 88, Failures: 0, Errors: 0, Skipped: 0
 [INFO] 
 [INFO] ------------------------------------------------------------------------
 [INFO] BUILD SUCCESS
 [INFO] ------------------------------------------------------------------------
-[INFO] Total time:  46.902 s
-[INFO] Finished at: 2026-11-16T09:13:28-03:00
+[INFO] Total time:  46.039 s
+[INFO] Finished at: 2026-11-16T09:33:57-03:00
 [INFO] ------------------------------------------------------------------------
 ```
 
