@@ -416,4 +416,35 @@ describe('correções da revisão de código', () => {
     await waitFor(() => expect(screen.queryByText('Importando…')).toBeNull(), { timeout: 7000 })
     expect(gets).toBe(3)
   }, 12000)
+
+  it('[C119] gravação de outro campo que termina enquanto a pessoa digita no parcelado não apaga a digitação', async () => {
+    let release: () => void = () => {}
+    let puts = 0
+    const { routes, acceptDraft } = playbookServer(playbookState())
+    fakeApi({
+      ...routes,
+      'PUT /api/businesses/b1/playbook/draft': (call: Call) => {
+        puts += 1
+        if (puts > 1) return acceptDraft(call)
+        return new Promise((resolve) => (release = () => resolve(acceptDraft(call))))
+      },
+    })
+    const { user } = await renderApp('/n/b1/playbook')
+    await screen.findByText(/^Playbook: /)
+
+    await user.click(screen.getByText('Abertura'))
+    await user.clear(screen.getByLabelText('Nome da etapa'))
+    await user.type(screen.getByLabelText('Nome da etapa'), 'Boas-vindas')
+    await user.click(document.body)
+    await waitFor(() => expect(puts).toBe(1))
+
+    await user.click(screen.getByText('Kit 3 kWp'))
+    await user.clear(screen.getByLabelText('Número de parcelas'))
+    await user.type(screen.getByLabelText('Número de parcelas'), '12')
+    release()
+    // Espera a resposta da gravação ser aplicada ao rascunho da tela.
+    await new Promise((resolve) => setTimeout(resolve, 100))
+
+    expect((screen.getByLabelText('Número de parcelas') as HTMLInputElement).value).toBe('12')
+  })
 })

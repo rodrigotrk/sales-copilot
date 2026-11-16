@@ -8,9 +8,12 @@ const emit = defineEmits<{ commit: [value: Installments | null]; invalid: [] }>(
 
 const count = ref('')
 const amount = ref('')
+// Observa o conteúdo, não a referência: uma gravação de outro campo que devolve o rascunho cria objetos
+// novos com os mesmos valores, e reiniciar aqui apagaria o que a pessoa está digitando.
 watch(
-  () => props.value,
-  (v) => {
+  () => (props.value ? `${props.value.count}|${props.value.value}` : ''),
+  () => {
+    const v = props.value
     count.value = v ? String(v.count) : ''
     amount.value = v ? formatMoney(v.value) : ''
   },

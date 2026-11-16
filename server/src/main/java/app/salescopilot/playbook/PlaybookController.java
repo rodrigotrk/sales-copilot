@@ -55,7 +55,7 @@ class PlaybookController {
 
     @GetMapping
     PlaybookView get(BusinessAccess access) {
-        return tenancy.inBusiness(access.userId(), access.businessId(), () -> {
+        return tenancy.readInBusiness(access.userId(), access.businessId(), () -> {
             var playbook = store.current().orElseThrow(ApiException::notFound);
             var latest = store.latestVersion(playbook.id());
             boolean unpublished = hasUnpublishedChanges(playbook.id(), playbook.draft());

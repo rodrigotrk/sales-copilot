@@ -5,6 +5,7 @@ import java.util.function.Supplier;
 
 import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.TransactionDefinition;
 import org.springframework.transaction.support.TransactionTemplate;
 
 /**
@@ -18,9 +19,27 @@ public class Tenancy {
     private final JdbcClient jdbc;
     private final TransactionTemplate transactions;
 
+    private final TransactionTemplate snapshotReads;
+
     public Tenancy(JdbcClient jdbc, TransactionTemplate transactions) {
         this.jdbc = jdbc;
         this.transactions = transactions;
+        this.snapshotReads = new TransactionTemplate(transactions.getTransactionManager());
+        this.snapshotReads.setIsolationLevel(TransactionDefinition.ISOLATION_REPEATABLE_READ);
+        this.snapshotReads.setReadOnly(true);
+    }
+
+    /**
+     * Leitura de várias tabelas que precisa sair coerente, como rascunho e tarefa de importação no GET do
+     * playbook: REPEATABLE READ fixa um snapshot na primeira consulta, e uma escrita concluída no meio não
+     * aparece pela metade.
+     */
+    public <T> T readInBusiness(UUID userId, UUID businessId, Supplier<T> work) {
+        return snapshotReads.execute(status -> {
+            set("app.user_id", userId);
+            set("app.business_id", businessId);
+            return work.get();
+        });
     }
 
     public <T> T asUser(UUID userId, Supplier<T> work) {

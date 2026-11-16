@@ -409,6 +409,15 @@ Proof: run server | PASSED [C115] SMTP sem STARTTLS recusa o envio antes de mand
 **C116** - Exportação do Google Docs acima de 10 MB não é baixada inteira (de uma de 200 MB o servidor entrega menos de 64 MB antes de o cliente parar) e a tarefa falha com `text_too_long`, sem chamar o modelo (AC 77, AC 79)
 Proof: run server | PASSED [C116] exportação do Google Docs acima de 10 MB falha com text_too_long sem chamar o modelo
 
+**C117** - Uma tabela temporária `import_jobs` criada pelo papel `app` não substitui a real em `claim_next_import_job` nem em `import_job_statuses`: as funções não devolvem a linha temporária nem a alteram (AD-037, AD-049)
+Proof: run server | PASSED [C117] tabela temporária import_jobs do papel app não substitui a real nas funções privilegiadas
+
+**C118** - O GET do playbook lê rascunho, revisão e tarefa de importação no mesmo snapshot: com a importação concluída entre a leitura do rascunho e a da tarefa, a resposta traz a tarefa e o rascunho de antes, e o GET seguinte traz os dois de depois (AC 68, AD-038)
+Proof: run server | PASSED [C118] GET do playbook lê rascunho e tarefa no mesmo snapshot mesmo com a importação concluindo no meio
+
+**C119** - Uma gravação de outro campo que termina enquanto a pessoa digita no parcelado não apaga a digitação (AC 35, AD-016)
+Proof: run web | ✓ [C119] gravação de outro campo que termina enquanto a pessoa digita no parcelado não apaga a digitação
+
 ## Coverage
 
 | Set (size) | Member -> proof | Unproven |

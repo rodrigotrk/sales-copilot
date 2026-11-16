@@ -463,6 +463,81 @@ class ImportTest extends IntegrationTest {
     }
 
     @Test
+    @DisplayName("[C117] tabela temporária import_jobs do papel app não substitui a real nas funções privilegiadas")
+    void definerFunctionsIgnoreTemporaryTables() {
+        UUID fake = UUID.randomUUID();
+        var app = TestDatabase.appRole();
+        var jdbc = JdbcClient.create(app);
+        new TransactionTemplate(new DataSourceTransactionManager(app)).executeWithoutResult(status -> {
+            jdbc.sql("""
+                    CREATE TEMP TABLE import_jobs (id uuid, business_id uuid, status text, lease_token uuid,
+                        lease_expires_at timestamptz, attempts int, created_at timestamptz) ON COMMIT DROP""").update();
+            jdbc.sql("INSERT INTO pg_temp.import_jobs VALUES (?, ?, 'queued', null, null, 0, now())")
+                    .params(fake, UUID.randomUUID()).update();
+
+            List<UUID> claimed = jdbc.sql("SELECT job_id FROM claim_next_import_job(600)").query(UUID.class).list();
+            assertThat(claimed).doesNotContain(fake);
+            assertThat(jdbc.sql("SELECT job_id FROM import_job_statuses(ARRAY[?]::uuid[])").param(fake)
+                    .query(UUID.class).list()).isEmpty();
+            assertThat(jdbc.sql("SELECT status FROM pg_temp.import_jobs WHERE id = ?").param(fake)
+                    .query(String.class).single()).isEqualTo("queued");
+            status.setRollbackOnly();
+        });
+    }
+
+    @Test
+    @DisplayName("[C118] GET do playbook lê rascunho e tarefa no mesmo snapshot mesmo com a importação concluindo no meio")
+    void getReadsOneSnapshot() throws Exception {
+        Gestor g = newGestor();
+        UUID jobId = jobId(importText(g, DOCUMENT));
+        long revision = revision(g);
+        var url = TestDatabase.POSTGRES.getJdbcUrl();
+        try (var worker = java.sql.DriverManager.getConnection(url, TestDatabase.POSTGRES.getUsername(),
+                TestDatabase.POSTGRES.getPassword())) {
+            worker.setAutoCommit(false);
+            // Segura a tabela de tarefas: o GET lê o rascunho e para na leitura da tarefa.
+            worker.createStatement().execute("LOCK TABLE sales_copilot.import_jobs IN ACCESS EXCLUSIVE MODE");
+            var response = java.util.concurrent.CompletableFuture.supplyAsync(() -> {
+                try {
+                    return getPlaybook(g);
+                } catch (Exception e) {
+                    throw new IllegalStateException(e);
+                }
+            });
+            long deadline = System.currentTimeMillis() + 10_000;
+            while (TestDatabase.admin().sql("""
+                    SELECT count(*) FROM pg_stat_activity
+                     WHERE usename = 'app' AND wait_event_type = 'Lock' AND query ILIKE '%import_jobs%'""")
+                    .query(Long.class).single() == 0) {
+                assertThat(System.currentTimeMillis()).as("GET esperando a tarefa").isLessThan(deadline);
+                Thread.sleep(50);
+            }
+            // A conclusão da importação acontece entre as duas leituras do GET.
+            try (var update = worker.prepareStatement("""
+                    UPDATE sales_copilot.playbooks SET draft = jsonb_set(draft, '{stages}',
+                        '[{"id":"00000000-0000-0000-0000-000000000001","name":"Abertura"}]'), draft_revision = draft_revision + 1
+                     WHERE business_id = ?""")) {
+                update.setObject(1, g.businessId());
+                update.executeUpdate();
+            }
+            try (var done = worker.prepareStatement("""
+                    UPDATE sales_copilot.import_jobs SET status = 'done', finished_at = now(),
+                        counts = '{"stages":1,"discovery":0,"objections":0,"plans":0}' WHERE id = ?""")) {
+                done.setObject(1, jobId);
+                done.executeUpdate();
+            }
+            worker.commit();
+
+            JsonNode playbook = response.get(10, java.util.concurrent.TimeUnit.SECONDS);
+            assertThat(playbook.get("importJob").get("status").asString()).isEqualTo("queued");
+            assertThat(playbook.get("revision").asLong()).isEqualTo(revision);
+        }
+        JsonNode after = getPlaybook(g);
+        assertThat(after.get("importJob").get("status").asString()).isEqualTo("done");
+        assertThat(after.get("revision").asLong()).isEqualTo(revision + 1);
+    }
+
+    @Test
     @DisplayName("[C87] arquivo da tarefa é apagado depois do commit e o texto não é gravado")
     void fileIsDeletedAndTextIsNotStored() throws Exception {
         Gestor g = newGestor();
