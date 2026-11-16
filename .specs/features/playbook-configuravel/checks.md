@@ -460,7 +460,7 @@ Proof: run server | PASSED [C130] resultado do filho com status desconhecido ou 
 **C131** - Valor negativo no documento, com o sinal colado (`R$ -7.000,00`, `-R$ 1.200`, `-R$7.000`, `-500`, inclusive com o espaço não separável da formatação pt-BR e com o sinal de menos Unicode `−`, como em `R$ −7.000,00`), não autoriza o mesmo valor positivo na importação: à vista, parcela e desconto ficam vazios; hífen seguido de espaço é marcador de lista ou separador (`- Plano A - R$ 7.000 à vista`, `Desconto máximo - 500`) e hífen entre números é faixa (`1.200-1.400`), e esses valores entram (AC 71)
 Proof: run server | PASSED [C131] valor negativo do documento não autoriza o positivo, e hífen de lista, separador ou faixa não é sinal
 
-**C133** - Número em notação científica no documento (`1E3`, `1e3`, `1,5E+3`, `2E-3`) não autoriza nenhum valor, nem os pedaços dele; um número comum ao lado de uma letra separada por espaço continua valendo (AC 71)
+**C133** - Número em notação científica no documento (`1E3`, `1e3`, `1,5E+3`, `2E-3`, e com o expoente marcado por menos Unicode ou travessão, como `1E−3`) não autoriza nenhum valor, nem os pedaços dele; um número comum ao lado de uma letra separada por espaço continua valendo (AC 71)
 Proof: run server | PASSED [C133] número em notação científica não autoriza nenhum pedaço dele
 
 **C132** - Com o envio da importação pendente, o diálogo não fecha (Esc nem botão de fechar), e depois do `202` a tela entra em "Importando…" com o rascunho só leitura: nada pode ser digitado entre o envio e o `202` (AC 35, AC 40, AC 66)

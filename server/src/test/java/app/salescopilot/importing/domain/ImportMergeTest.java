@@ -122,7 +122,8 @@ class ImportMergeTest {
         var extracted = new ExtractedPlaybook(List.of(new ExtractedPlaybook.Stage("Abertura")), List.of(), List.of(),
                 new ExtractedPlaybook.PriceTable(null, new BigDecimal("3"), "Desconto", List.of(
                         new ExtractedPlaybook.Plan("Plano", null, new BigDecimal("1"), null, null, "Plano"))));
-        for (String text : List.of("Plano por R$ 1E3 à vista. Desconto de 1e3.", "Plano por R$ 1,5E+3. Desconto 2E-3")) {
+        for (String text : List.of("Plano por R$ 1E3 à vista. Desconto de 1e3.", "Plano por R$ 1,5E+3. Desconto 2E-3",
+                "Plano por R$ 1E\u22123. Desconto 3E\uFE631", "Plano por R$ 1E\uFF0D3. Desconto 3e\u20131")) {
             PriceTable table = ImportMerge.merge(PlaybookDocument.empty(), extracted, text).draft().priceTable();
             assertThat(table.plans().getFirst().cash()).as(text).isNull();
             assertThat(table.maxDiscount()).as(text).isNull();

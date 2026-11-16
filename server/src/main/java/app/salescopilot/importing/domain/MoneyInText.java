@@ -15,8 +15,9 @@ import java.util.regex.Pattern;
  */
 public final class MoneyInText {
 
-    /** O número inteiro, inclusive um expoente: "1E3" é lido como um token só, e nenhum pedaço dele vale. */
-    private static final Pattern NUMBER = Pattern.compile("\\d+(?:[.,]\\d+)*(?:[eE][+-]?\\d+)?");
+    /** O número inteiro, inclusive um expoente com qualquer sinal: "1E3" e "1E−3" são um token só, e nenhum pedaço vale. */
+    private static final Pattern NUMBER = Pattern.compile(
+            "\\d+(?:[.,]\\d+)*(?:[eE][+\\-\u2212\uFE63\uFF0D\u2013\u2014]?\\d+)?");
     /** Hífen e as variantes Unicode do sinal de menos; o travessão (–) é separador, não sinal. */
     private static final String MINUS = "-\u2212\uFE63\uFF0D";
     private static final Pattern BRAZILIAN_THOUSANDS = Pattern.compile("\\d{1,3}(?:\\.\\d{3})+(?:,\\d{1,2})?");
