@@ -119,6 +119,13 @@ class DocumentText {
         }
     }
 
+    private static String body(String document) {
+        int start = document.indexOf("<body");
+        int end = document.lastIndexOf("</body>");
+        // Sem corpo (o parser parou nos metadados), não há texto do documento para o modelo.
+        return start < 0 || end < start ? "" : document.substring(start, end + "</body>".length());
+    }
+
     private static final String DOCX = "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
     private static final String PDF = "application/pdf";
     private static final String OOXML = "application/x-tika-ooxml";
@@ -139,6 +146,8 @@ class DocumentText {
         }
         if (expectedType.equals(DOCX)) {
             ZipBudget.check(file);
+        } else {
+            PdfBudget.check(file);
         }
         try (InputStream in = Files.newInputStream(file)) {
             return parse(in);
@@ -160,9 +169,9 @@ class DocumentText {
         } catch (org.xml.sax.SAXException | org.apache.tika.exception.TikaException e) {
             throw new ImportFailure(WriteLimitReachedException.isWriteLimitReached(e) ? "text_too_long" : "import_failed", e);
         }
-        // O XHTML que vai ao modelo também tem teto: metadados, como o título, entram nele em atributos de
-        // <meta>, fora do texto do corpo, e o tamanho deles já vem limitado pela conferência das partes XML.
-        String forModel = xhtml.toString();
+        // Ao modelo vai só o corpo: metadados, como o título, ficam no <head> e de fora do que ele lê. O corpo
+        // também tem teto, porque as tags de tabelas multiplicam o tamanho do texto.
+        String forModel = body(xhtml.toString());
         if (forModel.length() > MAX_FOR_MODEL) {
             throw new ImportFailure("text_too_long");
         }

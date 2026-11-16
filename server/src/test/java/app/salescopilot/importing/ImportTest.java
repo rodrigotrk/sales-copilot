@@ -219,6 +219,8 @@ class ImportTest extends IntegrationTest {
                 "application/vnd.openxmlformats-officedocument.wordprocessingml.document", docxWithTitle("t".repeat(100_001)))));
         worker.drain();
         assertThat(jobRow(longTitle)).containsEntry("status", "done");
+        // O título fica nos metadados e não vai ao modelo, só o corpo.
+        assertThat(STUB.modelRequests().getLast()).doesNotContain("t".repeat(1000));
         assertThat(STUB.modelRequests()).hasSize(2);
 
         UUID limit = jobId(importText(g, "a".repeat(100_000)));
@@ -326,11 +328,13 @@ class ImportTest extends IntegrationTest {
         assertThat(jobRow(total)).containsEntry("error_code", "text_too_long");
         assertThat(STUB.modelRequests()).isEmpty();
 
-        // Um título de 19 MB fica abaixo do limite de parte, mas o XHTML que iria ao modelo passa do teto.
-        UUID nineteen = jobId(importFile(g, new MockMultipartFile("file", "dezenove.docx",
-                "application/vnd.openxmlformats-officedocument.wordprocessingml.document", docxWithHugeTitle(19L * 1024 * 1024))));
+        // Uma parte com extensão declarada XML em Default conta como XML.
+        UUID byExtension = jobId(importFile(g, new MockMultipartFile("file", "extensao.docx",
+                "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                docxWithPart("customXml/item.dat", 25L * 1024 * 1024, "<Default Extension=\"dat\" ContentType=\"application/xml\"/>"))));
         worker.drain();
-        assertThat(jobRow(nineteen)).containsEntry("error_code", "text_too_long");
+        assertThat(jobRow(byExtension)).containsEntry("error_code", "text_too_long");
+        assertThat(STUB.modelRequests()).isEmpty();
 
         // Uma parte XML com nome de binário, declarada como XML por Override, conta como XML.
         UUID disguised = jobId(importFile(g, new MockMultipartFile("file", "disfarce.docx",
@@ -338,6 +342,25 @@ class ImportTest extends IntegrationTest {
         worker.drain();
         assertThat(jobRow(disguised)).containsEntry("error_code", "text_too_long");
         assertThat(STUB.modelRequests()).isEmpty();
+
+        // Títulos de 2 MB e de 19 MB, abaixo do limite de parte XML: o parser para nos metadados, sem corpo, e
+        // nada chega ao modelo (o título não vai a ele nem quando há corpo; ver C77).
+        for (long titleBytes : new long[] { 2L * 1024 * 1024, 19L * 1024 * 1024 }) {
+            UUID titled = jobId(importFile(g, new MockMultipartFile("file", "titulo.docx",
+                    "application/vnd.openxmlformats-officedocument.wordprocessingml.document", docxWithHugeTitle(titleBytes))));
+            worker.drain();
+            assertThat(jobRow(titled)).containsEntry("status", "failed").containsEntry("error_code", "nothing_found");
+            assertThat(STUB.modelRequests()).isEmpty();
+        }
+
+        // Um objeto OLE de 25 MB, tipo binário com "openxmlformats" no nome, não conta como XML.
+        STUB.modelAnswers(ANSWER);
+        UUID ole = jobId(importFile(g, new MockMultipartFile("file", "ole.docx",
+                "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                docxWithPart("word/embeddings/oleObject1.bin", 25L * 1024 * 1024,
+                        "<Default Extension=\"bin\" ContentType=\"application/vnd.openxmlformats-officedocument.oleObject\"/>"))));
+        worker.drain();
+        assertThat(jobRow(ole)).containsEntry("status", "done");
 
         // Uma imagem de 25 MB que comprime como um bitmap de verdade não é confundida com bomba.
         STUB.modelAnswers(ANSWER);
@@ -390,6 +413,23 @@ class ImportTest extends IntegrationTest {
                 zip.closeEntry();
             }
         });
+    }
+
+    /** Um .docx válido com a parte `name` de `bytes` que comprimem cerca de 5 para 1, e `typeDeclaration` em [Content_Types].xml. */
+    private static byte[] docxWithPart(String name, long bytes, String typeDeclaration) throws java.io.IOException {
+        byte[] base = rewriteDocx(docx(10), zip -> {
+            zip.putNextEntry(new java.util.zip.ZipEntry(name));
+            var colors = new java.util.Random(11);
+            byte[] chunk = new byte[1024 * 1024];
+            for (long written = 0; written < bytes; written += chunk.length) {
+                for (int i = 0; i < chunk.length; i += 4) {
+                    java.util.Arrays.fill(chunk, i, Math.min(i + 4, chunk.length), (byte) colors.nextInt(16));
+                }
+                zip.write(chunk);
+            }
+            zip.closeEntry();
+        });
+        return replaceEntry(base, "[Content_Types].xml", types -> types.replace("</Types>", typeDeclaration + "</Types>"));
     }
 
     /** Um .docx válido com `customXml/item.bin` declarado como XML em [Content_Types].xml. */
@@ -579,6 +619,33 @@ class ImportTest extends IntegrationTest {
             zip.closeEntry();
         }
         return out.toByteArray();
+    }
+
+    @Test
+    @DisplayName("[C125] PDF com metadados que descompactam para centenas de MB falha com text_too_long sem chamar o modelo")
+    void pdfBomb() throws Exception {
+        Gestor g = newGestor();
+        byte[] pdf;
+        try (var document = new org.apache.pdfbox.pdmodel.PDDocument(); var out = new ByteArrayOutputStream()) {
+            document.addPage(new org.apache.pdfbox.pdmodel.PDPage());
+            var metadata = new org.apache.pdfbox.pdmodel.common.PDMetadata(document);
+            try (var stream = metadata.createOutputStream(org.apache.pdfbox.cos.COSName.FLATE_DECODE)) {
+                stream.write("<x:xmpmeta xmlns:x='adobe:ns:meta/'>".getBytes(java.nio.charset.StandardCharsets.UTF_8));
+                byte[] chunk = "a".repeat(1024 * 1024).getBytes(java.nio.charset.StandardCharsets.UTF_8);
+                for (int i = 0; i < 300; i++) {
+                    stream.write(chunk);
+                }
+                stream.write("</x:xmpmeta>".getBytes(java.nio.charset.StandardCharsets.UTF_8));
+            }
+            document.getDocumentCatalog().setMetadata(metadata);
+            document.save(out);
+            pdf = out.toByteArray();
+        }
+        assertThat(pdf.length).isLessThan(1024 * 1024);
+        UUID jobId = jobId(importFile(g, new MockMultipartFile("file", "bomba.pdf", "application/pdf", pdf)));
+        worker.drain();
+        assertThat(jobRow(jobId)).containsEntry("status", "failed").containsEntry("error_code", "text_too_long");
+        assertThat(STUB.modelRequests()).isEmpty();
     }
 
     @Test

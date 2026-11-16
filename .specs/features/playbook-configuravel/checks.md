@@ -281,7 +281,7 @@ Proof: run web | ✓ [C74b] mensagens da importação por código de erro
 **C76** - Com importação ativa, outro pedido responde `409` `import_running` (AC 76)
 Proof: run server | PASSED [C76] segunda importação com tarefa ativa responde 409
 
-**C77** - Texto extraído acima de 100.000 caracteres encerra em `failed` sem chamar o modelo (AC 77)
+**C77** - Texto extraído acima de 100.000 caracteres encerra em `failed` sem chamar o modelo (AC 77); ao modelo vai só o corpo do documento em XHTML, sem os metadados, e documento sem texto no corpo termina em `nothing_found` sem chamar o modelo
 Proof: run server | PASSED [C77] texto acima de 100 mil caracteres falha sem chamar o modelo
 Proof: run web | ✓ [C74b] mensagens da importação por código de erro
 
@@ -421,7 +421,7 @@ Proof: run web | ✓ [C119] gravação de outro campo que termina enquanto a pes
 **C120** - `409` `import_running` ao gravar ou ao publicar deixa a tela em "Importando…" com o rascunho só leitura, e o acompanhamento continua mesmo se a consulta seguinte falhar (`503`) (AC 42, AC 67, AD-036)
 Proof: run web | ✓ [C120] 409 import_running ao gravar ou publicar deixa a tela em Importando e acompanha mesmo com a consulta falhando
 
-**C121** - Um `.docx` com uma parte XML (pelo nome ou por [Content_Types].xml, inclusive Override) acima de 20 MB descompactados, contados pelos bytes de fato produzidos e não pelo tamanho declarado, ou com mais de 100 MB no total, é recusado pela conferência antes do parser com `text_too_long`, sem chamar o modelo, e o arquivo é apagado; as partes são lidas pelo diretório central, então uma assinatura falsa não esconde nenhuma; o XHTML que iria ao modelo acima de 2 milhões de caracteres também é recusado; um `.docx` legítimo com uma imagem de 25 MB importa normalmente (AC 77, AD-026)
+**C121** - Um `.docx` com uma parte XML (pelo nome, por `Default` ou por `Override` em [Content_Types].xml, com tipo `+xml`, `application/xml` ou `text/xml`) acima de 20 MB descompactados, contados pelos bytes de fato produzidos e não pelo tamanho declarado, ou com mais de 100 MB no total, é recusado pela conferência antes do parser com `text_too_long`, sem chamar o modelo, e o arquivo é apagado; as partes são lidas pelo diretório central, então uma assinatura falsa não esconde nenhuma; títulos de 2 MB e 19 MB terminam sem corpo em `nothing_found`, sem chamar o modelo; um `.docx` legítimo com imagem de 25 MB ou objeto OLE de 25 MB importa normalmente (AC 77, AD-026)
 Proof: run server | PASSED [C121] .docx que expande metadados para dezenas de MB falha com text_too_long sem chamar o modelo
 
 **C122** - Um `Error` ao ler o documento (como esgotamento de memória) encerra a tarefa como `failed` `import_failed`, apaga o arquivo e registra o erro no log, em vez de deixá-la voltar à fila (AD-038)
@@ -432,6 +432,9 @@ Proof: run web | ✓ [C123] e-mail recusado pelo servidor e falha de rede mostra
 
 **C124** - Arquivo cujo conteúdo não é do tipo da extensão (um zip enviado como `.pdf`) falha com `import_failed` sem chamar o modelo, e um `.docx` embutido em outro não é aberto: o texto dele não chega ao modelo (AC 74, AD-026)
 Proof: run server | PASSED [C124] conteúdo de outro tipo que a extensão falha e documento embutido não é aberto
+
+**C125** - Um PDF de menos de 1 MB cujos streams descompactam para centenas de MB (metadados XMP de 300 MB) é recusado pela conferência antes do parser com `text_too_long`, sem chamar o modelo: cada stream FlateDecode é descompactado em pedaços, com teto de 50 MB por stream e 200 MB no total, e imagens ficam de fora (AC 77, AD-026)
+Proof: run server | PASSED [C125] PDF com metadados que descompactam para centenas de MB falha com text_too_long sem chamar o modelo
 
 ## Coverage
 

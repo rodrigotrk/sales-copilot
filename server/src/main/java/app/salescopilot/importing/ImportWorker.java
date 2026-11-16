@@ -50,6 +50,10 @@ class ImportWorker {
             if (text.plain().length() > MAX_TEXT) {
                 throw new ImportFailure("text_too_long");
             }
+            // Sem texto no corpo não há o que o modelo extrair: a chamada seria gasta à toa.
+            if (text.plain().isBlank() || text.forModel().isBlank()) {
+                throw new ImportFailure("nothing_found");
+            }
             ExtractedPlaybook extracted = extraction.extract(text.forModel());
             if (extracted.isEmpty()) {
                 throw new ImportFailure("nothing_found");

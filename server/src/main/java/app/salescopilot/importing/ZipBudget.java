@@ -71,6 +71,11 @@ final class ZipBudget {
         }
     }
 
+    /** Tipos que o POI lê como XML; "openxmlformats" no nome de um tipo binário, como o de OLE, não conta. */
+    private static boolean isXml(String contentType) {
+        return contentType.endsWith("+xml") || contentType.equals("application/xml") || contentType.equals("text/xml");
+    }
+
     private static XmlParts xmlParts(ZipFile zip) throws IOException, ImportFailure {
         Set<String> extensions = new HashSet<>();
         Set<String> parts = new HashSet<>();
@@ -94,7 +99,7 @@ final class ZipBudget {
                 @Override
                 public void startElement(String uri, String localName, String qName, Attributes attributes) {
                     String type = attributes.getValue("ContentType");
-                    if (type == null || !type.toLowerCase(Locale.ROOT).contains("xml")) {
+                    if (type == null || !isXml(type.toLowerCase(Locale.ROOT).strip())) {
                         return;
                     }
                     if (localName.equals("Default") && attributes.getValue("Extension") != null) {
