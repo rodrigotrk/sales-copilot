@@ -451,7 +451,7 @@ Proof: run server | PASSED [C129] número em dinheiro maior que numeric(12,2) n�
 **C130** - Resultado do processo de extração com status desconhecido ou texto mais curto que o tamanho declarado termina em `import_failed` (AD-063)
 Proof: run server | PASSED [C130] resultado do filho com status desconhecido ou texto cortado vira import_failed
 
-**C131** - Valor negativo no documento, com o sinal colado (`R$ -7.000,00`, `-R$ 1.200`, `-R$7.000`, `-500`), não autoriza o mesmo valor positivo na importação: à vista, parcela e desconto ficam vazios; hífen seguido de espaço é marcador de lista ou separador (`- Plano A - R$ 7.000 à vista`, `Desconto máximo - 500`) e hífen entre números é faixa (`1.200-1.400`), e esses valores entram (AC 71)
+**C131** - Valor negativo no documento, com o sinal colado (`R$ -7.000,00`, `-R$ 1.200`, `-R$7.000`, `-500`, inclusive com o espaço não separável da formatação pt-BR), não autoriza o mesmo valor positivo na importação: à vista, parcela e desconto ficam vazios; hífen seguido de espaço é marcador de lista ou separador (`- Plano A - R$ 7.000 à vista`, `Desconto máximo - 500`) e hífen entre números é faixa (`1.200-1.400`), e esses valores entram (AC 71)
 Proof: run server | PASSED [C131] valor negativo do documento não autoriza o positivo, e hífen de lista, separador ou faixa não é sinal
 
 **C132** - Com o envio da importação pendente, o diálogo não fecha (Esc nem botão de fechar), e depois do `202` a tela entra em "Importando…" com o rascunho só leitura: nada pode ser digitado entre o envio e o `202` (AC 35, AC 40, AC 66)

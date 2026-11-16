@@ -47,7 +47,7 @@ public final class MoneyInText {
         int at = start - 1;
         if (at >= 1 && text.startsWith("R$", at - 1)) {
             at -= 2;
-        } else if (at >= 0 && Character.isWhitespace(text.charAt(at))) {
+        } else if (at >= 0 && isSpace(text.charAt(at))) {
             // "R$ -7.000" ou "-R$ 7.000": espaço só entre o R$ e o número.
             int beforeSpace = skipSpaces(text, at);
             if (beforeSpace >= 1 && text.startsWith("R$", beforeSpace - 1)) {
@@ -62,8 +62,13 @@ public final class MoneyInText {
         return at == 0 || !Character.isDigit(text.charAt(at - 1));
     }
 
+    /** Inclui o espaço não separável, que a formatação de moeda em pt-BR põe entre "R$" e o número. */
+    private static boolean isSpace(char c) {
+        return Character.isWhitespace(c) || Character.isSpaceChar(c);
+    }
+
     private static int skipSpaces(String text, int at) {
-        while (at >= 0 && Character.isWhitespace(text.charAt(at))) {
+        while (at >= 0 && isSpace(text.charAt(at))) {
             at--;
         }
         return at;
