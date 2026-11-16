@@ -43,6 +43,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+@org.junit.jupiter.api.extension.ExtendWith(org.springframework.boot.test.system.OutputCaptureExtension.class)
 class ImportTest extends IntegrationTest {
 
     private static final String DOCUMENT = """
@@ -286,65 +287,32 @@ class ImportTest extends IntegrationTest {
     }
 
     @Test
-    @DisplayName("[C121] .docx que expande metadados para dezenas de MB falha com text_too_long sem chamar o modelo")
-    void compressedMetadataBomb() throws Exception {
+    @DisplayName("[C121] documento malicioso esgota só o processo de extração: a tarefa falha sem chamar o modelo e o servidor segue")
+    void maliciousDocumentOnlyKillsTheExtraction(org.springframework.boot.test.system.CapturedOutput output) throws Exception {
         Gestor g = newGestor();
         long revision = revision(g);
+        // Um título de 600 MB comprimido em menos de 1 MB: o processo de extração, com 512 MB, esgota a memória.
+        byte[] bomb = docxWithHugeTitle(600L * 1024 * 1024);
+        assertThat(bomb.length).isLessThan(10 * 1024 * 1024);
         UUID jobId = jobId(importFile(g, new MockMultipartFile("file", "bomba.docx",
-                "application/vnd.openxmlformats-officedocument.wordprocessingml.document", docxWithHugeTitle(30L * 1024 * 1024))));
+                "application/vnd.openxmlformats-officedocument.wordprocessingml.document", bomb)));
         String file = (String) jobRow(jobId).get("file_path");
         worker.drain();
-        assertThat(jobRow(jobId)).containsEntry("status", "failed").containsEntry("error_code", "text_too_long");
+        assertThat(jobRow(jobId)).containsEntry("status", "failed").containsEntry("error_code", "import_failed");
         assertThat(revision(g)).isEqualTo(revision);
         assertThat(STUB.modelRequests()).isEmpty();
         assertThat(Files.exists(IMPORT_DIRECTORY.resolve(file))).isFalse();
+        // Quem esgotou a memória foi o processo de extração, não o servidor.
+        assertThat(output.getAll()).contains("terminou com código").doesNotContain("falhou com erro inesperado");
 
-        // A parte escondida atrás de uma assinatura falsa de diretório central também é conferida.
-        UUID hidden = jobId(importFile(g, new MockMultipartFile("file", "escondida.docx",
-                "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-                withFakeCentralDirectorySignature(docxWithHugeTitle(30L * 1024 * 1024), "docProps/core.xml"))));
+        // O servidor segue: a importação seguinte, de um documento normal, conclui.
+        STUB.modelAnswers(ANSWER);
+        UUID normal = jobId(importText(g, DOCUMENT));
         worker.drain();
-        assertThat(jobRow(hidden)).containsEntry("error_code", "text_too_long");
+        assertThat(jobRow(normal)).containsEntry("status", "done");
+        STUB.reset();
 
-        // O diretório central declara 1 MB comprimido para um título de 30 MB: o tamanho declarado não conta.
-        UUID lying = jobId(importFile(g, new MockMultipartFile("file", "mentira.docx",
-                "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-                withDeclaredCompressedSize(docxWithHugeTitle(30L * 1024 * 1024), "docProps/core.xml", 1024 * 1024))));
-        worker.drain();
-        assertThat(jobRow(lying)).containsEntry("error_code", "text_too_long");
-        // A recusa vem da conferência, antes de o parser carregar a parte na memória.
-        Path lyingFile = Files.createTempFile("mentira", ".docx");
-        Files.write(lyingFile, withDeclaredCompressedSize(docxWithHugeTitle(30L * 1024 * 1024), "docProps/core.xml", 1024 * 1024));
-        try {
-            org.assertj.core.api.Assertions.assertThatThrownBy(() -> ZipBudget.check(lyingFile)).isInstanceOf(ImportFailure.class);
-        } finally {
-            Files.deleteIfExists(lyingFile);
-        }
-
-        // Seis partes de 18 MB, cada uma abaixo do limite de parte, passam do total de 100 MB.
-        UUID total = jobId(importFile(g, new MockMultipartFile("file", "total.docx",
-                "application/vnd.openxmlformats-officedocument.wordprocessingml.document", docxWithExtraParts(6, 18L * 1024 * 1024))));
-        worker.drain();
-        assertThat(jobRow(total)).containsEntry("error_code", "text_too_long");
-        assertThat(STUB.modelRequests()).isEmpty();
-
-        // Uma parte com extensão declarada XML em Default conta como XML.
-        UUID byExtension = jobId(importFile(g, new MockMultipartFile("file", "extensao.docx",
-                "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-                docxWithPart("customXml/item.dat", 25L * 1024 * 1024, "<Default Extension=\"dat\" ContentType=\"application/xml\"/>"))));
-        worker.drain();
-        assertThat(jobRow(byExtension)).containsEntry("error_code", "text_too_long");
-        assertThat(STUB.modelRequests()).isEmpty();
-
-        // Uma parte XML com nome de binário, declarada como XML por Override, conta como XML.
-        UUID disguised = jobId(importFile(g, new MockMultipartFile("file", "disfarce.docx",
-                "application/vnd.openxmlformats-officedocument.wordprocessingml.document", docxWithDisguisedXmlPart(25L * 1024 * 1024))));
-        worker.drain();
-        assertThat(jobRow(disguised)).containsEntry("error_code", "text_too_long");
-        assertThat(STUB.modelRequests()).isEmpty();
-
-        // Títulos de 2 MB e de 19 MB, abaixo do limite de parte XML: o parser para nos metadados, sem corpo, e
-        // nada chega ao modelo (o título não vai a ele nem quando há corpo; ver C77).
+        // Títulos de 2 MB e de 19 MB: o parser para nos metadados, sem corpo, e nada chega ao modelo.
         for (long titleBytes : new long[] { 2L * 1024 * 1024, 19L * 1024 * 1024 }) {
             UUID titled = jobId(importFile(g, new MockMultipartFile("file", "titulo.docx",
                     "application/vnd.openxmlformats-officedocument.wordprocessingml.document", docxWithHugeTitle(titleBytes))));
@@ -353,21 +321,18 @@ class ImportTest extends IntegrationTest {
             assertThat(STUB.modelRequests()).isEmpty();
         }
 
-        // Um objeto OLE de 25 MB, tipo binário com "openxmlformats" no nome, não conta como XML.
-        STUB.modelAnswers(ANSWER);
-        UUID ole = jobId(importFile(g, new MockMultipartFile("file", "ole.docx",
-                "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-                docxWithPart("word/embeddings/oleObject1.bin", 25L * 1024 * 1024,
-                        "<Default Extension=\"bin\" ContentType=\"application/vnd.openxmlformats-officedocument.oleObject\"/>"))));
-        worker.drain();
-        assertThat(jobRow(ole)).containsEntry("status", "done");
-
-        // Uma imagem de 25 MB que comprime como um bitmap de verdade não é confundida com bomba.
-        STUB.modelAnswers(ANSWER);
-        UUID image = jobId(importFile(g, new MockMultipartFile("file", "imagem.docx",
-                "application/vnd.openxmlformats-officedocument.wordprocessingml.document", docxWithRandomImage(25 * 1024 * 1024))));
-        worker.drain();
-        assertThat(jobRow(image)).containsEntry("status", "done");
+        // Uma imagem e um objeto OLE de 25 MB, de documentos legítimos, importam normalmente.
+        for (String[] part : new String[][] {
+                { "word/media/image1.bmp", "<Default Extension=\"bmp\" ContentType=\"image/bmp\"/>" },
+                { "word/embeddings/oleObject1.bin",
+                        "<Default Extension=\"bin\" ContentType=\"application/vnd.openxmlformats-officedocument.oleObject\"/>" } }) {
+            STUB.modelAnswers(ANSWER);
+            UUID legit = jobId(importFile(g, new MockMultipartFile("file", "legitimo.docx",
+                    "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                    docxWithPart(part[0], 25L * 1024 * 1024, part[1]))));
+            worker.drain();
+            assertThat(jobRow(legit)).as(part[0]).containsEntry("status", "done");
+        }
     }
 
     @Test
@@ -401,20 +366,6 @@ class ImportTest extends IntegrationTest {
         assertThat(STUB.modelRequests().getFirst()).doesNotContain("MARCADOR-EMBUTIDO");
     }
 
-    /** Um .docx válido com `parts` partes extras de `bytes` cada, muito comprimíveis. */
-    private static byte[] docxWithExtraParts(int parts, long bytes) throws java.io.IOException {
-        return rewriteDocx(docx(10), zip -> {
-            byte[] chunk = "a".repeat(1024 * 1024).getBytes(java.nio.charset.StandardCharsets.UTF_8);
-            for (int i = 0; i < parts; i++) {
-                zip.putNextEntry(new java.util.zip.ZipEntry("customXml/item" + i + ".xml"));
-                for (long written = 0; written < bytes; written += chunk.length) {
-                    zip.write(chunk);
-                }
-                zip.closeEntry();
-            }
-        });
-    }
-
     /** Um .docx válido com a parte `name` de `bytes` que comprimem cerca de 5 para 1, e `typeDeclaration` em [Content_Types].xml. */
     private static byte[] docxWithPart(String name, long bytes, String typeDeclaration) throws java.io.IOException {
         byte[] base = rewriteDocx(docx(10), zip -> {
@@ -430,20 +381,6 @@ class ImportTest extends IntegrationTest {
             zip.closeEntry();
         });
         return replaceEntry(base, "[Content_Types].xml", types -> types.replace("</Types>", typeDeclaration + "</Types>"));
-    }
-
-    /** Um .docx válido com `customXml/item.bin` declarado como XML em [Content_Types].xml. */
-    private static byte[] docxWithDisguisedXmlPart(long bytes) throws java.io.IOException {
-        byte[] base = rewriteDocx(docx(10), zip -> {
-            byte[] chunk = "a".repeat(1024 * 1024).getBytes(java.nio.charset.StandardCharsets.UTF_8);
-            zip.putNextEntry(new java.util.zip.ZipEntry("customXml/item.bin"));
-            for (long written = 0; written < bytes; written += chunk.length) {
-                zip.write(chunk);
-            }
-            zip.closeEntry();
-        });
-        return replaceEntry(base, "[Content_Types].xml", types -> types.replace("</Types>",
-                "<Override PartName=\"/customXml/item.bin\" ContentType=\"application/xml\"/></Types>"));
     }
 
     /** Um .docx com outro .docx embutido como pacote, ligado ao documento por relacionamento. */
@@ -485,24 +422,6 @@ class ImportTest extends IntegrationTest {
         return out.toByteArray();
     }
 
-    /** Um .docx válido com uma imagem grande que comprime pouco, como um bitmap de verdade. */
-    private static byte[] docxWithRandomImage(int bytes) throws java.io.IOException {
-        return rewriteDocx(docx(10), zip -> {
-            // 16 cores em blocos de 4 pixels: comprime algumas vezes, como um bitmap de verdade, longe de 100 para 1.
-            byte[] random = new byte[bytes];
-            var colors = new java.util.Random(7);
-            for (int i = 0; i < bytes; i += 4) {
-                byte color = (byte) colors.nextInt(16);
-                for (int j = i; j < Math.min(i + 4, bytes); j++) {
-                    random[j] = color;
-                }
-            }
-            zip.putNextEntry(new java.util.zip.ZipEntry("word/media/image1.bmp"));
-            zip.write(random);
-            zip.closeEntry();
-        });
-    }
-
     private interface ZipWriter {
         void write(java.util.zip.ZipOutputStream zip) throws java.io.IOException;
     }
@@ -527,69 +446,6 @@ class ImportTest extends IntegrationTest {
             extra.write(zip);
         }
         return out.toByteArray();
-    }
-
-    /**
-     * Insere "PK\\1\\2" antes do cabeçalho local de `entryName` e corrige os deslocamentos: quem lê o zip em
-     * ordem para ali, quem lê o diretório central encontra a parte.
-     */
-    private static byte[] withFakeCentralDirectorySignature(byte[] zip, String entryName) {
-        var data = java.nio.ByteBuffer.wrap(zip).order(java.nio.ByteOrder.LITTLE_ENDIAN);
-        int eocd = zip.length - 22;
-        while (data.getInt(eocd) != 0x06054b50) {
-            eocd--;
-        }
-        int cdOffset = data.getInt(eocd + 16);
-        int entries = data.getShort(eocd + 10) & 0xffff;
-        int insertAt = -1;
-        int at = cdOffset;
-        for (int i = 0; i < entries; i++) {
-            int nameLength = data.getShort(at + 28) & 0xffff;
-            String name = new String(zip, at + 46, nameLength, java.nio.charset.StandardCharsets.UTF_8);
-            if (name.equals(entryName)) {
-                insertAt = data.getInt(at + 42);
-            }
-            at += 46 + nameLength + (data.getShort(at + 30) & 0xffff) + (data.getShort(at + 32) & 0xffff);
-        }
-        byte[] out = new byte[zip.length + 4];
-        System.arraycopy(zip, 0, out, 0, insertAt);
-        out[insertAt] = 'P';
-        out[insertAt + 1] = 'K';
-        out[insertAt + 2] = 1;
-        out[insertAt + 3] = 2;
-        System.arraycopy(zip, insertAt, out, insertAt + 4, zip.length - insertAt);
-        var fixed = java.nio.ByteBuffer.wrap(out).order(java.nio.ByteOrder.LITTLE_ENDIAN);
-        at = cdOffset + 4;
-        for (int i = 0; i < entries; i++) {
-            int offset = fixed.getInt(at + 42);
-            if (offset >= insertAt) {
-                fixed.putInt(at + 42, offset + 4);
-            }
-            int nameLength = fixed.getShort(at + 28) & 0xffff;
-            at += 46 + nameLength + (fixed.getShort(at + 30) & 0xffff) + (fixed.getShort(at + 32) & 0xffff);
-        }
-        fixed.putInt(eocd + 4 + 16, cdOffset + 4);
-        return out;
-    }
-
-    /** Troca, no diretório central, o tamanho comprimido declarado de `entryName`. */
-    private static byte[] withDeclaredCompressedSize(byte[] zip, String entryName, int declared) {
-        byte[] out = zip.clone();
-        var data = java.nio.ByteBuffer.wrap(out).order(java.nio.ByteOrder.LITTLE_ENDIAN);
-        int eocd = out.length - 22;
-        while (data.getInt(eocd) != 0x06054b50) {
-            eocd--;
-        }
-        int at = data.getInt(eocd + 16);
-        int entries = data.getShort(eocd + 10) & 0xffff;
-        for (int i = 0; i < entries; i++) {
-            int nameLength = data.getShort(at + 28) & 0xffff;
-            if (new String(out, at + 46, nameLength, java.nio.charset.StandardCharsets.UTF_8).equals(entryName)) {
-                data.putInt(at + 20, declared);
-            }
-            at += 46 + nameLength + (data.getShort(at + 30) & 0xffff) + (data.getShort(at + 32) & 0xffff);
-        }
-        return out;
     }
 
     /** Um .docx válido em que docProps/core.xml traz um título de `titleBytes`, escrito em pedaços. */
@@ -622,7 +478,7 @@ class ImportTest extends IntegrationTest {
     }
 
     @Test
-    @DisplayName("[C125] PDF com metadados que descompactam para centenas de MB falha com text_too_long sem chamar o modelo")
+    @DisplayName("[C125] PDF com metadados que descompactam para centenas de MB falha com import_failed sem chamar o modelo")
     void pdfBomb() throws Exception {
         Gestor g = newGestor();
         byte[] pdf;
@@ -644,7 +500,7 @@ class ImportTest extends IntegrationTest {
         assertThat(pdf.length).isLessThan(1024 * 1024);
         UUID jobId = jobId(importFile(g, new MockMultipartFile("file", "bomba.pdf", "application/pdf", pdf)));
         worker.drain();
-        assertThat(jobRow(jobId)).containsEntry("status", "failed").containsEntry("error_code", "text_too_long");
+        assertThat(jobRow(jobId)).containsEntry("status", "failed").containsEntry("error_code", "import_failed");
         assertThat(STUB.modelRequests()).isEmpty();
     }
 
