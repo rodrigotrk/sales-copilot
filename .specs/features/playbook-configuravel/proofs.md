@@ -1,9 +1,9 @@
 # playbook-configuravel proofs
 
-**HEAD**: 76fba39
+**HEAD**: 5971816
 **Tree**: clean
 **Shell**: /bin/sh
-**Result**: 154 pass, 0 fail
+**Result**: 158 pass, 0 fail
 
 | Check | Proof | Result |
 | --- | --- | --- |
@@ -159,6 +159,10 @@
 | C111 | `run web / ✓ [C111] voltar o campo ao valor gravado apaga o erro do servidor e libera Publicar` | pass |
 | C111 | `run web / ✓ [C24c] Sair aparece no acesso não liberado, na criação de negócio e na lista e leva a /entrar` | pass |
 | C112 | `run web / ✓ [C112] remover o último plano apaga o erro do desconto e libera Publicar e Importar documento` | pass |
+| C113 | `run web / ✓ [C113] importação aceita com 202 fica em Importando e é acompanhada mesmo se a primeira consulta f` | pass |
+| C114 | `run server / PASSED [C114] número de parcelas fracionário é recusado sem gravar e 6.0 vale 6` | pass |
+| C115 | `run server / PASSED [C115] SMTP sem STARTTLS recusa o envio antes de mandar senha ou mensagem` | pass |
+| C116 | `run server / PASSED [C116] exportação do Google Docs acima de 10 MB falha com text_too_long sem chamar o model` | pass |
 | Build | `make build` | pass |
 | Build | `make lint` | pass |
 
@@ -167,21 +171,21 @@
 `Run web` - exit 0
 
 ```
- ✓ src/features/playbook/__tests__/playbook.test.ts > tela do playbook > [C56b] publish_minimum mostra a mensagem do mínimo 21ms
- ✓ src/features/playbook/__tests__/playbook.test.ts > tela do playbook > [C57b] incomplete_rows destaca as linhas e mostra Complete ou remova 20ms
- ✓ src/features/playbook/__tests__/playbook.test.ts > tela do playbook > [C59b] pending_review mostra Confira os valores marcados 19ms
- ✓ src/features/playbook/__tests__/playbook.test.ts > tela do playbook > [C60] alteração pendente desabilita Publicar com Há alterações não salvas 73ms
- ✓ src/features/playbook/__tests__/playbook.test.ts > tela do playbook > [C61b] Alterações não publicadas aparece só com diferença e Publicar desabilita sem ela 79ms
- ✓ src/features/playbook/__tests__/playbook.test.ts > tela do playbook > [C62] sem versão o topo mostra rascunho 9ms
- ✓ src/features/playbook/__tests__/review.test.ts > correções da revisão de código > [C110] consulta da importação que falha uma vez continua até a tarefa terminar 10603ms
- ✓ src/features/playbook/__tests__/review.test.ts > correções da revisão de código > [C111] voltar o campo ao valor gravado apaga o erro do servidor e libera Publicar 343ms
- ✓ src/features/playbook/__tests__/review.test.ts > correções da revisão de código > [C24c] Sair aparece no acesso não liberado, na criação de negócio e na lista e leva a /entrar 26ms
- ✓ src/features/playbook/__tests__/review.test.ts > correções da revisão de código > [C112] remover o último plano apaga o erro do desconto e libera Publicar e Importar documento 66ms
+ ✓ src/features/playbook/__tests__/playbook.test.ts > tela do playbook > [C57b] incomplete_rows destaca as linhas e mostra Complete ou remova 19ms
+ ✓ src/features/playbook/__tests__/playbook.test.ts > tela do playbook > [C59b] pending_review mostra Confira os valores marcados 22ms
+ ✓ src/features/playbook/__tests__/playbook.test.ts > tela do playbook > [C60] alteração pendente desabilita Publicar com Há alterações não salvas 79ms
+ ✓ src/features/playbook/__tests__/playbook.test.ts > tela do playbook > [C61b] Alterações não publicadas aparece só com diferença e Publicar desabilita sem ela 89ms
+ ✓ src/features/playbook/__tests__/playbook.test.ts > tela do playbook > [C62] sem versão o topo mostra rascunho 10ms
+ ✓ src/features/playbook/__tests__/review.test.ts > correções da revisão de código > [C110] consulta da importação que falha uma vez continua até a tarefa terminar 10561ms
+ ✓ src/features/playbook/__tests__/review.test.ts > correções da revisão de código > [C111] voltar o campo ao valor gravado apaga o erro do servidor e libera Publicar 338ms
+ ✓ src/features/playbook/__tests__/review.test.ts > correções da revisão de código > [C24c] Sair aparece no acesso não liberado, na criação de negócio e na lista e leva a /entrar 28ms
+ ✓ src/features/playbook/__tests__/review.test.ts > correções da revisão de código > [C112] remover o último plano apaga o erro do desconto e libera Publicar e Importar documento 81ms
+ ✓ src/features/playbook/__tests__/review.test.ts > correções da revisão de código > [C113] importação aceita com 202 fica em Importando e é acompanhada mesmo se a primeira consulta falhar 2118ms
 
  Test Files  6 passed (6)
-      Tests  72 passed (72)
-   Start at  21:20:57
-   Duration  13.33s (transform 2.28s, setup 0ms, import 4.90s, tests 15.04s, environment 2.29s)
+      Tests  73 passed (73)
+   Start at  21:56:53
+   Duration  16.05s (transform 2.54s, setup 0ms, import 6.28s, tests 17.42s, environment 3.91s)
 ```
 
 `Run server` - exit 0
@@ -190,17 +194,17 @@
 PASSED [C82] bloco acima do limite importa até o limite e avisa os itens de fora
 PASSED [C75] arquivo acima de 10 MB responde 413 sem criar tarefa
 PASSED [C89] chamada ao OpenRouter leva provider.zdr true
-[INFO] Tests run: 22, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 2.894 s -- in app.salescopilot.importing.ImportTest
+[INFO] Tests run: 23, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 3.193 s -- in app.salescopilot.importing.ImportTest
 [INFO] 
 [INFO] Results:
 [INFO] 
-[INFO] Tests run: 72, Failures: 0, Errors: 0, Skipped: 0
+[INFO] Tests run: 75, Failures: 0, Errors: 0, Skipped: 0
 [INFO] 
 [INFO] ------------------------------------------------------------------------
 [INFO] BUILD SUCCESS
 [INFO] ------------------------------------------------------------------------
-[INFO] Total time:  23.124 s
-[INFO] Finished at: 2026-11-15T21:21:34-03:00
+[INFO] Total time:  24.980 s
+[INFO] Finished at: 2026-11-15T21:57:35-03:00
 [INFO] ------------------------------------------------------------------------
 ```
 
