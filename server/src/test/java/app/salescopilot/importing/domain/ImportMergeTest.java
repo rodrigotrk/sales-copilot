@@ -88,18 +88,25 @@ class ImportMergeTest {
     }
 
     @Test
-    @DisplayName("[C131] valor negativo do documento não autoriza o positivo, e o hífen de faixa não é sinal")
+    @DisplayName("[C131] valor negativo do documento não autoriza o positivo, e hífen de lista, separador ou faixa não é sinal")
     void negativeNumbersDoNotAuthorizePositives() {
         var extracted = new ExtractedPlaybook(List.of(new ExtractedPlaybook.Stage("Abertura")), List.of(), List.of(),
                 new ExtractedPlaybook.PriceTable(null, new BigDecimal("500"), "Desconto", List.of(
                         new ExtractedPlaybook.Plan("Plano", null, new BigDecimal("7000"), 6, new BigDecimal("1200"), "Plano"))));
         for (String text : List.of("Plano: R$ -7.000,00 ou 6x de -R$ 1.200. Desconto: -500.",
-                "Plano: - R$ 7.000 ou 6x de R$ -1.200. Desconto: R$ - 500")) {
+                "Plano: -R$7.000 ou 6x de R$-1.200. Desconto:-500")) {
             PriceTable table = ImportMerge.merge(PlaybookDocument.empty(), extracted, text).draft().priceTable();
             assertThat(table.plans().getFirst().cash()).as(text).isNull();
             assertThat(table.plans().getFirst().installments()).as(text).isNull();
             assertThat(table.maxDiscount()).as(text).isNull();
         }
+        // Hífen seguido de espaço é marcador de lista ou separador, não sinal.
+        String bullets = "Planos:\n- Plano A - R$ 7.000 à vista\n- 6x de R$ 1.200\nDesconto máximo - 500";
+        PriceTable listed = ImportMerge.merge(PlaybookDocument.empty(), extracted, bullets).draft().priceTable();
+        assertThat(listed.plans().getFirst().cash()).isEqualByComparingTo("7000.00");
+        assertThat(listed.plans().getFirst().installments().value()).isEqualByComparingTo("1200.00");
+        assertThat(listed.maxDiscount()).isEqualByComparingTo("500.00");
+
         String range = "Plano de R$ 7.000 - R$ 8.000, em 6x de 1.200-1.400. Desconto de 300-500.";
         PriceTable table = ImportMerge.merge(PlaybookDocument.empty(), extracted, range).draft().priceTable();
         assertThat(table.plans().getFirst().cash()).isEqualByComparingTo("7000.00");

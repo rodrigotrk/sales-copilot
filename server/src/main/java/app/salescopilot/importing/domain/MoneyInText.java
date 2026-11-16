@@ -39,22 +39,27 @@ public final class MoneyInText {
     }
 
     /**
-     * "-7.000", "R$ -7.000" ou "-R$ 7.000" é negativo e não autoriza o valor positivo. O hífen depois de outro
-     * número, como em "7.000 - 8.000", é de faixa, não sinal.
+     * O sinal de menos fica colado: "-7.000", "R$ -7.000" ou "-R$ 7.000" é negativo e não autoriza o valor
+     * positivo. Hífen seguido de espaço é marcador de lista ou separador ("- R$ 4.500 à vista", "Plano A -
+     * R$ 4.500"), e hífen depois de outro número é faixa ("7.000-8.000").
      */
     private static boolean isNegative(String text, int start) {
-        int at = skipSpaces(text, start - 1);
+        int at = start - 1;
         if (at >= 1 && text.startsWith("R$", at - 1)) {
-            at = skipSpaces(text, at - 2);
+            at -= 2;
+        } else if (at >= 0 && Character.isWhitespace(text.charAt(at))) {
+            // "R$ -7.000" ou "-R$ 7.000": espaço só entre o R$ e o número.
+            int beforeSpace = skipSpaces(text, at);
+            if (beforeSpace >= 1 && text.startsWith("R$", beforeSpace - 1)) {
+                at = beforeSpace - 2;
+            } else {
+                return false;
+            }
         }
         if (at < 0 || text.charAt(at) != '-') {
             return false;
         }
-        int before = skipSpaces(text, at - 1);
-        if (before >= 1 && text.startsWith("R$", before - 1)) {
-            before = skipSpaces(text, before - 2);
-        }
-        return before < 0 || !Character.isDigit(text.charAt(before));
+        return at == 0 || !Character.isDigit(text.charAt(at - 1));
     }
 
     private static int skipSpaces(String text, int at) {
