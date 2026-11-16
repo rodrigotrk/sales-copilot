@@ -447,4 +447,41 @@ describe('correções da revisão de código', () => {
 
     expect((screen.getByLabelText('Número de parcelas') as HTMLInputElement).value).toBe('12')
   })
+
+  it('[C120] 409 import_running ao gravar ou publicar deixa a tela em Importando e acompanha mesmo com a consulta falhando', async () => {
+    for (const trigger of ['gravar', 'publicar'] as const) {
+      let gets = 0
+      const running = playbookState()
+      running.importJob = { id: 'j1', status: 'running', counts: null, skipped: 0, notices: [], errorCode: null }
+      fakeApi({
+        'GET /api/me': ok(me()),
+        'GET /api/businesses/b1/playbook': () => {
+          gets += 1
+          if (gets === 1) return ok(playbookState())
+          if (gets === 2) return problem(503, '')
+          return ok(running)
+        },
+        'PUT /api/businesses/b1/playbook/draft': problem(409, 'import_running'),
+        'POST /api/businesses/b1/playbook/versions': problem(409, 'import_running'),
+      })
+      const { user } = await renderApp('/n/b1/playbook')
+      await screen.findByText(/^Playbook: /)
+
+      if (trigger === 'gravar') {
+        await user.click(screen.getByText('Abertura'))
+        await user.clear(screen.getByLabelText('Nome da etapa'))
+        await user.type(screen.getByLabelText('Nome da etapa'), 'Boas-vindas')
+        await user.click(document.body)
+      } else {
+        await user.click(button('Publicar'))
+      }
+
+      expect(await screen.findByText('Importando…')).toBeTruthy()
+      expect(button('+ Etapa').disabled).toBe(true)
+      expect(button('Importar documento').disabled).toBe(true)
+      await waitFor(() => expect(gets).toBeGreaterThanOrEqual(3), { timeout: 5000 })
+      expect(screen.getByText('Importando…')).toBeTruthy()
+      cleanup()
+    }
+  }, 15000)
 })

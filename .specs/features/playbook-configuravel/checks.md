@@ -367,7 +367,7 @@ Proof: run web | ✓ [C102] parcela acima de R$ 10 milhões é aceita, sem o tet
 **C103** - Erro recusado antes do MVC, por HTTP real, sai em `application/problem+json` com `code`, `type`, `detail` e `instance` igual ao endereço enviado: firewall do Spring Security (`/api//me`, `/api/me;extra`) `400` `request_rejected`; `TRACE` `405` `method_not_allowed`; endereço que o Tomcat recusa (`%2F`, `%00`, `%zz`) `400` `invalid_request`; byte não ASCII cru no caminho `400` `invalid_request` com `instance` `/`, porque o Tomcat recusa a linha do pedido antes de guardar o caminho (AD-057)
 Proof: run server | PASSED [C103] erro recusado antes do MVC sai em RFC 9457 com code e type
 
-**C104** - O script de papéis cria `migrator`, `app` e `job_claimer` com senhas que têm apóstrofo, aspas e ponto e vírgula, e `migrator` e `app` entram com a própria senha; a prova não deixa volume do Postgres para trás (Landing 1, AD-037)
+**C104** - O script de papéis cria `migrator`, `app` e `job_claimer` com senhas que têm apóstrofo, aspas e ponto e vírgula, e `migrator` e `app` entram pela rede (`scram-sha-256`, de outro contêiner) com a própria senha e são recusados com uma senha errada; a prova não deixa volume do Postgres para trás (Landing 1, AD-037)
 Proof: `sh deploy/verify-roles.sh`
 
 **C105** - Importação que começa com uma linha em edição fecha a linha, e nenhum campo da tela fica editável (AC 42, AC 66, AD-036)
@@ -417,6 +417,9 @@ Proof: run server | PASSED [C118] GET do playbook lê rascunho e tarefa no mesmo
 
 **C119** - Uma gravação de outro campo que termina enquanto a pessoa digita no parcelado não apaga a digitação (AC 35, AD-016)
 Proof: run web | ✓ [C119] gravação de outro campo que termina enquanto a pessoa digita no parcelado não apaga a digitação
+
+**C120** - `409` `import_running` ao gravar ou ao publicar deixa a tela em "Importando…" com o rascunho só leitura, e o acompanhamento continua mesmo se a consulta seguinte falhar (`503`) (AC 42, AC 67, AD-036)
+Proof: run web | ✓ [C120] 409 import_running ao gravar ou publicar deixa a tela em Importando e acompanha mesmo com a consulta falhando
 
 ## Coverage
 

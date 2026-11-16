@@ -148,7 +148,8 @@ export function createEditor(businessId: string) {
     } catch (e) {
       if (!(e instanceof ApiError) && !(e instanceof TypeError)) throw e
       if (e instanceof ApiError && e.code === 'revision_conflict') conflict.value = true
-      else if (e instanceof ApiError && e.code === 'import_running') await reload()
+      // Outra aba começou uma importação: mesmo caminho do 202, com acompanhamento que sobrevive a falhas.
+      else if (e instanceof ApiError && e.code === 'import_running') await importStarted()
       else if (e instanceof ApiError && e.status === 422 && e.errors.length) {
         serverErrors.value = Object.fromEntries(e.errors.map((fe) => [fieldKey(fe.itemId, fe.field), messageFor(fe)]))
       } else {
@@ -251,7 +252,8 @@ export function createEditor(businessId: string) {
       if (!(e instanceof ApiError) && !(e instanceof TypeError)) throw e
       const code = e instanceof ApiError ? e.code : ''
       if (code === 'revision_conflict') conflict.value = true
-      else if (code === 'nothing_to_publish' || code === 'import_running') await reload()
+      else if (code === 'import_running') await importStarted()
+      else if (code === 'nothing_to_publish') await reload()
       else if (code === 'incomplete_rows' && e instanceof ApiError) {
         incomplete.value = new Set(e.errors.flatMap((fe) => (fe.itemId ? [fe.itemId] : [])))
         publishError.value = msg.incompleteRows
