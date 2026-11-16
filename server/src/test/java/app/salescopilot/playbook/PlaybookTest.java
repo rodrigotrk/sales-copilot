@@ -115,6 +115,37 @@ class PlaybookTest extends IntegrationTest {
     }
 
     @Test
+    @DisplayName("[C128] valor em dinheiro com expoente enorme responde 422 com erro de campo, sem 500 nem gravar")
+    void hugeMoneyExponentIsRefused() throws Exception {
+        Gestor g = newGestor();
+        UUID id = playbookId(g);
+        var draft = (tools.jackson.databind.node.ObjectNode) json.readTree(Drafts.complete());
+        var plan = (tools.jackson.databind.node.ObjectNode) draft.get("priceTable").get("plans").get(0);
+        ((tools.jackson.databind.node.ObjectNode) plan.get("installments")).put("value", "1E+2147483647");
+        save(g, id, json.writeValueAsString(draft), 0).andExpect(status().isUnprocessableContent())
+                .andExpect(jsonPath("$.errors[0].field").value("installments"));
+
+        draft = (tools.jackson.databind.node.ObjectNode) json.readTree(Drafts.complete());
+        ((tools.jackson.databind.node.ObjectNode) draft.get("priceTable").get("plans").get(0)).put("cash", "1E-2147483647");
+        save(g, id, json.writeValueAsString(draft), 0).andExpect(status().isUnprocessableContent())
+                .andExpect(jsonPath("$.errors[0].field").value("cash"));
+
+        draft = (tools.jackson.databind.node.ObjectNode) json.readTree(Drafts.complete());
+        var table = (tools.jackson.databind.node.ObjectNode) draft.get("priceTable");
+        table.putArray("plans");
+        table.put("maxDiscount", "1E+100000000");
+        save(g, id, json.writeValueAsString(draft), 0).andExpect(status().isUnprocessableContent())
+                .andExpect(jsonPath("$.errors[0].field").value("maxDiscount"));
+        assertThat(playbook(g).get("revision").asLong()).isZero();
+
+        // Um valor grande de verdade, sem o teto do preço à vista, ainda vale para a parcela.
+        draft = (tools.jackson.databind.node.ObjectNode) json.readTree(Drafts.complete());
+        plan = (tools.jackson.databind.node.ObjectNode) draft.get("priceTable").get("plans").get(0);
+        ((tools.jackson.databind.node.ObjectNode) plan.get("installments")).put("value", "999999999999.99");
+        save(g, id, json.writeValueAsString(draft), 0).andExpect(status().isOk());
+    }
+
+    @Test
     @DisplayName("[C38a] rascunho acima do limite de itens responde 422")
     void itemLimits() throws Exception {
         Gestor g = newGestor();

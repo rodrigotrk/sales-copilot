@@ -29,12 +29,15 @@ class DocumentText {
     private static final Pattern GOOGLE_DOC = Pattern.compile("^https://docs\\.google\\.com/document/d/([A-Za-z0-9_-]+)(/.*)?$");
 
     private final ExtractionProcess extraction;
+    private final Path importDirectory;
     private final RestClient http;
     private final String googleDocsBaseUrl;
 
     DocumentText(ExtractionProcess extraction, RestClient.Builder builder,
-            @Value("${app.import.google-docs-base-url}") String googleDocsBaseUrl) {
+            @Value("${app.import.google-docs-base-url}") String googleDocsBaseUrl,
+            @Value("${app.import.directory}") Path importDirectory) {
         this.extraction = extraction;
+        this.importDirectory = importDirectory;
         var requests = new SimpleClientHttpRequestFactory();
         requests.setConnectTimeout(10_000);
         requests.setReadTimeout(60_000);
@@ -93,8 +96,10 @@ class DocumentText {
         }
         Path copy = null;
         try {
-            // Em arquivo, para a conferência ler o diretório central como o parser.
-            copy = Files.createTempFile("google-docs-", ".docx");
+            // Em arquivo, para o processo de extração ler.
+            // Na pasta de importação, como um upload: se o servidor cair no meio, a varredura de órfãos a apaga.
+            copy = importDirectory.resolve("google-" + java.util.UUID.randomUUID() + ".docx");
+            Files.createDirectories(importDirectory);
             Files.write(copy, body);
             return extraction.extract(copy, TextExtraction.DOCX);
         } catch (IOException e) {

@@ -41,7 +41,17 @@ class ImportFiles {
 
     void delete(String fileName) {
         try {
-            Files.deleteIfExists(directory.resolve(fileName));
+            Path target = directory.resolve(fileName);
+            // A pasta temporária de uma extração que caiu também é apagada, com o que estiver dentro.
+            if (Files.isDirectory(target, java.nio.file.LinkOption.NOFOLLOW_LINKS)) {
+                try (var paths = Files.walk(target)) {
+                    for (Path path : paths.sorted(java.util.Comparator.reverseOrder()).toList()) {
+                        Files.deleteIfExists(path);
+                    }
+                }
+            } else {
+                Files.deleteIfExists(target);
+            }
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         }

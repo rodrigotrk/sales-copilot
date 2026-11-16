@@ -86,7 +86,7 @@ class ExtractionTimeoutTest extends IntegrationTest {
             zip.write("</dc:title></cp:coreProperties>".getBytes(java.nio.charset.StandardCharsets.UTF_8));
             zip.closeEntry();
         }
-        var slow = new ExtractionProcess("4g", java.time.Duration.ofMinutes(5));
+        var slow = new ExtractionProcess(IMPORT_DIRECTORY, "4g", java.time.Duration.ofMinutes(5));
         Thread worker = new Thread(() -> {
             try {
                 slow.extract(file, TextExtraction.DOCX);

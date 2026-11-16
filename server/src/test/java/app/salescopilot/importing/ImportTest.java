@@ -776,6 +776,57 @@ class ImportTest extends IntegrationTest {
         String draft = admin.sql("SELECT draft::text FROM playbooks WHERE business_id = ?").param(g.businessId()).query(String.class).single();
         assertThat(draft).doesNotContain("MARCADOR-DO-DOCUMENTO");
 
+        // Um .docx passa pelo processo de extração: o texto volta pela memória e nenhum arquivo o contém,
+        // nem durante a extração. Uma vigia lê os arquivos da pasta de importação e das pastas de extração.
+        byte[] marked;
+        try (var document = new org.apache.poi.xwpf.usermodel.XWPFDocument(); var out = new ByteArrayOutputStream()) {
+            document.createParagraph().createRun().setText("Etapas: Abertura. MARCADOR-EM-DOCX");
+            document.write(out);
+            marked = out.toByteArray();
+        }
+        STUB.modelAnswers(ANSWER);
+        UUID docxJob = jobId(importFile(g, new MockMultipartFile("file", "marcado.docx",
+                "application/vnd.openxmlformats-officedocument.wordprocessingml.document", marked)));
+        var seen = new java.util.concurrent.atomic.AtomicReference<String>();
+        var watching = new java.util.concurrent.atomic.AtomicBoolean(true);
+        Thread watcher = Thread.ofVirtual().start(() -> {
+            List<Path> roots = List.of(IMPORT_DIRECTORY, Path.of(System.getProperty("java.io.tmpdir")));
+            while (watching.get()) {
+                for (Path root : roots) {
+                    try (var paths = Files.walk(root, root.equals(IMPORT_DIRECTORY) ? 4 : 1)) {
+                        paths.filter(path -> root.equals(IMPORT_DIRECTORY) || path.getFileName().toString().startsWith("extracao-"))
+                                .flatMap(path -> {
+                                    try {
+                                        return Files.isDirectory(path) ? Files.walk(path) : java.util.stream.Stream.of(path);
+                                    } catch (java.io.IOException e) {
+                                        return java.util.stream.Stream.empty();
+                                    }
+                                })
+                                .filter(Files::isRegularFile)
+                                .forEach(path -> {
+                                    try {
+                                        if (new String(Files.readAllBytes(path), java.nio.charset.StandardCharsets.UTF_8).contains("MARCADOR-EM-DOCX")) {
+                                            seen.set(path.toString());
+                                        }
+                                    } catch (java.io.IOException | RuntimeException e) {
+                                        // O arquivo sumiu entre a listagem e a leitura.
+                                    }
+                                });
+                    } catch (java.io.IOException | RuntimeException e) {
+                        // A pasta mudou durante a listagem; a próxima volta confere de novo.
+                    }
+                }
+            }
+        });
+        worker.drain();
+        watching.set(false);
+        watcher.join();
+        assertThat(jobRow(docxJob)).containsEntry("status", "done");
+        assertThat(seen.get()).as("arquivo com o texto extraído").isNull();
+        try (var left = Files.list(IMPORT_DIRECTORY)) {
+            assertThat(left.map(path -> path.getFileName().toString())).noneMatch(name -> name.startsWith("extracao-"));
+        }
+
         UUID failing = jobId(importText(g, "x".repeat(100_001)));
         String failingFile = (String) jobRow(failing).get("file_path");
         worker.drain();

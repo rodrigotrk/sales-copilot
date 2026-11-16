@@ -317,7 +317,7 @@ Proof: run server | PASSED [C85] concessão vencida é reprocessada sem duplicar
 **C86** - `claim_next_import_job()` entrega tarefas de dois negócios e o papel `app` só vê as do seu negócio (AC 86)
 Proof: run server | PASSED [C86] claim entrega tarefas de dois negócios e o papel app só vê as suas
 
-**C87** - Ao terminar em `done` ou `failed`, o arquivo é apagado depois do commit e o texto extraído não é gravado (AC 87)
+**C87** - Ao terminar em `done` ou `failed`, o arquivo é apagado depois do commit e o texto extraído não é gravado (AC 87); um .docx que passa pelo processo de extração também conclui sem que nenhum arquivo da pasta de importação ou das pastas de extração contenha o texto, nem durante a extração (o resultado volta pela saída padrão do filho, AD-063), e nenhuma pasta de extração sobra
 Proof: run server | PASSED [C87] arquivo da tarefa é apagado depois do commit e o texto não é gravado
 
 **C88** - A varredura apaga arquivos de tarefas encerradas e órfãos com mais de 1 hora (AC 88)
@@ -441,6 +441,9 @@ Proof: run server | PASSED [C126] extração que passa do tempo limite é encerr
 
 **C127** - Uma extração interrompida no meio (como no desligamento do servidor) encerra o processo filho em até 500 ms, em vez de deixá-lo rodando sem tempo limite (AD-063)
 Proof: run server | PASSED [C127] extração interrompida encerra o processo filho
+
+**C128** - Valor em dinheiro com representação enorme (`1E+2147483647` na parcela, `1E-2147483647` no à vista, `1E+100000000` no desconto sem plano) responde `422` com erro do campo, sem `500` e sem gravar; um valor de parcela grande de verdade (`999999999999.99`) continua aceito (AD-025, AC 47)
+Proof: run server | PASSED [C128] valor em dinheiro com expoente enorme responde 422 com erro de campo, sem 500 nem gravar
 
 ## Coverage
 
