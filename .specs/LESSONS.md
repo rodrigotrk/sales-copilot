@@ -212,6 +212,12 @@ Seen once or not yet corroborated. Tracked, not trusted.
 - evidence: Verifier C121-C125, AD-063 (importing)
 - last seen: 2026-11-16T10:52:14Z
 
+### L-034 - Bound a decimal's representation (precision, scale, integer digits) to the stored column before any arithmetic on it.
+- signal: `ac_gap` · recurrence: 1 feature(s) · scope: `server` · harmful: 0
+- features: playbook-configuravel
+- evidence: Codex r9 1, Verifier C128 (server)
+- last seen: 2026-11-16T11:25:59Z
+
 ## Quarantined (failed when applied - ignore)
 
 A confirmed lesson that recurred alongside failure. Kept for the maintainer to review.

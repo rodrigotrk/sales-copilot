@@ -3,7 +3,7 @@
   "promote_threshold": 2,
   "window_days": 45,
   "quarantine_threshold": 2,
-  "next_id": 34,
+  "next_id": 35,
   "lessons": [
     {
       "id": "L-001",
@@ -598,6 +598,24 @@
       ],
       "created": "2026-11-16T10:52:14Z",
       "last_seen": "2026-11-16T10:52:14Z"
+    },
+    {
+      "id": "L-034",
+      "key": "ac_gap::bound a decimal s representation precision scale integer digits to the stored column before any arithmetic on it",
+      "text": "Bound a decimal's representation (precision, scale, integer digits) to the stored column before any arithmetic on it.",
+      "signal": "ac_gap",
+      "scope": "server",
+      "status": "candidate",
+      "features": [
+        "playbook-configuravel"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "Codex r9 1, Verifier C128 (server)"
+      ],
+      "created": "2026-11-16T11:25:59Z",
+      "last_seen": "2026-11-16T11:25:59Z"
     }
   ]
 }
