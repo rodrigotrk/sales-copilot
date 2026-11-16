@@ -32,7 +32,7 @@ public final class ImportMerge {
     }
 
     public static Result merge(PlaybookDocument current, ExtractedPlaybook extracted, String documentText) {
-        MoneyInText money = new MoneyInText(documentText);
+        Citation citation = new Citation(documentText);
         int[] skipped = {0};
 
         var stages = new ArrayList<>(current.stages());
@@ -55,7 +55,7 @@ public final class ImportMerge {
         PriceTable table = current.priceTable();
         var plans = new ArrayList<>(table.plans());
         int plansAdded = append(plans, extracted.priceTable().plans().stream()
-                .map(p -> plan(p, money))
+                .map(p -> plan(p, citation))
                 .toList(), PlaybookLimits.MAX_PLANS, skipped);
 
         List<String> notices = new ArrayList<>();
@@ -73,7 +73,8 @@ public final class ImportMerge {
         BigDecimal discount = table.maxDiscount();
         Review discountReview = table.maxDiscountReview();
         BigDecimal documentDiscount = extracted.priceTable().maxDiscount();
-        if (documentDiscount != null && money.contains(documentDiscount) && documentDiscount.signum() >= 0
+        if (documentDiscount != null && citation.confirms(extracted.priceTable().maxDiscountExcerpt(), documentDiscount)
+                && documentDiscount.signum() >= 0
                 && twoDecimals(documentDiscount)) {
             if (discount == null) {
                 discount = scale(documentDiscount);
@@ -94,14 +95,14 @@ public final class ImportMerge {
         return new Result(draft, counts, skipped[0], notices);
     }
 
-    private static Plan plan(ExtractedPlaybook.Plan p, MoneyInText money) {
-        BigDecimal cash = p.cash() != null && money.contains(p.cash()) && twoDecimals(p.cash()) && p.cash().signum() > 0
+    private static Plan plan(ExtractedPlaybook.Plan p, Citation citation) {
+        BigDecimal cash = p.cash() != null && citation.confirms(p.excerpt(), p.cash()) && twoDecimals(p.cash()) && p.cash().signum() > 0
                 && p.cash().compareTo(MAX_CASH) <= 0 ? scale(p.cash()) : null;
         Installments installments = null;
         Integer count = p.installmentsCount();
         BigDecimal value = p.installmentsValue();
         if (count != null && count >= PlaybookLimits.MIN_INSTALLMENTS && count <= PlaybookLimits.MAX_INSTALLMENTS
-                && value != null && value.signum() > 0 && twoDecimals(value) && money.contains(value)) {
+                && value != null && value.signum() > 0 && twoDecimals(value) && citation.confirms(p.excerpt(), value)) {
             installments = new Installments(count, scale(value));
         }
         return new Plan(UUID.randomUUID(), cut(p.name(), PlaybookLimits.SHORT_TEXT),

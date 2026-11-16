@@ -33,7 +33,8 @@ class PlaybookExtraction {
             - discovery: o que o vendedor precisa descobrir na call (information) e a pergunta sugerida (question).
             - objections: a objeção (name), como o lead costuma dizer (leadSays, vazio se o documento não disser) e a resposta aprovada (approvedResponse).
             - priceTable.plans: cada plano com nome, o valor de uma coluna extra se houver (extraValue, ex.: número de encontros), preço à vista (cash), número de parcelas e valor de cada parcela, como números com ponto decimal, exatamente como escritos.
-            - excerpt: o trecho literal do documento de onde saiu o preço do plano ou o desconto.
+            - excerpt: o trecho do documento copiado letra por letra, sem resumir nem corrigir, que contém o preço à vista e o valor da parcela do plano como estão escritos.
+            - maxDiscountExcerpt: o trecho do documento copiado letra por letra que contém o desconto máximo como está escrito.
             - priceTable.extraColumnName: o nome da coluna extra da tabela de preços, se houver.
             - priceTable.maxDiscount: o desconto máximo em reais permitido na call, se o documento disser.
             - Use null para o que o documento não traz.
