@@ -25,6 +25,10 @@ const url = ref('')
 const error = ref('')
 const sending = ref(false)
 
+function setOpen(value: boolean) {
+  if (value || !sending.value) open.value = value
+}
+
 const ready = computed(() =>
   kind.value === 'file' ? !!file.value : kind.value === 'text' ? !!text.value.trim() : !!url.value.trim(),
 )
@@ -71,7 +75,9 @@ async function submit() {
 </script>
 
 <template>
-  <Dialog v-model:open="open">
+  <!-- Com o envio pendente o diálogo não fecha (botão, Esc ou clique fora): fechado, o rascunho voltaria a
+       aceitar edição, e o 202 que chega depois recarregaria o rascunho por cima dela. -->
+  <Dialog :open="open" @update:open="setOpen">
     <DialogContent>
       <DialogHeader>
         <DialogTitle>Importar documento</DialogTitle>

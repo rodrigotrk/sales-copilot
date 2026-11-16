@@ -484,4 +484,38 @@ describe('correções da revisão de código', () => {
       cleanup()
     }
   }, 15000)
+
+  it('[C132] com o envio da importação pendente o diálogo não fecha, e o rascunho não fica editável antes do 202', async () => {
+    let release: () => void = () => {}
+    const { server, routes } = playbookServer(playbookState())
+    fakeApi({
+      ...routes,
+      'POST /api/businesses/b1/playbook/imports': () =>
+        new Promise((resolve) => {
+          release = () => {
+            server.state.importJob = { id: 'j1', status: 'queued', counts: null, skipped: 0, notices: [], errorCode: null }
+            resolve(ok({ jobId: 'j1' }, 202))
+          }
+        }),
+    })
+    const { user } = await renderApp('/n/b1/playbook')
+    await screen.findByText(/^Playbook: /)
+
+    await user.click(button('Importar documento'))
+    const dialog = within(await screen.findByRole('dialog'))
+    await user.click(dialog.getByLabelText('Texto colado'))
+    await user.type(dialog.getByLabelText('Texto do playbook'), 'Etapa 1: abertura.')
+    await user.click(dialog.getByRole('button', { name: 'Importar' }))
+
+    await user.keyboard('{Escape}')
+    expect(screen.getByRole('dialog')).toBeTruthy()
+    const close = screen.queryByRole('button', { name: /close|fechar/i })
+    if (close) await user.click(close)
+    expect(screen.getByRole('dialog')).toBeTruthy()
+
+    release()
+    expect(await screen.findByText('Importando…')).toBeTruthy()
+    await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull())
+    expect(button('+ Etapa').disabled).toBe(true)
+  })
 })

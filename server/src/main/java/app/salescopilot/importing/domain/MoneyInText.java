@@ -27,12 +27,41 @@ public final class MoneyInText {
     public MoneyInText(String text) {
         Matcher matcher = NUMBER.matcher(text);
         while (matcher.find()) {
+            if (isNegative(text, matcher.start())) {
+                continue;
+            }
             String token = matcher.group();
             String plain = read(token);
             if (plain != null) {
                 values.add(new BigDecimal(plain).stripTrailingZeros());
             }
         }
+    }
+
+    /**
+     * "-7.000", "R$ -7.000" ou "-R$ 7.000" é negativo e não autoriza o valor positivo. O hífen depois de outro
+     * número, como em "7.000 - 8.000", é de faixa, não sinal.
+     */
+    private static boolean isNegative(String text, int start) {
+        int at = skipSpaces(text, start - 1);
+        if (at >= 1 && text.startsWith("R$", at - 1)) {
+            at = skipSpaces(text, at - 2);
+        }
+        if (at < 0 || text.charAt(at) != '-') {
+            return false;
+        }
+        int before = skipSpaces(text, at - 1);
+        if (before >= 1 && text.startsWith("R$", before - 1)) {
+            before = skipSpaces(text, before - 2);
+        }
+        return before < 0 || !Character.isDigit(text.charAt(before));
+    }
+
+    private static int skipSpaces(String text, int at) {
+        while (at >= 0 && Character.isWhitespace(text.charAt(at))) {
+            at--;
+        }
+        return at;
     }
 
     public boolean contains(BigDecimal value) {
