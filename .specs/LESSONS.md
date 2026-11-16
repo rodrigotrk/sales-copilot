@@ -170,6 +170,24 @@ Seen once or not yet corroborated. Tracked, not trusted.
 - evidence: Codex r4 4, Verifier (C110) (web)
 - last seen: 2026-11-16T00:22:02Z
 
+### L-027 - Outbound mail that carries login links requires TLS by configuration, proved against a server that does not offer it.
+- signal: `ac_gap` · recurrence: 1 feature(s) · scope: `server` · harmful: 0
+- features: playbook-configuravel
+- evidence: Codex r5 1 (C115) (server)
+- last seen: 2026-11-16T00:56:52Z
+
+### L-028 - Integer fields from JSON reject fractional input before conversion; default coercion truncates silently.
+- signal: `ac_gap` · recurrence: 1 feature(s) · scope: `server` · harmful: 0
+- features: playbook-configuravel
+- evidence: Codex r5 3 (C114) (server)
+- last seen: 2026-11-16T00:56:52Z
+
+### L-029 - A bound on bytes read is proved by counting what the server delivered, not by the final error code.
+- signal: `weak_test` · recurrence: 1 feature(s) · scope: `importing` · harmful: 0
+- features: playbook-configuravel
+- evidence: Verifier C113, C116 (importing)
+- last seen: 2026-11-16T00:56:52Z
+
 ## Quarantined (failed when applied - ignore)
 
 A confirmed lesson that recurred alongside failure. Kept for the maintainer to review.

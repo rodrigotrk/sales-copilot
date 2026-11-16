@@ -3,7 +3,7 @@
   "promote_threshold": 2,
   "window_days": 45,
   "quarantine_threshold": 2,
-  "next_id": 27,
+  "next_id": 30,
   "lessons": [
     {
       "id": "L-001",
@@ -472,6 +472,60 @@
       ],
       "created": "2026-11-16T00:22:02Z",
       "last_seen": "2026-11-16T00:22:02Z"
+    },
+    {
+      "id": "L-027",
+      "key": "ac_gap::outbound mail that carries login links requires tls by configuration proved against a server that does not offer it",
+      "text": "Outbound mail that carries login links requires TLS by configuration, proved against a server that does not offer it.",
+      "signal": "ac_gap",
+      "scope": "server",
+      "status": "candidate",
+      "features": [
+        "playbook-configuravel"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "Codex r5 1 (C115) (server)"
+      ],
+      "created": "2026-11-16T00:56:52Z",
+      "last_seen": "2026-11-16T00:56:52Z"
+    },
+    {
+      "id": "L-028",
+      "key": "ac_gap::integer fields from json reject fractional input before conversion default coercion truncates silently",
+      "text": "Integer fields from JSON reject fractional input before conversion; default coercion truncates silently.",
+      "signal": "ac_gap",
+      "scope": "server",
+      "status": "candidate",
+      "features": [
+        "playbook-configuravel"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "Codex r5 3 (C114) (server)"
+      ],
+      "created": "2026-11-16T00:56:52Z",
+      "last_seen": "2026-11-16T00:56:52Z"
+    },
+    {
+      "id": "L-029",
+      "key": "weak_test::a bound on bytes read is proved by counting what the server delivered not by the final error code",
+      "text": "A bound on bytes read is proved by counting what the server delivered, not by the final error code.",
+      "signal": "weak_test",
+      "scope": "importing",
+      "status": "candidate",
+      "features": [
+        "playbook-configuravel"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "Verifier C113, C116 (importing)"
+      ],
+      "created": "2026-11-16T00:56:52Z",
+      "last_seen": "2026-11-16T00:56:52Z"
     }
   ]
 }
