@@ -518,4 +518,31 @@ describe('correções da revisão de código', () => {
     await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull())
     expect(button('+ Etapa').disabled).toBe(true)
   })
+
+  it('[C108b] depois de 409 nothing_to_publish o rascunho só volta a aceitar edição quando o reload termina', async () => {
+    let gets = 0
+    let release: () => void = () => {}
+    const { routes } = playbookServer(playbookState())
+    fakeApi({
+      ...routes,
+      'GET /api/businesses/b1/playbook': () => {
+        gets += 1
+        if (gets === 1) return ok(playbookState())
+        return new Promise((resolve) => (release = () => resolve(ok(playbookState()))))
+      },
+      'POST /api/businesses/b1/playbook/versions': problem(409, 'nothing_to_publish'),
+    })
+    const { user } = await renderApp('/n/b1/playbook')
+    await screen.findByText(/^Playbook: /)
+
+    await user.click(button('Publicar'))
+    await waitFor(() => expect(gets).toBe(2))
+    await user.click(screen.getByText('Abertura'))
+    expect(screen.queryByLabelText('Nome da etapa')).toBeNull()
+
+    release()
+    await waitFor(() => expect(button('+ Etapa').disabled).toBe(false))
+    await user.click(screen.getByText('Abertura'))
+    expect(screen.getByLabelText('Nome da etapa')).toBeTruthy()
+  })
 })

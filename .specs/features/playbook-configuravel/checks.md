@@ -260,6 +260,9 @@ Proof: run web | ✓ [C69b] valor marcado mostra Importado · conferir e o trech
 **C70** - "Conferido" ou editar o valor tira a marca do item (AC 70)
 Proof: run web | ✓ [C70] Conferido ou edição tira a marca do item
 
+**C70b** - Editar o à vista de um plano marcado "Importado · conferir" tira a marca dele, e editar o parcelado de outro plano marcado tira a marca deste, na tela e no rascunho gravado (AC 70, AD-035)
+Proof: run web | ✓ [C70b] editar o à vista ou o parcelado de um plano marcado tira a marca dele
+
 **C71** - Valor em dinheiro que não aparece no texto é descartado e o campo fica vazio (AC 71)
 Proof: run server | PASSED [C71] valor ausente do texto é descartado e presente é importado
 
@@ -381,6 +384,9 @@ Proof: run server | PASSED [C107] desconto sem plano fica guardado e só bloquei
 
 **C108** - Enquanto a publicação está em andamento, nenhuma linha abre para edição e nenhum campo da tela fica editável; depois dela a edição volta (AC 35, AC 54)
 Proof: run web | ✓ [C108] durante a publicação nenhuma linha abre para edição e nada digitado se perde
+
+**C108b** - Depois de `409` `nothing_to_publish`, o rascunho segue só leitura até terminar o reload que a resposta dispara, e só então a edição volta (AC 35, AC 54)
+Proof: run web | ✓ [C108b] depois de 409 nothing_to_publish o rascunho só volta a aceitar edição quando o reload termina
 
 **C109** - "Desfazer" fica desabilitado enquanto outra gravação está em andamento, e a tela termina igual ao rascunho gravado (AC 40, AC 54)
 Proof: run web | ✓ [C109] Desfazer fica indisponível enquanto outra gravação está em andamento

@@ -129,6 +129,32 @@ describe('importação', () => {
     expect(screen.queryByText('Importado · conferir')).toBeNull()
   })
 
+  it('[C70b] editar o à vista ou o parcelado de um plano marcado tira a marca dele', async () => {
+    const draft: Draft = sampleDraft()
+    draft.priceTable.plans[0]!.review = { status: 'pending', excerpt: 'Kit 3 kWp: R$ 4.500 à vista' }
+    draft.priceTable.plans[1]!.review = { status: 'pending', excerpt: 'Kit 5 kWp: R$ 7.000' }
+    const { user, server } = await openPlaybook(playbookState({ draft }))
+    expect(screen.getAllByText('Importado · conferir')).toHaveLength(2)
+
+    await user.click(screen.getByText('Kit 3 kWp'))
+    await user.clear(screen.getByLabelText('À vista'))
+    await user.type(screen.getByLabelText('À vista'), '4.600')
+    await user.click(document.body)
+    await waitFor(() => expect(server.state.draft.priceTable.plans[0]!.review).toBeNull())
+    expect(server.state.draft.priceTable.plans[0]!.cash).toBe('4600.00')
+    expect(server.state.draft.priceTable.plans[1]!.review).not.toBeNull()
+
+    await user.click(screen.getByText('Kit 5 kWp'))
+    await user.clear(screen.getByLabelText('Número de parcelas'))
+    await user.type(screen.getByLabelText('Número de parcelas'), '10')
+    await user.clear(screen.getByLabelText('Valor da parcela'))
+    await user.type(screen.getByLabelText('Valor da parcela'), '700')
+    await user.click(document.body)
+    await waitFor(() => expect(server.state.draft.priceTable.plans[1]!.review).toBeNull())
+    expect(server.state.draft.priceTable.plans[1]!.installments).toEqual({ count: 10, value: '700.00' })
+    expect(screen.queryByText('Importado · conferir')).toBeNull()
+  })
+
   it('[C73b] avisos da importação aparecem na mensagem do resultado', async () => {
     const notice = 'O documento traz desconto máximo de R$ 500; o atual (R$ 300) foi mantido.'
     await finishImport(

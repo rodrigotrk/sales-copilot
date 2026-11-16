@@ -245,31 +245,33 @@ export function createEditor(businessId: string) {
     if (unsaved.value || readOnly.value) return
     publishError.value = ''
     publishing.value = true
+    // O rascunho fica só leitura até terminar o reload que a resposta dispara, de sucesso ou de erro:
+    // liberado antes, o reload apagaria o que fosse digitado no intervalo.
     try {
-      await publishVersion(businessId, state.value!.playbookId, revision)
-    } catch (e) {
-      publishing.value = false
-      if (!(e instanceof ApiError) && !(e instanceof TypeError)) throw e
-      const code = e instanceof ApiError ? e.code : ''
-      if (code === 'revision_conflict') conflict.value = true
-      else if (code === 'import_running') await importStarted()
-      else if (code === 'nothing_to_publish') await reload()
-      else if (code === 'incomplete_rows' && e instanceof ApiError) {
-        incomplete.value = new Set(e.errors.flatMap((fe) => (fe.itemId ? [fe.itemId] : [])))
-        publishError.value = msg.incompleteRows
-      } else if (code === 'publish_minimum') publishError.value = msg.publishMinimum
-      else if (code === 'pending_review') publishError.value = msg.pendingReview
-      else if (code === 'discount_invalid') publishError.value = msg.discount(minCash(draft.value!) ?? '0.00')
-      else publishError.value = msg.publishFailed
-      return
-    }
-    incomplete.value = new Set()
-    try {
+      try {
+        await publishVersion(businessId, state.value!.playbookId, revision)
+      } catch (e) {
+        if (!(e instanceof ApiError) && !(e instanceof TypeError)) throw e
+        const code = e instanceof ApiError ? e.code : ''
+        if (code === 'revision_conflict') conflict.value = true
+        else if (code === 'import_running') await importStarted()
+        else if (code === 'nothing_to_publish') await reload()
+        else if (code === 'incomplete_rows' && e instanceof ApiError) {
+          incomplete.value = new Set(e.errors.flatMap((fe) => (fe.itemId ? [fe.itemId] : [])))
+          publishError.value = msg.incompleteRows
+        } else if (code === 'publish_minimum') publishError.value = msg.publishMinimum
+        else if (code === 'pending_review') publishError.value = msg.pendingReview
+        else if (code === 'discount_invalid') publishError.value = msg.discount(minCash(draft.value!) ?? '0.00')
+        else publishError.value = msg.publishFailed
+        return
+      }
+      incomplete.value = new Set()
       await reload()
     } finally {
       publishing.value = false
     }
   }
+
 
   return {
     state,
