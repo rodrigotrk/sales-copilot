@@ -26,6 +26,11 @@ class MoneyInTextTest {
         org.assertj.core.api.Assertions.assertThatCode(() -> new MoneyInText("  E 3\nEtapas: Abertura.")).doesNotThrowAnyException();
         assertThat(new MoneyInText("  E 3\nEtapas: Abertura.").contains(new BigDecimal("3"))).isTrue();
 
+        // Uma sequência "1.1.1…" de 60 mil caracteres é lida sem estourar a pilha, e não vira valor.
+        String chain = "1.".repeat(30_000) + "1";
+        org.assertj.core.api.Assertions.assertThatCode(() -> new MoneyInText(chain)).doesNotThrowAnyException();
+        assertThat(new MoneyInText(chain).contains(new BigDecimal("1"))).isFalse();
+
         // As grafias usuais de preço continuam valendo.
         var usual = new MoneyInText("""
                 Planos:

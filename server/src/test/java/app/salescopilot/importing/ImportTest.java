@@ -506,6 +506,24 @@ class ImportTest extends IntegrationTest {
     }
 
     @Test
+    @DisplayName("[C136] documento com sequência longa de números importa as etapas sem derrubar a tarefa")
+    void longNumberChainDoesNotBreakTheImport() throws Exception {
+        Gestor g = newGestor();
+        STUB.modelAnswers("{\"stages\":[{\"name\":\"Abertura\"}],\"discovery\":[],\"objections\":[],"
+                + "\"priceTable\":{\"extraColumnName\":null,\"maxDiscount\":null,\"maxDiscountExcerpt\":null,\"plans\":[]}}");
+        UUID jobId = jobId(importText(g, "Etapas: Abertura.\nReferência técnica: " + "1.".repeat(30_000) + "1"));
+        worker.drain();
+        assertThat(jobRow(jobId)).containsEntry("status", "done");
+        assertThat(getPlaybook(g).get("draft").get("stages").get(0).get("name").asString()).isEqualTo("Abertura");
+
+        // Com preço citado no mesmo documento longo, a conferência também conclui.
+        STUB.modelAnswers(ANSWER);
+        UUID priced = jobId(importText(g, DOCUMENT + "\nReferência técnica: " + "1.".repeat(30_000) + "1"));
+        worker.drain();
+        assertThat(jobRow(priced)).containsEntry("status", "done");
+    }
+
+    @Test
     @DisplayName("[C80] documento sem itens falha sem mudar o rascunho")
     void nothingFound() throws Exception {
         Gestor g = newGestor();

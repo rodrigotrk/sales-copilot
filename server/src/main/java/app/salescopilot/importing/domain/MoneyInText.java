@@ -3,7 +3,6 @@ package app.salescopilot.importing.domain;
 import java.math.BigDecimal;
 import java.util.HashSet;
 import java.util.Set;
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
@@ -15,9 +14,8 @@ import java.util.regex.Pattern;
  */
 public final class MoneyInText {
 
-    /** O número inteiro, inclusive um expoente com qualquer sinal: "1E3" e "1E−3" são um token só, e nenhum pedaço vale. */
-    private static final Pattern NUMBER = Pattern.compile(
-            "\\d+(?:[.,]\\d+)*(?:[eE][+\\-\u2212\uFE63\uFF0D\u2013\u2014]?\\d+)?");
+    /** Sinais que podem marcar um expoente: "1E3", "1E−3" e "1E–3" são um token só, e nenhum pedaço vale. */
+    private static final String EXPONENT_SIGNS = "+-\u2212\uFE63\uFF0D\u2013\u2014";
     /** Hífen e as variantes Unicode do sinal de menos; o travessão (–) é separador, não sinal. */
     private static final String MINUS = "-\u2212\uFE63\uFF0D";
     private static final Pattern BRAZILIAN_THOUSANDS = Pattern.compile("\\d{1,3}(?:\\.\\d{3})+(?:,\\d{1,2})?");
@@ -34,12 +32,21 @@ public final class MoneyInText {
     private final java.util.List<Found> found = new java.util.ArrayList<>();
 
     public MoneyInText(String text) {
-        Matcher matcher = NUMBER.matcher(text);
-        while (matcher.find()) {
-            if (isNegative(text, matcher.start()) || !isIsolated(text, matcher.start(), matcher.end())) {
+        // Varredura linear, sem expressão regular: um "1.1.1…" de dezenas de milhares de caracteres estourava a
+        // pilha do motor de regex e derrubava a importação inteira.
+        int at = 0;
+        while (at < text.length()) {
+            if (!Character.isDigit(text.charAt(at))) {
+                at++;
                 continue;
             }
-            String token = matcher.group();
+            int start = at;
+            int end = tokenEnd(text, start);
+            at = end;
+            if (end - start > MAX_TOKEN || isNegative(text, start) || !isIsolated(text, start, end)) {
+                continue;
+            }
+            String token = text.substring(start, end);
             // Notação científica não é como se escreve preço; o token inteiro fica de fora.
             if (token.indexOf('e') >= 0 || token.indexOf('E') >= 0) {
                 continue;
@@ -48,7 +55,7 @@ public final class MoneyInText {
             if (plain != null) {
                 BigDecimal value = new BigDecimal(plain).stripTrailingZeros();
                 values.add(value);
-                found.add(new Found(matcher.start(), matcher.end(), value));
+                found.add(new Found(start, end, value));
             }
         }
     }
@@ -75,6 +82,35 @@ public final class MoneyInText {
             return false;
         }
         return at == 0 || !Character.isDigit(text.charAt(at - 1));
+    }
+
+    /** Nenhum preço tem mais de 40 caracteres escritos; um token maior é lido inteiro e descartado. */
+    private static final int MAX_TOKEN = 40;
+
+    /** Dígitos, grupos separados por ponto ou vírgula e um expoente opcional, como um token só. */
+    private static int tokenEnd(String text, int start) {
+        int at = digitsEnd(text, start);
+        while (at + 1 < text.length() && (text.charAt(at) == '.' || text.charAt(at) == ',')
+                && Character.isDigit(text.charAt(at + 1))) {
+            at = digitsEnd(text, at + 1);
+        }
+        if (at < text.length() && (text.charAt(at) == 'e' || text.charAt(at) == 'E')) {
+            int exponent = at + 1;
+            if (exponent < text.length() && EXPONENT_SIGNS.indexOf(text.charAt(exponent)) >= 0) {
+                exponent++;
+            }
+            if (exponent < text.length() && Character.isDigit(text.charAt(exponent))) {
+                at = digitsEnd(text, exponent);
+            }
+        }
+        return at;
+    }
+
+    private static int digitsEnd(String text, int at) {
+        while (at < text.length() && Character.isDigit(text.charAt(at))) {
+            at++;
+        }
+        return at;
     }
 
     /** Antes do número: começo, espaço, "$", abertura, pontuação, sinal ou travessão de faixa. */
