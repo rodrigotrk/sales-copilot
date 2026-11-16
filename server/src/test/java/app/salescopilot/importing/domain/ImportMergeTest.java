@@ -95,7 +95,8 @@ class ImportMergeTest {
                         new ExtractedPlaybook.Plan("Plano", null, new BigDecimal("7000"), 6, new BigDecimal("1200"), "Plano"))));
         for (String text : List.of("Plano: R$ -7.000,00 ou 6x de -R$ 1.200. Desconto: -500.",
                 "Plano: -R$7.000 ou 6x de R$-1.200. Desconto:-500",
-                "Plano: -R$\u00a07.000,00 ou 6x de R$\u202f-1.200. Desconto: -500")) {
+                "Plano: -R$\u00a07.000,00 ou 6x de R$\u202f-1.200. Desconto: -500",
+                "Estorno: R$ \u22127.000,00 ou 6x de \u2212R$ 1.200. Desconto: \u2212500.")) {
             PriceTable table = ImportMerge.merge(PlaybookDocument.empty(), extracted, text).draft().priceTable();
             assertThat(table.plans().getFirst().cash()).as(text).isNull();
             assertThat(table.plans().getFirst().installments()).as(text).isNull();
@@ -113,6 +114,24 @@ class ImportMergeTest {
         assertThat(table.plans().getFirst().cash()).isEqualByComparingTo("7000.00");
         assertThat(table.plans().getFirst().installments().value()).isEqualByComparingTo("1200.00");
         assertThat(table.maxDiscount()).isEqualByComparingTo("500.00");
+    }
+
+    @Test
+    @DisplayName("[C133] número em notação científica não autoriza nenhum pedaço dele")
+    void scientificNotationIsNotSplit() {
+        var extracted = new ExtractedPlaybook(List.of(new ExtractedPlaybook.Stage("Abertura")), List.of(), List.of(),
+                new ExtractedPlaybook.PriceTable(null, new BigDecimal("3"), "Desconto", List.of(
+                        new ExtractedPlaybook.Plan("Plano", null, new BigDecimal("1"), null, null, "Plano"))));
+        for (String text : List.of("Plano por R$ 1E3 à vista. Desconto de 1e3.", "Plano por R$ 1,5E+3. Desconto 2E-3")) {
+            PriceTable table = ImportMerge.merge(PlaybookDocument.empty(), extracted, text).draft().priceTable();
+            assertThat(table.plans().getFirst().cash()).as(text).isNull();
+            assertThat(table.maxDiscount()).as(text).isNull();
+        }
+        // Um número comum ao lado de uma letra continua valendo: "Plano 1 E 3" não é notação científica.
+        PriceTable table = ImportMerge.merge(PlaybookDocument.empty(), extracted, "Plano 1 por R$ 1 e desconto de 3.")
+                .draft().priceTable();
+        assertThat(table.plans().getFirst().cash()).isEqualByComparingTo("1.00");
+        assertThat(table.maxDiscount()).isEqualByComparingTo("3.00");
     }
 
     private static ImportMerge.Result merge(PlaybookDocument current, ExtractedPlaybook.Plan plan, String column,

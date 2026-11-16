@@ -15,7 +15,10 @@ import java.util.regex.Pattern;
  */
 public final class MoneyInText {
 
-    private static final Pattern NUMBER = Pattern.compile("\\d+(?:[.,]\\d+)*");
+    /** O número inteiro, inclusive um expoente: "1E3" é lido como um token só, e nenhum pedaço dele vale. */
+    private static final Pattern NUMBER = Pattern.compile("\\d+(?:[.,]\\d+)*(?:[eE][+-]?\\d+)?");
+    /** Hífen e as variantes Unicode do sinal de menos; o travessão (–) é separador, não sinal. */
+    private static final String MINUS = "-\u2212\uFE63\uFF0D";
     private static final Pattern BRAZILIAN_THOUSANDS = Pattern.compile("\\d{1,3}(?:\\.\\d{3})+(?:,\\d{1,2})?");
     private static final Pattern ENGLISH_THOUSANDS = Pattern.compile("\\d{1,3}(?:,\\d{3})+(?:\\.\\d{1,2})?");
     private static final Pattern COMMA_CENTS = Pattern.compile("\\d+,\\d{1,2}");
@@ -31,6 +34,10 @@ public final class MoneyInText {
                 continue;
             }
             String token = matcher.group();
+            // Notação científica não é como se escreve preço; o token inteiro fica de fora.
+            if (token.indexOf('e') >= 0 || token.indexOf('E') >= 0) {
+                continue;
+            }
             String plain = read(token);
             if (plain != null) {
                 values.add(new BigDecimal(plain).stripTrailingZeros());
@@ -56,7 +63,7 @@ public final class MoneyInText {
                 return false;
             }
         }
-        if (at < 0 || text.charAt(at) != '-') {
+        if (at < 0 || MINUS.indexOf(text.charAt(at)) < 0) {
             return false;
         }
         return at == 0 || !Character.isDigit(text.charAt(at - 1));
