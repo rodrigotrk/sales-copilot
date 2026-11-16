@@ -397,7 +397,7 @@ Proof: run web | ✓ [C24c] Sair aparece no acesso não liberado, na criação d
 **C112** - Remover o último plano apaga o erro local do desconto, cuja linha some (AC 52), e libera "Publicar" e "Importar documento" (AC 46, AC 60)
 Proof: run web | ✓ [C112] remover o último plano apaga o erro do desconto e libera Publicar e Importar documento
 
-**C113** - Importação aceita com `202` deixa a tela em "Importando…" e o rascunho só leitura na hora, e o acompanhamento continua mesmo se a primeira consulta falhar (`503`) (AC 42, AC 66, AC 67, AC 68)
+**C113** - Importação aceita com `202` deixa a tela em "Importando…" e o rascunho só leitura na hora ("Publicar", "+ Etapa" e "Importar documento" desabilitados, nenhuma linha abre), e o acompanhamento continua mesmo se a primeira consulta falhar (`503`) (AC 42, AC 66, AC 67, AC 68)
 Proof: run web | ✓ [C113] importação aceita com 202 fica em Importando e é acompanhada mesmo se a primeira consulta falhar
 
 **C114** - Número de parcelas fracionário (`60.9`) responde `400` `malformed_request` sem gravar, e `6.0` é gravado como `6` (AC 47, AD-023)
@@ -406,7 +406,7 @@ Proof: run server | PASSED [C114] número de parcelas fracionário é recusado s
 **C115** - O e-mail exige STARTTLS e confere o certificado: com um servidor SMTP que não anuncia STARTTLS, o envio falha antes de mandar `AUTH`, `MAIL FROM` ou `DATA` (AD-039, Landing 1)
 Proof: run server | PASSED [C115] SMTP sem STARTTLS recusa o envio antes de mandar senha ou mensagem
 
-**C116** - Exportação do Google Docs acima de 10 MB não é baixada inteira e a tarefa falha com `text_too_long`, sem chamar o modelo (AC 77, AC 79)
+**C116** - Exportação do Google Docs acima de 10 MB não é baixada inteira (de uma de 200 MB o servidor entrega menos de 64 MB antes de o cliente parar) e a tarefa falha com `text_too_long`, sem chamar o modelo (AC 77, AC 79)
 Proof: run server | PASSED [C116] exportação do Google Docs acima de 10 MB falha com text_too_long sem chamar o modelo
 
 ## Coverage

@@ -30,6 +30,8 @@ public final class StubServer {
     private final ConcurrentLinkedQueue<Reply> modelReplies = new ConcurrentLinkedQueue<>();
     private final List<String> modelRequests = new CopyOnWriteArrayList<>();
     private final Map<String, Reply> documents = new ConcurrentHashMap<>();
+    private final Map<String, Long> streamedDocuments = new ConcurrentHashMap<>();
+    private final java.util.concurrent.atomic.AtomicLong streamedBytes = new java.util.concurrent.atomic.AtomicLong();
     private volatile long modelDelayMillis;
 
     private StubServer(HttpServer server) {
@@ -56,6 +58,18 @@ public final class StubServer {
         modelReplies.clear();
         modelRequests.clear();
         documents.clear();
+        streamedDocuments.clear();
+        streamedBytes.set(0);
+    }
+
+    /** Documento .docx falso de `totalBytes`, enviado em pedaços de 1 MB enquanto o cliente continuar lendo. */
+    public void documentStream(String id, long totalBytes) {
+        streamedDocuments.put(id, totalBytes);
+    }
+
+    /** Quantos bytes do documento em pedaços o cliente chegou a receber. */
+    public long streamedBytes() {
+        return streamedBytes.get();
     }
 
     /** O modelo responde com este JSON como conteúdo da mensagem. */
@@ -96,8 +110,32 @@ public final class StubServer {
     private void document(HttpExchange exchange) throws IOException {
         String path = exchange.getRequestURI().getPath();
         String id = path.substring("/document/d/".length(), path.indexOf("/export"));
+        Long total = streamedDocuments.get(id);
+        if (total != null) {
+            stream(exchange, total);
+            return;
+        }
         Reply reply = documents.getOrDefault(id, new Reply(404, "text/html", "<html>login</html>".getBytes()));
         respond(exchange, reply);
+    }
+
+    private void stream(HttpExchange exchange, long total) throws IOException {
+        exchange.getResponseHeaders().add("Content-Type", "application/vnd.openxmlformats-officedocument.wordprocessingml.document");
+        exchange.sendResponseHeaders(200, 0);
+        byte[] chunk = new byte[1024 * 1024];
+        chunk[0] = 'P';
+        chunk[1] = 'K';
+        try (var out = exchange.getResponseBody()) {
+            for (long sent = 0; sent < total; sent += chunk.length) {
+                out.write(chunk);
+                out.flush();
+                streamedBytes.addAndGet(chunk.length);
+            }
+        } catch (IOException e) {
+            // O cliente parou de ler e fechou a conexão: é o que a leitura limitada deve fazer.
+        } finally {
+            exchange.close();
+        }
     }
 
     private static void respond(HttpExchange exchange, Reply reply) throws IOException {

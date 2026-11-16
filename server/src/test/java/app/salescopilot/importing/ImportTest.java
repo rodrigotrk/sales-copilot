@@ -274,6 +274,13 @@ class ImportTest extends IntegrationTest {
         assertThat(jobRow(jobId)).containsEntry("status", "failed").containsEntry("error_code", "text_too_long");
         assertThat(revision(g)).isEqualTo(revision);
         assertThat(STUB.modelRequests()).isEmpty();
+
+        // Uma exportação de 200 MB não é baixada inteira: a leitura para logo depois de 10 MB.
+        STUB.documentStream("gigante", 200L * 1024 * 1024);
+        UUID streamed = jobId(importUrl(g, "https://docs.google.com/document/d/gigante/edit"));
+        worker.drain();
+        assertThat(jobRow(streamed)).containsEntry("error_code", "text_too_long");
+        assertThat(STUB.streamedBytes()).isLessThan(64L * 1024 * 1024);
     }
 
     @Test
