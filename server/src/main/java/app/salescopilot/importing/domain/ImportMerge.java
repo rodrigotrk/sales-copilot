@@ -17,12 +17,13 @@ import app.salescopilot.shared.BrazilianReais;
 
 /**
  * Acrescenta ao rascunho o que o documento trouxe (AD-017, AD-035): listas ao fim de cada bloco, sem
- * mudar o que já existe; preços conferidos contra o texto e marcados para o gestor conferir;
+ * mudar o que já existe; preços dentro dos limites de valor e sempre marcados para o gestor conferir (AD-067);
  * desconto e nome da coluna só preenchidos quando vazios.
  */
 public final class ImportMerge {
 
-    private static final int EXCERPT_LIMIT = Citation.MAX_EXCERPT;
+    /** O trecho do documento que acompanha a marca "Importado · conferir" (AD-035). */
+    private static final int EXCERPT_LIMIT = 300;
     private static final BigDecimal MAX_CASH = new BigDecimal("10000000.00");
 
     public record Result(PlaybookDocument draft, Map<String, Integer> counts, int skipped, List<String> notices) {
@@ -31,8 +32,7 @@ public final class ImportMerge {
     private ImportMerge() {
     }
 
-    public static Result merge(PlaybookDocument current, ExtractedPlaybook extracted, String documentText) {
-        Citation citation = new Citation(documentText);
+    public static Result merge(PlaybookDocument current, ExtractedPlaybook extracted) {
         int[] skipped = {0};
 
         var stages = new ArrayList<>(current.stages());
@@ -55,7 +55,7 @@ public final class ImportMerge {
         PriceTable table = current.priceTable();
         var plans = new ArrayList<>(table.plans());
         int plansAdded = append(plans, extracted.priceTable().plans().stream()
-                .map(p -> plan(p, citation))
+                .map(ImportMerge::plan)
                 .toList(), PlaybookLimits.MAX_PLANS, skipped);
 
         List<String> notices = new ArrayList<>();
@@ -73,8 +73,7 @@ public final class ImportMerge {
         BigDecimal discount = table.maxDiscount();
         Review discountReview = table.maxDiscountReview();
         BigDecimal documentDiscount = extracted.priceTable().maxDiscount();
-        if (documentDiscount != null && citation.confirms(extracted.priceTable().maxDiscountExcerpt(), documentDiscount)
-                && documentDiscount.signum() >= 0
+        if (documentDiscount != null && documentDiscount.signum() >= 0
                 && twoDecimals(documentDiscount)) {
             if (discount == null) {
                 discount = scale(documentDiscount);
@@ -95,14 +94,14 @@ public final class ImportMerge {
         return new Result(draft, counts, skipped[0], notices);
     }
 
-    private static Plan plan(ExtractedPlaybook.Plan p, Citation citation) {
-        BigDecimal cash = p.cash() != null && citation.confirms(p.excerpt(), p.cash()) && twoDecimals(p.cash()) && p.cash().signum() > 0
+    private static Plan plan(ExtractedPlaybook.Plan p) {
+        BigDecimal cash = p.cash() != null && twoDecimals(p.cash()) && p.cash().signum() > 0
                 && p.cash().compareTo(MAX_CASH) <= 0 ? scale(p.cash()) : null;
         Installments installments = null;
         Integer count = p.installmentsCount();
         BigDecimal value = p.installmentsValue();
         if (count != null && count >= PlaybookLimits.MIN_INSTALLMENTS && count <= PlaybookLimits.MAX_INSTALLMENTS
-                && value != null && value.signum() > 0 && twoDecimals(value) && citation.confirms(p.excerpt(), value)) {
+                && value != null && value.signum() > 0 && twoDecimals(value)) {
             installments = new Installments(count, scale(value));
         }
         return new Plan(UUID.randomUUID(), cut(p.name(), PlaybookLimits.SHORT_TEXT),

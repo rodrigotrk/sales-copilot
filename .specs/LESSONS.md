@@ -224,6 +224,12 @@ Seen once or not yet corroborated. Tracked, not trusted.
 - evidence: Codex r10-r14, Verifier C131-C135, AD-065 (importing)
 - last seen: 2026-11-16T18:32:41Z
 
+### L-036 - Before hardening an automatic check, confirm a human review step does not already cover the risk; drop the check when it does.
+- signal: `spec_precision_gap` · recurrence: 1 feature(s) · scope: `importing` · harmful: 0
+- features: playbook-configuravel
+- evidence: AD-067, rounds 10-16 (importing)
+- last seen: 2026-11-16T19:20:36Z
+
 ## Quarantined (failed when applied - ignore)
 
 A confirmed lesson that recurred alongside failure. Kept for the maintainer to review.

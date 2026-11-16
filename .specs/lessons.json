@@ -3,7 +3,7 @@
   "promote_threshold": 2,
   "window_days": 45,
   "quarantine_threshold": 2,
-  "next_id": 36,
+  "next_id": 37,
   "lessons": [
     {
       "id": "L-001",
@@ -634,6 +634,24 @@
       ],
       "created": "2026-11-16T18:32:41Z",
       "last_seen": "2026-11-16T18:32:41Z"
+    },
+    {
+      "id": "L-036",
+      "key": "spec_precision_gap::before hardening an automatic check confirm a human review step does not already cover the risk drop the check when it does",
+      "text": "Before hardening an automatic check, confirm a human review step does not already cover the risk; drop the check when it does.",
+      "signal": "spec_precision_gap",
+      "scope": "importing",
+      "status": "candidate",
+      "features": [
+        "playbook-configuravel"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "AD-067, rounds 10-16 (importing)"
+      ],
+      "created": "2026-11-16T19:20:36Z",
+      "last_seen": "2026-11-16T19:20:36Z"
     }
   ]
 }

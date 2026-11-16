@@ -58,7 +58,7 @@ class ImportWorker {
             if (extracted.isEmpty()) {
                 throw new ImportFailure("nothing_found");
             }
-            finished = complete(job, claim.leaseToken(), extracted, text.plain());
+            finished = complete(job, claim.leaseToken(), extracted);
         } catch (ImportFailure failure) {
             finished = fail(job, claim.leaseToken(), failure.code());
         } catch (RuntimeException | Error unexpected) {
@@ -77,11 +77,11 @@ class ImportWorker {
      * Linhas, revisão nova e estado final na mesma transação, com o playbook travado (AD-038, AD-050).
      * Se a tarefa não puder ser marcada, tudo é desfeito.
      */
-    boolean complete(ImportJobs.Job job, UUID leaseToken, ExtractedPlaybook extracted, String plainText) {
+    boolean complete(ImportJobs.Job job, UUID leaseToken, ExtractedPlaybook extracted) {
         try {
             tenancy.runInBusiness(null, job.businessId(), () -> {
                 var locked = drafts.lock(job.playbookId());
-                var result = ImportMerge.merge(locked.draft(), extracted, plainText);
+                var result = ImportMerge.merge(locked.draft(), extracted);
                 drafts.replace(job.playbookId(), result.draft());
                 if (jobs.finishDone(job.id(), leaseToken, result.counts(), result.skipped(), result.notices()) != 1) {
                     throw new LeaseLost();

@@ -14,27 +14,29 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class ImportMergeTest {
 
-    private static final String TEXT = "Plano de 6 meses por R$ 7.000, ou 6x de R$ 1.166,67. Desconto máximo na call: R$ 500.";
+    private static final String PLAN_EXCERPT = "Plano de 6 meses por R$ 7.000, ou 6x de R$ 1.166,67.";
+    private static final String DISCOUNT_EXCERPT = "Desconto máximo na call: R$ 500.";
 
     @Test
-    @DisplayName("[C71] valor ausente do texto é descartado e presente é importado")
-    void moneyMustBeInTheText() {
-        var present = merge(PlaybookDocument.empty(), plan(new BigDecimal("7000"), 6, new BigDecimal("1166.67")), null, null);
-        var plan = present.draft().priceTable().plans().getFirst();
+    @DisplayName("[C71] valor do modelo dentro dos limites entra marcado com o trecho, e fora deles fica vazio")
+    void modelValuesEnterMarkedWithinTheLimits() {
+        var plan = merge(PlaybookDocument.empty(), plan(new BigDecimal("7000"), 6, new BigDecimal("1166.67")), null, null)
+                .draft().priceTable().plans().getFirst();
         assertThat(plan.cash()).isEqualByComparingTo("7000.00");
+        assertThat(plan.installments().count()).isEqualTo(6);
         assertThat(plan.installments().value()).isEqualByComparingTo("1166.67");
         assertThat(plan.review().status()).isEqualTo("pending");
+        assertThat(plan.review().excerpt()).isEqualTo(PLAN_EXCERPT);
 
-        var absent = merge(PlaybookDocument.empty(), plan(new BigDecimal("6600"), 6, new BigDecimal("1100")), null, null);
-        var invented = absent.draft().priceTable().plans().getFirst();
-        assertThat(invented.cash()).isNull();
-        assertThat(invented.installments()).isNull();
-        assertThat(invented.review().status()).isEqualTo("pending");
-
-        var seven = merge(PlaybookDocument.empty(), plan(new BigDecimal("7"), null, null), null, null);
-        assertThat(seven.draft().priceTable().plans().getFirst().cash()).isNull();
-        var seventy = merge(PlaybookDocument.empty(), plan(new BigDecimal("70"), null, null), null, null);
-        assertThat(seventy.draft().priceTable().plans().getFirst().cash()).isNull();
+        for (String invalid : List.of("-5", "0", "0.005", "10000000.01")) {
+            var refused = merge(PlaybookDocument.empty(), plan(new BigDecimal(invalid), 6, new BigDecimal(invalid)), null, null)
+                    .draft().priceTable().plans().getFirst();
+            assertThat(refused.cash()).as(invalid).isNull();
+            assertThat(refused.review().status()).as(invalid).isEqualTo("pending");
+        }
+        var oneInstallment = merge(PlaybookDocument.empty(), plan(new BigDecimal("7000"), 1, new BigDecimal("7000")), null, null)
+                .draft().priceTable().plans().getFirst();
+        assertThat(oneInstallment.installments()).isNull();
     }
 
     @Test
@@ -45,13 +47,12 @@ class ImportMergeTest {
         assertThat(table.extraColumnName()).isEqualTo("Sessões");
         assertThat(table.maxDiscount()).isEqualByComparingTo("500.00");
         assertThat(table.maxDiscountReview().status()).isEqualTo("pending");
-        assertThat(table.maxDiscountReview().excerpt()).isEqualTo("Desconto máximo na call: R$ 500.");
+        assertThat(table.maxDiscountReview().excerpt()).isEqualTo(DISCOUNT_EXCERPT);
         assertThat(result.notices()).isEmpty();
         // Também sem plano na tabela (AD-061): o desconto entra com a marca, e a linha aparece quando houver plano.
         var withoutPlans = ImportMerge.merge(PlaybookDocument.empty(),
                 new ExtractedPlaybook(List.of(new ExtractedPlaybook.Stage("Abertura")), List.of(), List.of(),
-                        new ExtractedPlaybook.PriceTable(null, new BigDecimal("500"), "Desconto máximo na call: R$ 500.", List.of())),
-                TEXT);
+                        new ExtractedPlaybook.PriceTable(null, new BigDecimal("500"), DISCOUNT_EXCERPT, List.of())));
         assertThat(withoutPlans.draft().priceTable().maxDiscount()).isEqualByComparingTo("500.00");
         assertThat(withoutPlans.draft().priceTable().maxDiscountReview().status()).isEqualTo("pending");
     }
@@ -72,159 +73,25 @@ class ImportMergeTest {
     }
 
     @Test
-    @DisplayName("[C129] número em dinheiro maior que numeric(12,2) não entra no rascunho, mesmo citado do documento")
-    void hugeNumberFromTheDocumentIsDropped() {
-        // 11 dígitos inteiros: o primeiro tamanho acima de numeric(12,2), e cabe numa citação de verdade.
-        String text = "Plano Grande por R$ 7.000 em 6x de R$ 12.345.678.901,00. Desconto máximo na call: R$ 12.345.678.901,00.";
+    @DisplayName("[C129] número em dinheiro maior que numeric(12,2) não entra no rascunho")
+    void hugeNumberIsDropped() {
+        // 11 dígitos inteiros: o primeiro tamanho acima de numeric(12,2) (AD-025).
         var huge = new BigDecimal("12345678901.00");
-        var extracted = new ExtractedPlaybook(List.of(new ExtractedPlaybook.Stage("Abertura")), List.of(), List.of(),
-                new ExtractedPlaybook.PriceTable(null, huge, text, List.of(
-                        new ExtractedPlaybook.Plan("Grande", null, new BigDecimal("7000"), 6, huge, text))));
-        var result = ImportMerge.merge(PlaybookDocument.empty(), extracted, text);
+        var result = merge(PlaybookDocument.empty(), plan(new BigDecimal("7000"), 6, huge), null, huge);
         PriceTable table = result.draft().priceTable();
         assertThat(table.plans().getFirst().installments()).isNull();
         assertThat(table.maxDiscount()).isNull();
         assertThat(table.plans().getFirst().cash()).isEqualByComparingTo("7000.00");
     }
 
-    @Test
-    @DisplayName("[C131] valor negativo do documento não autoriza o positivo, e hífen de lista, separador ou faixa não é sinal")
-    void negativeNumbersDoNotAuthorizePositives() {
-        // O trecho citado é o próprio texto: o teste exercita a leitura dos números dentro da citação.
-        java.util.function.Function<String, ExtractedPlaybook> extracted = text -> new ExtractedPlaybook(
-                List.of(new ExtractedPlaybook.Stage("Abertura")), List.of(), List.of(),
-                new ExtractedPlaybook.PriceTable(null, new BigDecimal("500"), text, List.of(
-                        new ExtractedPlaybook.Plan("Plano", null, new BigDecimal("7000"), 6, new BigDecimal("1200"), text))));
-        for (String text : List.of("Plano: R$ -7.000,00 ou 6x de -R$ 1.200. Desconto: -500.",
-                "Plano: -R$7.000 ou 6x de R$-1.200. Desconto:-500",
-                "Plano: -R$\u00a07.000,00 ou 6x de R$\u202f-1.200. Desconto: -500",
-                "Estorno: R$ \u22127.000,00 ou 6x de \u2212R$ 1.200. Desconto: \u2212500.")) {
-            PriceTable table = ImportMerge.merge(PlaybookDocument.empty(), extracted.apply(text), text).draft().priceTable();
-            assertThat(table.plans().getFirst().cash()).as(text).isNull();
-            assertThat(table.plans().getFirst().installments()).as(text).isNull();
-            assertThat(table.maxDiscount()).as(text).isNull();
-        }
-        // Hífen seguido de espaço é marcador de lista ou separador, não sinal.
-        String bullets = "Planos:\n- Plano A - R$ 7.000 à vista\n- 6x de R$ 1.200\nDesconto máximo - 500";
-        PriceTable listed = ImportMerge.merge(PlaybookDocument.empty(), extracted.apply(bullets), bullets).draft().priceTable();
-        assertThat(listed.plans().getFirst().cash()).isEqualByComparingTo("7000.00");
-        assertThat(listed.plans().getFirst().installments().value()).isEqualByComparingTo("1200.00");
-        assertThat(listed.maxDiscount()).isEqualByComparingTo("500.00");
-
-        String range = "Plano de R$ 7.000 - R$ 8.000, em 6x de 1.200-1.400. Desconto de 300-500.";
-        PriceTable table = ImportMerge.merge(PlaybookDocument.empty(), extracted.apply(range), range).draft().priceTable();
-        assertThat(table.plans().getFirst().cash()).isEqualByComparingTo("7000.00");
-        assertThat(table.plans().getFirst().installments().value()).isEqualByComparingTo("1200.00");
-        assertThat(table.maxDiscount()).isEqualByComparingTo("500.00");
-    }
-
-    @Test
-    @DisplayName("[C133] número em notação científica não autoriza nenhum pedaço dele")
-    void scientificNotationIsNotSplit() {
-        java.util.function.Function<String, ExtractedPlaybook> extracted = text -> new ExtractedPlaybook(
-                List.of(new ExtractedPlaybook.Stage("Abertura")), List.of(), List.of(),
-                new ExtractedPlaybook.PriceTable(null, new BigDecimal("3"), text, List.of(
-                        new ExtractedPlaybook.Plan("Plano", null, new BigDecimal("1"), null, null, text))));
-        for (String text : List.of("Plano por R$ 1E3 à vista. Desconto de 1e3.", "Plano por R$ 1,5E+3. Desconto 2E-3",
-                "Plano por R$ 1E\u22123. Desconto 3E\uFE631", "Plano por R$ 1E\uFF0D3. Desconto 3e\u20131")) {
-            PriceTable table = ImportMerge.merge(PlaybookDocument.empty(), extracted.apply(text), text).draft().priceTable();
-            assertThat(table.plans().getFirst().cash()).as(text).isNull();
-            assertThat(table.maxDiscount()).as(text).isNull();
-        }
-        // Um número comum ao lado de uma letra continua valendo: "Plano 1 E 3" não é notação científica.
-        PriceTable table = ImportMerge.merge(PlaybookDocument.empty(), extracted.apply("Plano 1 por R$ 1 e desconto de 3."), "Plano 1 por R$ 1 e desconto de 3.")
-                .draft().priceTable();
-        assertThat(table.plans().getFirst().cash()).isEqualByComparingTo("1.00");
-        assertThat(table.maxDiscount()).isEqualByComparingTo("3.00");
-    }
-
-    @Test
-    @DisplayName("[C135] valor só entra se vier de um número inteiro dentro do trecho citado, que precisa estar no documento")
-    void citationMustBeLiteralAndContainTheValue() {
-        String document = "Plano Ouro: R$ 4.500 à vista ou 6x de R$ 800.\nDesconto máximo na call: R$ 300.";
-        java.util.function.BiFunction<String, String, PriceTable> merged = (planExcerpt, discountExcerpt) -> ImportMerge.merge(
-                PlaybookDocument.empty(), new ExtractedPlaybook(List.of(new ExtractedPlaybook.Stage("Abertura")), List.of(), List.of(),
-                        new ExtractedPlaybook.PriceTable(null, new BigDecimal("300"), discountExcerpt, List.of(new ExtractedPlaybook.Plan(
-                                "Ouro", null, new BigDecimal("4500"), 6, new BigDecimal("800"), planExcerpt)))),
-                document).draft().priceTable();
-
-        // Citação literal, com espaço e quebra de linha diferentes: entra.
-        PriceTable cited = merged.apply("Plano Ouro: R$ 4.500  à vista\nou 6x de R$ 800.", "Desconto máximo na call: R$ 300.");
-        assertThat(cited.plans().getFirst().cash()).isEqualByComparingTo("4500.00");
-        assertThat(cited.plans().getFirst().installments().value()).isEqualByComparingTo("800.00");
-        assertThat(cited.maxDiscount()).isEqualByComparingTo("300.00");
-
-        // Trecho que não está no documento (o modelo resumiu) ou que não contém o valor: fica vazio.
-        PriceTable paraphrased = merged.apply("Plano Ouro custa R$ 4.500 à vista ou 6x de R$ 800", "Desconto de R$ 300");
-        assertThat(paraphrased.plans().getFirst().cash()).isNull();
-        assertThat(paraphrased.plans().getFirst().installments()).isNull();
-        assertThat(paraphrased.maxDiscount()).isNull();
-        PriceTable withoutValue = merged.apply("Plano Ouro:", "Desconto máximo na call:");
-        assertThat(withoutValue.plans().getFirst().cash()).isNull();
-        assertThat(withoutValue.maxDiscount()).isNull();
-        // Trecho que corta um número do documento: o pedaço não vale.
-        String cents = "Plano Ouro: R$ 14.500 à vista ou 6x de R$ 800,50.\nDesconto máximo na call: R$ -300.";
-        PriceTable cut = ImportMerge.merge(PlaybookDocument.empty(), new ExtractedPlaybook(
-                List.of(new ExtractedPlaybook.Stage("Abertura")), List.of(), List.of(),
-                new ExtractedPlaybook.PriceTable(null, new BigDecimal("300"), "300.", List.of(new ExtractedPlaybook.Plan(
-                        "Ouro", null, new BigDecimal("4500"), 6, new BigDecimal("800"), "4.500 à vista ou 6x de R$ 800")))),
-                cents).draft().priceTable();
-        assertThat(cut.plans().getFirst().cash()).isNull();
-        assertThat(cut.plans().getFirst().installments()).isNull();
-        assertThat(cut.maxDiscount()).isNull();
-
-        // Tabela e lista citadas corretamente: tabulação e quebra de linha separam os valores.
-        String table = "Ouro\t6.800\t12\t600\n6x de R$ 800\n100 vagas";
-        PriceTable fromTable = ImportMerge.merge(PlaybookDocument.empty(), new ExtractedPlaybook(
-                List.of(new ExtractedPlaybook.Stage("Abertura")), List.of(), List.of(),
-                new ExtractedPlaybook.PriceTable(null, new BigDecimal("600"), "Ouro\t6.800\t12\t600", List.of(new ExtractedPlaybook.Plan(
-                        "Ouro", null, new BigDecimal("6800"), 6, new BigDecimal("800"), "Ouro 6.800 12 600\n6x de R$ 800\n100 vagas")))),
-                table).draft().priceTable();
-        assertThat(fromTable.plans().getFirst().cash()).isEqualByComparingTo("6800.00");
-        assertThat(fromTable.plans().getFirst().installments().value()).isEqualByComparingTo("800.00");
-
-        // Documento de 100 mil caracteres: citação acima de 2.000 caracteres não conta, e um trecho mínimo
-        // repetido em todo o documento é conferido rápido.
-        String ones = "1 ".repeat(50_000);
-        long started = System.nanoTime();
-        PriceTable big = ImportMerge.merge(PlaybookDocument.empty(), new ExtractedPlaybook(
-                List.of(new ExtractedPlaybook.Stage("Abertura")), List.of(), List.of(),
-                new ExtractedPlaybook.PriceTable(null, new BigDecimal("2"), "1", List.of(new ExtractedPlaybook.Plan(
-                        "Ouro", null, new BigDecimal("1"), 6, new BigDecimal("2"), ones.strip())))),
-                ones).draft().priceTable();
-        assertThat(big.plans().getFirst().cash()).isNull();
-        assertThat(big.maxDiscount()).isNull();
-        assertThat(java.time.Duration.ofNanos(System.nanoTime() - started)).isLessThan(java.time.Duration.ofSeconds(2));
-
-        // A citação aceita é a que a tela mostra inteira: acima de 300 caracteres o valor não entra.
-        String longText = "Condições do plano. ".repeat(17) + "À vista R$ 4.500; desconto R$ 300.";
-        PriceTable longCitation = ImportMerge.merge(PlaybookDocument.empty(), new ExtractedPlaybook(
-                List.of(new ExtractedPlaybook.Stage("Abertura")), List.of(), List.of(),
-                new ExtractedPlaybook.PriceTable(null, new BigDecimal("300"), longText, List.of(new ExtractedPlaybook.Plan(
-                        "Ouro", null, new BigDecimal("4500"), null, null, longText)))),
-                longText).draft().priceTable();
-        assertThat(longText.length()).isGreaterThan(300);
-        assertThat(longCitation.plans().getFirst().cash()).isNull();
-        assertThat(longCitation.maxDiscount()).isNull();
-        // E toda citação aceita aparece inteira na marca de conferência.
-        assertThat(cited.plans().getFirst().review().excerpt()).contains("4.500").contains("800");
-        assertThat(cited.maxDiscountReview().excerpt()).contains("300");
-
-        // O valor está no documento, mas não no trecho citado: fica vazio.
-        PriceTable elsewhere = merged.apply("Plano Ouro: R$ 4.500 à vista", "Plano Ouro: R$ 4.500");
-        assertThat(elsewhere.plans().getFirst().installments()).isNull();
-        assertThat(elsewhere.maxDiscount()).isNull();
-    }
-
     private static ImportMerge.Result merge(PlaybookDocument current, ExtractedPlaybook.Plan plan, String column,
             BigDecimal discount) {
         var extracted = new ExtractedPlaybook(List.of(new ExtractedPlaybook.Stage("Abertura")), List.of(), List.of(),
-                new ExtractedPlaybook.PriceTable(column, discount, "Desconto máximo na call: R$ 500.", List.of(plan)));
-        return ImportMerge.merge(current, extracted, TEXT);
+                new ExtractedPlaybook.PriceTable(column, discount, DISCOUNT_EXCERPT, List.of(plan)));
+        return ImportMerge.merge(current, extracted);
     }
 
     private static ExtractedPlaybook.Plan plan(BigDecimal cash, Integer count, BigDecimal value) {
-        return new ExtractedPlaybook.Plan("6 meses " + UUID.randomUUID(), "12", cash, count, value,
-                "Plano de 6 meses por R$ 7.000, ou 6x de R$ 1.166,67.");
+        return new ExtractedPlaybook.Plan("6 meses " + UUID.randomUUID(), "12", cash, count, value, PLAN_EXCERPT);
     }
 }
