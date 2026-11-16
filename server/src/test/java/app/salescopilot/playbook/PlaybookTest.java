@@ -82,6 +82,16 @@ class PlaybookTest extends IntegrationTest {
                 .andExpect(jsonPath("$.draft.priceTable.maxDiscountReview.status").value("pending"));
 
         publish(g, id, 1).andExpect(status().isCreated());
+        // A versão sai sem o desconto escondido e sem a marca (AD-062); o rascunho continua com os dois.
+        JsonNode version = json.readTree(TestDatabase.admin()
+                .sql("SELECT content::text FROM playbook_versions WHERE playbook_id = ? AND number = 1").param(id)
+                .query(String.class).single());
+        assertThat(version.get("priceTable").get("maxDiscount").isNull()).isTrue();
+        assertThat(version.get("priceTable").get("maxDiscountReview").isNull()).isTrue();
+        JsonNode current = playbook(g);
+        assertThat(current.get("draft").get("priceTable").get("maxDiscount").asString()).isEqualTo("300.00");
+        assertThat(current.get("hasUnpublishedChanges").asBoolean()).isFalse();
+        publish(g, id, 1).andExpect(status().isConflict()).andExpect(jsonPath("$.code").value("nothing_to_publish"));
 
         table.set("plans", plans);
         save(g, id, json.writeValueAsString(draft), 1).andExpect(status().isOk());

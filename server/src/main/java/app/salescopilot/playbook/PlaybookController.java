@@ -89,7 +89,8 @@ class PlaybookController {
         return tenancy.inBusiness(access.userId(), access.businessId(), () -> {
             var playbook = lockCurrent(request.playbookId(), request.revision());
             var latest = store.latestVersion(playbook.id());
-            if (latest.isPresent() && latest.get().content().equals(playbook.draft())) {
+            PlaybookDocument published = PublishRules.publishedForm(playbook.draft());
+            if (latest.isPresent() && latest.get().content().equals(published)) {
                 throw new ApiException(HttpStatus.CONFLICT, "nothing_to_publish", "Não há alterações para publicar.");
             }
             PublishRules.check(playbook.draft()).ifPresent(refusal -> {
@@ -99,13 +100,14 @@ class PlaybookController {
                                 .toList());
             });
             int number = latest.map(v -> v.number() + 1).orElse(1);
-            store.insertVersion(playbook, number, access.userId());
+            store.insertVersion(playbook, published, number, access.userId());
             return Map.of("number", number);
         });
     }
 
     private boolean hasUnpublishedChanges(UUID playbookId, PlaybookDocument draft) {
-        return store.latestVersion(playbookId).map(v -> !v.content().equals(draft)).orElse(draft.hasItems());
+        PlaybookDocument published = PublishRules.publishedForm(draft);
+        return store.latestVersion(playbookId).map(v -> !v.content().equals(published)).orElse(draft.hasItems());
     }
 
     /** A trava comum da AD-050: trava o playbook e só então confere revisão e importação ativa. */

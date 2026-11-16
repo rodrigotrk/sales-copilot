@@ -16,6 +16,19 @@ public final class PublishRules {
     private PublishRules() {
     }
 
+    /**
+     * O que a versão guarda do rascunho: sem plano, o desconto escondido e a marca dele ficam só no rascunho,
+     * para nenhuma versão levar valor não conferido (AD-062). Toda comparação entre rascunho e versão usa esta forma.
+     */
+    public static PlaybookDocument publishedForm(PlaybookDocument draft) {
+        PlaybookDocument.PriceTable table = draft.priceTable();
+        if (!table.plans().isEmpty() || (table.maxDiscount() == null && table.maxDiscountReview() == null)) {
+            return draft;
+        }
+        return new PlaybookDocument(draft.schemaVersion(), draft.stages(), draft.discovery(), draft.objections(),
+                new PlaybookDocument.PriceTable(table.extraColumnName(), null, null, table.plans()));
+    }
+
     public static Optional<Refusal> check(PlaybookDocument draft) {
         if (draft.stages().isEmpty() || draft.discovery().isEmpty() || draft.objections().isEmpty()) {
             return Optional.of(new Refusal("publish_minimum",
@@ -39,7 +52,7 @@ public final class PublishRules {
         List<String> pending = draft.priceTable().plans().stream().filter(p -> p.review() != null)
                 .map(Plan::id).map(Object::toString).toList();
         // Sem plano a linha do desconto não aparece (AC 52) e não há onde usar "Conferido"; a marca volta a
-        // contar quando a tabela ganha um plano (AD-061).
+        // contar quando a tabela ganha um plano (AD-061); a versão sai sem ele (AD-062).
         boolean discountPending = draft.priceTable().maxDiscountReview() != null && !draft.priceTable().plans().isEmpty();
         if (!pending.isEmpty() || discountPending) {
             return Optional.of(new Refusal("pending_review",

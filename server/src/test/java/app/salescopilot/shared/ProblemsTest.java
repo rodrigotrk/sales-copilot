@@ -1,5 +1,7 @@
 package app.salescopilot.shared;
 
+import java.util.UUID;
+
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.MediaType;
@@ -45,6 +47,18 @@ class ProblemsTest extends IntegrationTest {
                 .andExpect(jsonPath("$.code").value("missing_parameter"))
                 .andExpect(jsonPath("$.type").value("/problems/missing_parameter"))
                 .andExpect(jsonPath("$.detail").value("Falta um parâmetro obrigatório."));
+        UUID playbookId = UUID.fromString(json.readTree(mvc.perform(get("/api/businesses/" + g.businessId() + "/playbook")
+                .cookie(g.session())).andReturn().getResponse().getContentAsString()).get("playbookId").asString());
+        mvc.perform(multipart("/api/businesses/" + g.businessId() + "/playbook/imports").param("playbookId", playbookId.toString())
+                .cookie(g.session()).with(csrf()))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value("missing_parameter"))
+                .andExpect(jsonPath("$.detail").value("Falta um parâmetro obrigatório."));
+        mvc.perform(get("/api/me").cookie(g.session()).accept(MediaType.APPLICATION_XML))
+                .andExpect(status().isNotAcceptable())
+                .andExpect(jsonPath("$.code").value("not_acceptable"))
+                .andExpect(jsonPath("$.type").value("/problems/not_acceptable"))
+                .andExpect(jsonPath("$.detail").value("Formato de resposta não disponível."));
         mvc.perform(get("/api/nada/aqui").cookie(g.session()))
                 .andExpect(status().isNotFound())
                 .andExpect(header().string("Content-Type", "application/problem+json"))

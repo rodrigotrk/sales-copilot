@@ -24,6 +24,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.multipart.MaxUploadSizeExceededException;
+import org.springframework.web.multipart.support.MissingServletRequestPartException;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 
 import tools.jackson.databind.json.JsonMapper;
@@ -80,6 +81,7 @@ public class Problems extends ResponseEntityExceptionHandler {
         return switch (e) {
             case HttpMessageNotReadableException ignored -> "malformed_request";
             case MissingServletRequestParameterException ignored -> "missing_parameter";
+            case MissingServletRequestPartException ignored -> "missing_parameter";
             case HttpRequestMethodNotSupportedException ignored -> "method_not_allowed";
             case HttpMediaTypeNotSupportedException ignored -> "unsupported_media_type";
             default -> codeForStatus(status);
@@ -93,6 +95,7 @@ public class Problems extends ResponseEntityExceptionHandler {
             case "missing_parameter" -> "Falta um parâmetro obrigatório.";
             case "method_not_allowed" -> "Método não permitido neste endereço.";
             case "unsupported_media_type" -> "Tipo de conteúdo não aceito.";
+            case "not_acceptable" -> "Formato de resposta não disponível.";
             case "unauthenticated" -> "Entre para continuar.";
             case "forbidden" -> "Sem permissão para esta ação.";
             case "not_found" -> "Endereço não encontrado.";
@@ -110,6 +113,7 @@ public class Problems extends ResponseEntityExceptionHandler {
             case 403 -> "forbidden";
             case 404 -> "not_found";
             case 405 -> "method_not_allowed";
+            case 406 -> "not_acceptable";
             case 413 -> "file_too_large";
             case 415 -> "unsupported_media_type";
             default -> status >= 500 ? "internal_error" : "invalid_request";

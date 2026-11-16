@@ -70,12 +70,12 @@ public class PlaybookStore {
                 .optional();
     }
 
-    void insertVersion(Row playbook, int number, UUID publishedBy) {
+    void insertVersion(Row playbook, PlaybookDocument content, int number, UUID publishedBy) {
         jdbc.sql("""
                 INSERT INTO playbook_versions (id, playbook_id, business_id, number, content, published_by)
                 VALUES (?, ?, ?, ?, ?::jsonb, ?)""")
                 .params(UUID.randomUUID(), playbook.id(), playbook.businessId(), number,
-                        json.writeValueAsString(playbook.draft()), publishedBy)
+                        json.writeValueAsString(content), publishedBy)
                 .update();
     }
 
