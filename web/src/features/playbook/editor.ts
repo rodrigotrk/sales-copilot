@@ -98,6 +98,20 @@ export function createEditor(businessId: string) {
     }
   }
 
+  /**
+   * Chamado no 202 da importação: a tarefa já existe, então o rascunho fica só leitura e o acompanhamento
+   * começa agora, com nova tentativa se a primeira consulta falhar.
+   */
+  async function importStarted() {
+    clearTimeout(pollTimer)
+    if (state.value) {
+      state.value.importJob = { id: '', status: 'queued', counts: null, skipped: 0, notices: [], errorCode: null }
+    }
+    watchingImport = true
+    importResult.value = []
+    await poll()
+  }
+
   function messageFor(error: FieldError): string {
     if (error.field === 'cash') return msg.cash
     if (error.field === 'installments') return msg.installments
@@ -272,6 +286,7 @@ export function createEditor(businessId: string) {
     readOnly,
     unsaved,
     reload,
+    importStarted,
     save,
     setLocalError,
     retry,

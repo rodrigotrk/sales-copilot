@@ -100,6 +100,21 @@ class PlaybookTest extends IntegrationTest {
     }
 
     @Test
+    @DisplayName("[C114] número de parcelas fracionário é recusado sem gravar e 6.0 vale 6")
+    void fractionalInstallmentCountIsRefused() throws Exception {
+        Gestor g = newGestor();
+        UUID id = playbookId(g);
+        String fractional = Drafts.complete().replace("\"count\":6,", "\"count\":60.9,");
+        assertThat(fractional).contains("60.9");
+        save(g, id, fractional, 0).andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value("malformed_request"));
+        assertThat(playbook(g).get("revision").asLong()).isZero();
+
+        save(g, id, Drafts.complete().replace("\"count\":6,", "\"count\":6.0,"), 0).andExpect(status().isOk())
+                .andExpect(jsonPath("$.draft.priceTable.plans[0].installments.count").value(6));
+    }
+
+    @Test
     @DisplayName("[C38a] rascunho acima do limite de itens responde 422")
     void itemLimits() throws Exception {
         Gestor g = newGestor();

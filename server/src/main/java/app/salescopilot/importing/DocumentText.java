@@ -79,9 +79,21 @@ class DocumentText {
         URI export = URI.create(googleDocsBaseUrl + "/document/d/" + matcher.group(1) + "/export?format=docx");
         byte[] body;
         try {
-            body = http.get().uri(export).retrieve().body(byte[].class);
+            // Lê no máximo o limite de upload mais um byte: uma exportação enorme não é carregada inteira.
+            body = http.get().uri(export).exchange((request, response) -> {
+                if (!response.getStatusCode().is2xxSuccessful()) {
+                    return null;
+                }
+                try (InputStream in = response.getBody()) {
+                    return in.readNBytes(Math.toIntExact(ImportController.MAX_FILE_BYTES) + 1);
+                }
+            });
         } catch (RuntimeException e) {
             throw new ImportFailure("google_docs_unavailable", e);
+        }
+        if (body != null && body.length > ImportController.MAX_FILE_BYTES) {
+            // Acima de 10 MB o texto passaria do limite de 100 mil caracteres (AC 77).
+            throw new ImportFailure("text_too_long");
         }
         // Documento não compartilhado devolve a página de login do Google (HTML), não um .docx (zip "PK").
         if (body == null || body.length < 2 || body[0] != 'P' || body[1] != 'K') {

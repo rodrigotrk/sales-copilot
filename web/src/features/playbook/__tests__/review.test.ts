@@ -337,10 +337,6 @@ describe('correções da revisão de código', () => {
     expect(calls.some((c) => c.method === 'POST' && c.path === '/logout')).toBe(true)
     cleanup()
 
-    fakeApi({
-      'GET /api/me': ok(me({ businesses: [{ id: 'b1', name: 'Solar Norte', role: 'gestor' }, { id: 'b2', name: 'Loja Sul', role: 'gestor' }], lastBusinessId: null })),
-      'POST /logout': ok(undefined, 204),
-    })
     const create = fakeApi({
       'GET /api/me': ok(me({ businesses: [], lastBusinessId: null, canCreateBusiness: true })),
       'POST /logout': ok(undefined, 204),
@@ -352,10 +348,17 @@ describe('correções da revisão de código', () => {
     expect(create.some((c) => c.method === 'POST' && c.path === '/logout')).toBe(true)
     cleanup()
 
+    const listCalls = fakeApi({
+      'GET /api/me': ok(me({ businesses: [{ id: 'b1', name: 'Solar Norte', role: 'gestor' }, { id: 'b2', name: 'Loja Sul', role: 'gestor' }], lastBusinessId: null })),
+      'POST /logout': ok(undefined, 204),
+    })
     const list = await renderApp('/negocios')
     expect(await screen.findByText('Escolha o negócio')).toBeTruthy()
+    expect(screen.getByText('Solar Norte')).toBeTruthy()
+    expect(screen.getByText('Loja Sul')).toBeTruthy()
     await list.user.click(screen.getByRole('button', { name: 'Sair' }))
     await waitFor(() => expect(list.router.currentRoute.value.path).toBe('/entrar'))
+    expect(listCalls.some((c) => c.method === 'POST' && c.path === '/logout')).toBe(true)
   })
 
   it('[C112] remover o último plano apaga o erro do desconto e libera Publicar e Importar documento', async () => {
@@ -379,4 +382,35 @@ describe('correções da revisão de código', () => {
     expect(button('Publicar').disabled).toBe(false)
     expect(screen.queryByText(/Desconto máximo na call/)).toBeNull()
   })
+
+  it('[C113] importação aceita com 202 fica em Importando e é acompanhada mesmo se a primeira consulta falhar', async () => {
+    let gets = 0
+    const done = playbookState()
+    done.importJob = { id: 'j1', status: 'done', counts: { stages: 1, discovery: 0, objections: 0, plans: 0 }, skipped: 0, notices: [], errorCode: null }
+    fakeApi({
+      'GET /api/me': ok(me()),
+      'GET /api/businesses/b1/playbook': () => {
+        gets += 1
+        if (gets === 1) return ok(playbookState())
+        if (gets === 2) return problem(503, '')
+        return ok(done)
+      },
+      'POST /api/businesses/b1/playbook/imports': ok({ jobId: 'j1' }, 202),
+    })
+    const { user } = await renderApp('/n/b1/playbook')
+    await screen.findByText(/^Playbook: /)
+
+    await user.click(button('Importar documento'))
+    const dialog = within(await screen.findByRole('dialog'))
+    await user.click(dialog.getByLabelText('Texto colado'))
+    await user.type(dialog.getByLabelText('Texto do playbook'), 'Etapa 1: abertura.')
+    await user.click(dialog.getByRole('button', { name: 'Importar' }))
+
+    expect(await screen.findByText('Importando…')).toBeTruthy()
+    await waitFor(() => expect(gets).toBe(2))
+    expect(button('Importar documento').disabled).toBe(true)
+    expect(document.querySelectorAll('main input:not([disabled])')).toHaveLength(0)
+    await waitFor(() => expect(screen.queryByText('Importando…')).toBeNull(), { timeout: 7000 })
+    expect(gets).toBe(3)
+  }, 12000)
 })

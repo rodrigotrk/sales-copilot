@@ -1,5 +1,7 @@
 package app.salescopilot.playbook.api;
 
+import tools.jackson.databind.annotation.JsonDeserialize;
+
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.UUID;
@@ -30,7 +32,8 @@ public record PlaybookDocument(int schemaVersion, List<Stage> stages, List<Disco
             Review review) {
     }
 
-    public record Installments(Integer count, BigDecimal value) {
+    /** `count` passa por {@link WholeNumber}: o Jackson truncaria 60.9 para 60 antes da validação. */
+    public record Installments(@JsonDeserialize(using = WholeNumber.class) Integer count, BigDecimal value) {
     }
 
     /** Marca "Importado · conferir" (AD-035): `status` é sempre "pending"; sem marca, o campo é nulo. */

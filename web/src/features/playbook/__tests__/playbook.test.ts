@@ -226,7 +226,7 @@ describe('tela do playbook', () => {
     await openPlaybook(state)
 
     expect((screen.getByRole('button', { name: '+ Etapa' }) as HTMLButtonElement).disabled).toBe(true)
-    expect(screen.getByText('Limite de 30 itens neste bloco.')).toBeTruthy()
+    expect(within(screen.getByRole('region', { name: 'Etapas da call' })).getByText('Limite de 30 itens neste bloco.')).toBeTruthy()
     expect((screen.getByRole('button', { name: '+ Objeção' }) as HTMLButtonElement).disabled).toBe(false)
     cleanup()
 
@@ -239,9 +239,15 @@ describe('tela do playbook', () => {
         }))
       }),
     )
-    for (const [button, limit] of [['+ Informação', 50], ['+ Objeção', 50], ['+ Plano', 20]] as const) {
-      expect((screen.getByRole('button', { name: button }) as HTMLButtonElement).disabled).toBe(true)
-      expect(screen.getAllByText(`Limite de ${limit} itens neste bloco.`).length).toBeGreaterThan(0)
+    // Cada aviso é procurado dentro do próprio bloco: o aviso de outro bloco não pode satisfazer a asserção.
+    for (const [region, button, limit] of [
+      ['O que precisa ser descoberto na call', '+ Informação', 50],
+      ['Objeções e sugestões de fala', '+ Objeção', 50],
+      ['Tabela de preços', '+ Plano', 20],
+    ] as const) {
+      const block = within(screen.getByRole('region', { name: region }))
+      expect((block.getByRole('button', { name: button }) as HTMLButtonElement).disabled).toBe(true)
+      expect(block.getByText(`Limite de ${limit} itens neste bloco.`)).toBeTruthy()
     }
   })
 

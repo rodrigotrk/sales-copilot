@@ -261,6 +261,22 @@ class ImportTest extends IntegrationTest {
     }
 
     @Test
+    @DisplayName("[C116] exportação do Google Docs acima de 10 MB falha com text_too_long sem chamar o modelo")
+    void googleDocsTooLarge() throws Exception {
+        Gestor g = newGestor();
+        long revision = revision(g);
+        byte[] huge = new byte[Math.toIntExact(ImportController.MAX_FILE_BYTES) + 1];
+        huge[0] = 'P';
+        huge[1] = 'K';
+        STUB.document("enorme", new StubServer.Reply(200, "application/vnd.openxmlformats-officedocument.wordprocessingml.document", huge));
+        UUID jobId = jobId(importUrl(g, "https://docs.google.com/document/d/enorme/edit"));
+        worker.drain();
+        assertThat(jobRow(jobId)).containsEntry("status", "failed").containsEntry("error_code", "text_too_long");
+        assertThat(revision(g)).isEqualTo(revision);
+        assertThat(STUB.modelRequests()).isEmpty();
+    }
+
+    @Test
     @DisplayName("[C80] documento sem itens falha sem mudar o rascunho")
     void nothingFound() throws Exception {
         Gestor g = newGestor();

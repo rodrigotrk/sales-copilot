@@ -33,6 +33,13 @@ spring:
       "[mail.smtp.connectiontimeout]": 10000
       "[mail.smtp.timeout]": 10000
       "[mail.smtp.writetimeout]": 10000
+      # O link de acesso e a senha do SMTP não trafegam em texto aberto: STARTTLS é exigido e o certificado
+      # do servidor é conferido. SMTP_SSL=true usa TLS implícito (porta 465); SMTP_STARTTLS_REQUIRED=false
+      # só para um SMTP local de testes, sem TLS.
+      "[mail.smtp.starttls.enable]": true
+      "[mail.smtp.starttls.required]": ${SMTP_STARTTLS_REQUIRED:true}
+      "[mail.smtp.ssl.enable]": ${SMTP_SSL:false}
+      "[mail.smtp.ssl.checkserveridentity]": true
   security:
     oauth2:
       client:

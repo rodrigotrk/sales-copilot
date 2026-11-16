@@ -89,7 +89,7 @@ const canPublish = computed(
         v-model:open="importOpen"
         :business-id="businessId"
         :playbook-id="state.playbookId"
-        @started="editor.reload()"
+        @started="editor.importStarted()"
       />
     </main>
   </AppShell>
