@@ -1,9 +1,9 @@
 # playbook-configuravel proofs
 
-**HEAD**: 0d540dc
+**HEAD**: 866f903
 **Tree**: clean
 **Shell**: /bin/sh
-**Result**: 162 pass, 0 fail
+**Result**: 169 pass, 0 fail
 
 | Check | Proof | Result |
 | --- | --- | --- |
@@ -167,6 +167,13 @@
 | C118 | `run server / PASSED [C118] GET do playbook lê rascunho e tarefa no mesmo snapshot mesmo com a importação concl` | pass |
 | C119 | `run web / ✓ [C119] gravação de outro campo que termina enquanto a pessoa digita no parcelado não apaga a digit` | pass |
 | C120 | `run web / ✓ [C120] 409 import_running ao gravar ou publicar deixa a tela em Importando e acompanha mesmo com a` | pass |
+| C121 | `run server / PASSED [C121] documento malicioso esgota só o processo de extração: a tarefa falha sem chamar o m` | pass |
+| C122 | `run server / PASSED [C122] Error ao ler o documento encerra a tarefa como import_failed, apaga o arquivo e fic` | pass |
+| C123 | `run web / ✓ [C123] e-mail recusado pelo servidor e falha de rede mostram mensagem na tela` | pass |
+| C124 | `run server / PASSED [C124] conteúdo de outro tipo que a extensão falha e documento embutido não é aberto` | pass |
+| C125 | `run server / PASSED [C125] PDF com metadados que descompactam para centenas de MB falha com import_failed sem ` | pass |
+| C126 | `run server / PASSED [C126] extração que passa do tempo limite é encerrada e a tarefa termina em import_failed` | pass |
+| C127 | `run server / PASSED [C127] extração interrompida encerra o processo filho` | pass |
 | Build | `make build` | pass |
 | Build | `make lint` | pass |
 
@@ -175,40 +182,40 @@
 `Run web` - exit 0
 
 ```
- ✓ src/features/playbook/__tests__/playbook.test.ts > tela do playbook > [C60] alteração pendente desabilita Publicar com Há alterações não salvas 82ms
- ✓ src/features/playbook/__tests__/playbook.test.ts > tela do playbook > [C61b] Alterações não publicadas aparece só com diferença e Publicar desabilita sem ela 90ms
- ✓ src/features/playbook/__tests__/playbook.test.ts > tela do playbook > [C62] sem versão o topo mostra rascunho 10ms
- ✓ src/features/playbook/__tests__/review.test.ts > correções da revisão de código > [C110] consulta da importação que falha uma vez continua até a tarefa terminar 10586ms
- ✓ src/features/playbook/__tests__/review.test.ts > correções da revisão de código > [C111] voltar o campo ao valor gravado apaga o erro do servidor e libera Publicar 348ms
- ✓ src/features/playbook/__tests__/review.test.ts > correções da revisão de código > [C24c] Sair aparece no acesso não liberado, na criação de negócio e na lista e leva a /entrar 26ms
- ✓ src/features/playbook/__tests__/review.test.ts > correções da revisão de código > [C112] remover o último plano apaga o erro do desconto e libera Publicar e Importar documento 74ms
- ✓ src/features/playbook/__tests__/review.test.ts > correções da revisão de código > [C113] importação aceita com 202 fica em Importando e é acompanhada mesmo se a primeira consulta falhar 2113ms
- ✓ src/features/playbook/__tests__/review.test.ts > correções da revisão de código > [C119] gravação de outro campo que termina enquanto a pessoa digita no parcelado não apaga a digitação 223ms
- ✓ src/features/playbook/__tests__/review.test.ts > correções da revisão de código > [C120] 409 import_running ao gravar ou publicar deixa a tela em Importando e acompanha mesmo com a consulta falhando 4191ms
+ ✓ src/features/playbook/__tests__/playbook.test.ts > tela do playbook > [C60] alteração pendente desabilita Publicar com Há alterações não salvas 77ms
+ ✓ src/features/playbook/__tests__/playbook.test.ts > tela do playbook > [C61b] Alterações não publicadas aparece só com diferença e Publicar desabilita sem ela 83ms
+ ✓ src/features/playbook/__tests__/playbook.test.ts > tela do playbook > [C62] sem versão o topo mostra rascunho 9ms
+ ✓ src/features/playbook/__tests__/review.test.ts > correções da revisão de código > [C110] consulta da importação que falha uma vez continua até a tarefa terminar 10596ms
+ ✓ src/features/playbook/__tests__/review.test.ts > correções da revisão de código > [C111] voltar o campo ao valor gravado apaga o erro do servidor e libera Publicar 332ms
+ ✓ src/features/playbook/__tests__/review.test.ts > correções da revisão de código > [C24c] Sair aparece no acesso não liberado, na criação de negócio e na lista e leva a /entrar 27ms
+ ✓ src/features/playbook/__tests__/review.test.ts > correções da revisão de código > [C112] remover o último plano apaga o erro do desconto e libera Publicar e Importar documento 77ms
+ ✓ src/features/playbook/__tests__/review.test.ts > correções da revisão de código > [C113] importação aceita com 202 fica em Importando e é acompanhada mesmo se a primeira consulta falhar 2108ms
+ ✓ src/features/playbook/__tests__/review.test.ts > correções da revisão de código > [C119] gravação de outro campo que termina enquanto a pessoa digita no parcelado não apaga a digitação 188ms
+ ✓ src/features/playbook/__tests__/review.test.ts > correções da revisão de código > [C120] 409 import_running ao gravar ou publicar deixa a tela em Importando e acompanha mesmo com a consulta falhando 4188ms
 
  Test Files  6 passed (6)
-      Tests  75 passed (75)
-   Start at  22:46:04
-   Duration  19.97s (transform 2.30s, setup 0ms, import 5.10s, tests 21.84s, environment 2.37s)
+      Tests  76 passed (76)
+   Start at  07:52:15
+   Duration  19.84s (transform 2.16s, setup 0ms, import 4.86s, tests 21.71s, environment 2.28s)
 ```
 
 `Run server` - exit 0
 
 ```
-PASSED [C82] bloco acima do limite importa até o limite e avisa os itens de fora
-PASSED [C75] arquivo acima de 10 MB responde 413 sem criar tarefa
-PASSED [C89] chamada ao OpenRouter leva provider.zdr true
-[INFO] Tests run: 25, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 3.264 s -- in app.salescopilot.importing.ImportTest
+2026-11-16T07:53:17.729-03:00  WARN 4949 --- [server] [           main] a.s.importing.ExtractionProcess          : Extração de 85fc9361-4d53-45d2-b559-06c635feb239.docx passou de PT0.001S e foi encerrada
+PASSED [C126] extração que passa do tempo limite é encerrada e a tarefa termina em import_failed
+PASSED [C127] extração interrompida encerra o processo filho
+[INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 2.777 s -- in app.salescopilot.importing.ExtractionTimeoutTest
 [INFO] 
 [INFO] Results:
 [INFO] 
-[INFO] Tests run: 77, Failures: 0, Errors: 0, Skipped: 0
+[INFO] Tests run: 83, Failures: 0, Errors: 0, Skipped: 0
 [INFO] 
 [INFO] ------------------------------------------------------------------------
 [INFO] BUILD SUCCESS
 [INFO] ------------------------------------------------------------------------
-[INFO] Total time:  23.256 s
-[INFO] Finished at: 2026-11-15T22:46:48-03:00
+[INFO] Total time:  44.428 s
+[INFO] Finished at: 2026-11-16T07:53:20-03:00
 [INFO] ------------------------------------------------------------------------
 ```
 
