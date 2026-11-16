@@ -3,7 +3,7 @@
   "promote_threshold": 2,
   "window_days": 45,
   "quarantine_threshold": 2,
-  "next_id": 35,
+  "next_id": 36,
   "lessons": [
     {
       "id": "L-001",
@@ -616,6 +616,24 @@
       ],
       "created": "2026-11-16T11:25:59Z",
       "last_seen": "2026-11-16T11:25:59Z"
+    },
+    {
+      "id": "L-035",
+      "key": "spec_precision_gap::ground model extracted values with a verifiable citation exact excerpt whole token inside it instead of scanning free text for every possible spelling",
+      "text": "Ground model-extracted values with a verifiable citation (exact excerpt, whole token inside it) instead of scanning free text for every possible spelling.",
+      "signal": "spec_precision_gap",
+      "scope": "importing",
+      "status": "candidate",
+      "features": [
+        "playbook-configuravel"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "Codex r10-r14, Verifier C131-C135, AD-065 (importing)"
+      ],
+      "created": "2026-11-16T18:32:41Z",
+      "last_seen": "2026-11-16T18:32:41Z"
     }
   ]
 }

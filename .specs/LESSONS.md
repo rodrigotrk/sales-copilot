@@ -218,6 +218,12 @@ Seen once or not yet corroborated. Tracked, not trusted.
 - evidence: Codex r9 1, Verifier C128 (server)
 - last seen: 2026-11-16T11:25:59Z
 
+### L-035 - Ground model-extracted values with a verifiable citation (exact excerpt, whole token inside it) instead of scanning free text for every possible spelling.
+- signal: `spec_precision_gap` · recurrence: 1 feature(s) · scope: `importing` · harmful: 0
+- features: playbook-configuravel
+- evidence: Codex r10-r14, Verifier C131-C135, AD-065 (importing)
+- last seen: 2026-11-16T18:32:41Z
+
 ## Quarantined (failed when applied - ignore)
 
 A confirmed lesson that recurred alongside failure. Kept for the maintainer to review.
