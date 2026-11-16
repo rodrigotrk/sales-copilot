@@ -907,6 +907,41 @@ class ImportTest extends IntegrationTest {
         assertThat(response.getStatus()).isEqualTo(409);
         assertThat(json.readTree(response.getContentAsString()).get("code").asString()).isEqualTo("import_running");
         assertThat(revision(g)).isZero();
+
+        // Pelo endpoint real: com o playbook travado por outra transação, o POST de importação espera a trava
+        // e só cria a tarefa depois que ela é liberada.
+        Gestor other = newGestor();
+        UUID otherPlaybook = playbookId(other);
+        try (var holder = java.sql.DriverManager.getConnection(TestDatabase.POSTGRES.getJdbcUrl(),
+                TestDatabase.POSTGRES.getUsername(), TestDatabase.POSTGRES.getPassword())) {
+            holder.setAutoCommit(false);
+            try (var lock = holder.prepareStatement("SELECT id FROM sales_copilot.playbooks WHERE id = ? FOR UPDATE")) {
+                lock.setObject(1, otherPlaybook);
+                lock.executeQuery().close();
+            }
+            var importing = CompletableFuture.supplyAsync(() -> {
+                try {
+                    return importText(other, DOCUMENT).andReturn().getResponse().getStatus();
+                } catch (Exception e) {
+                    throw new IllegalStateException(e);
+                }
+            });
+            long deadline = System.currentTimeMillis() + 10_000;
+            while (TestDatabase.admin().sql("""
+                    SELECT count(*) FROM pg_stat_activity
+                     WHERE usename = 'app' AND wait_event_type = 'Lock' AND query ILIKE '%playbooks%'""")
+                    .query(Long.class).single() == 0) {
+                assertThat(importing).as("POST de importação esperando a trava").isNotDone();
+                assertThat(System.currentTimeMillis()).as("POST de importação esperando a trava").isLessThan(deadline);
+                Thread.sleep(20);
+            }
+            assertThat(TestDatabase.admin().sql("SELECT count(*) FROM import_jobs WHERE playbook_id = ?").param(otherPlaybook)
+                    .query(Long.class).single()).isZero();
+            holder.commit();
+            assertThat(importing.get(10, TimeUnit.SECONDS)).isEqualTo(202);
+        }
+        assertThat(TestDatabase.admin().sql("SELECT count(*) FROM import_jobs WHERE playbook_id = ?").param(otherPlaybook)
+                .query(Long.class).single()).isEqualTo(1);
     }
 
     private ResultActions importText(Gestor g, String text) throws Exception {

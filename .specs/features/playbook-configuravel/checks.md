@@ -159,7 +159,7 @@ Proof: run web | ✓ [C41b] revision_conflict mostra O playbook foi alterado em 
 Proof: run server | PASSED [C42a] gravação com importação ativa responde 409 import_running
 Proof: run web | ✓ [C42b] importação ativa deixa o rascunho só para leitura
 
-**C43** - Gravação e pedido de importação simultâneos nunca deixam uma gravação entrar depois da tarefa criada (AC 43)
+**C43** - Gravação e pedido de importação simultâneos nunca deixam uma gravação entrar depois da tarefa criada (AC 43); pelo endpoint real, com o playbook travado por outra transação, o POST de importação espera a trava e só cria a tarefa depois que ela é liberada
 Proof: run server | PASSED [C43] gravação e importação simultâneas nunca gravam depois da tarefa
 
 **C44** - O nome da coluna extra vira o título da coluna entre "Plano" e "À vista" (AC 44)
