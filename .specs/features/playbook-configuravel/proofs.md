@@ -1,9 +1,9 @@
 # playbook-configuravel proofs
 
-**HEAD**: 95bea55
+**HEAD**: 76fba39
 **Tree**: clean
 **Shell**: /bin/sh
-**Result**: 147 pass, 0 fail
+**Result**: 154 pass, 0 fail
 
 | Check | Proof | Result |
 | --- | --- | --- |
@@ -152,6 +152,13 @@
 | C104 | `sh deploy/verify-roles.sh` | pass |
 | C105 | `run web / ✓ [C105] importação iniciada em outra aba fecha a linha aberta e nenhum campo fica editável` | pass |
 | C106 | `run server / PASSED [C106] valor em dinheiro da resposta do modelo chega com todos os dígitos` | pass |
+| C107 | `run server / PASSED [C107] desconto sem plano fica guardado e só bloqueia a publicação quando há plano` | pass |
+| C108 | `run web / ✓ [C108] durante a publicação nenhuma linha abre para edição e nada digitado se perde` | pass |
+| C109 | `run web / ✓ [C109] Desfazer fica indisponível enquanto outra gravação está em andamento` | pass |
+| C110 | `run web / ✓ [C110] consulta da importação que falha uma vez continua até a tarefa terminar` | pass |
+| C111 | `run web / ✓ [C111] voltar o campo ao valor gravado apaga o erro do servidor e libera Publicar` | pass |
+| C111 | `run web / ✓ [C24c] Sair aparece no acesso não liberado, na criação de negócio e na lista e leva a /entrar` | pass |
+| C112 | `run web / ✓ [C112] remover o último plano apaga o erro do desconto e libera Publicar e Importar documento` | pass |
 | Build | `make build` | pass |
 | Build | `make lint` | pass |
 
@@ -160,21 +167,21 @@
 `Run web` - exit 0
 
 ```
- ✓ src/features/playbook/__tests__/playbook.test.ts > tela do playbook > [C52] sem plano a linha do desconto não aparece 9ms
- ✓ src/features/playbook/__tests__/playbook.test.ts > tela do playbook > [C53] sem call registrada a coluna Nas calls não aparece 12ms
- ✓ src/features/playbook/__tests__/playbook.test.ts > tela do playbook > [C54b] após publicar o topo mostra a versão nova 19ms
- ✓ src/features/playbook/__tests__/playbook.test.ts > tela do playbook > [C55b] publicar com revision_conflict mostra O playbook foi alterado em outra aba 17ms
  ✓ src/features/playbook/__tests__/playbook.test.ts > tela do playbook > [C56b] publish_minimum mostra a mensagem do mínimo 21ms
  ✓ src/features/playbook/__tests__/playbook.test.ts > tela do playbook > [C57b] incomplete_rows destaca as linhas e mostra Complete ou remova 20ms
  ✓ src/features/playbook/__tests__/playbook.test.ts > tela do playbook > [C59b] pending_review mostra Confira os valores marcados 19ms
- ✓ src/features/playbook/__tests__/playbook.test.ts > tela do playbook > [C60] alteração pendente desabilita Publicar com Há alterações não salvas 76ms
- ✓ src/features/playbook/__tests__/playbook.test.ts > tela do playbook > [C61b] Alterações não publicadas aparece só com diferença e Publicar desabilita sem ela 85ms
+ ✓ src/features/playbook/__tests__/playbook.test.ts > tela do playbook > [C60] alteração pendente desabilita Publicar com Há alterações não salvas 73ms
+ ✓ src/features/playbook/__tests__/playbook.test.ts > tela do playbook > [C61b] Alterações não publicadas aparece só com diferença e Publicar desabilita sem ela 79ms
  ✓ src/features/playbook/__tests__/playbook.test.ts > tela do playbook > [C62] sem versão o topo mostra rascunho 9ms
+ ✓ src/features/playbook/__tests__/review.test.ts > correções da revisão de código > [C110] consulta da importação que falha uma vez continua até a tarefa terminar 10603ms
+ ✓ src/features/playbook/__tests__/review.test.ts > correções da revisão de código > [C111] voltar o campo ao valor gravado apaga o erro do servidor e libera Publicar 343ms
+ ✓ src/features/playbook/__tests__/review.test.ts > correções da revisão de código > [C24c] Sair aparece no acesso não liberado, na criação de negócio e na lista e leva a /entrar 26ms
+ ✓ src/features/playbook/__tests__/review.test.ts > correções da revisão de código > [C112] remover o último plano apaga o erro do desconto e libera Publicar e Importar documento 66ms
 
  Test Files  6 passed (6)
-      Tests  66 passed (66)
-   Start at  18:54:37
-   Duration  3.70s (transform 2.34s, setup 0ms, import 5.36s, tests 3.91s, environment 3.74s)
+      Tests  72 passed (72)
+   Start at  21:20:57
+   Duration  13.33s (transform 2.28s, setup 0ms, import 4.90s, tests 15.04s, environment 2.29s)
 ```
 
 `Run server` - exit 0
@@ -183,17 +190,17 @@
 PASSED [C82] bloco acima do limite importa até o limite e avisa os itens de fora
 PASSED [C75] arquivo acima de 10 MB responde 413 sem criar tarefa
 PASSED [C89] chamada ao OpenRouter leva provider.zdr true
-[INFO] Tests run: 22, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 3.012 s -- in app.salescopilot.importing.ImportTest
+[INFO] Tests run: 22, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 2.894 s -- in app.salescopilot.importing.ImportTest
 [INFO] 
 [INFO] Results:
 [INFO] 
-[INFO] Tests run: 71, Failures: 0, Errors: 0, Skipped: 0
+[INFO] Tests run: 72, Failures: 0, Errors: 0, Skipped: 0
 [INFO] 
 [INFO] ------------------------------------------------------------------------
 [INFO] BUILD SUCCESS
 [INFO] ------------------------------------------------------------------------
-[INFO] Total time:  23.040 s
-[INFO] Finished at: 2026-11-15T18:55:05-03:00
+[INFO] Total time:  23.124 s
+[INFO] Finished at: 2026-11-15T21:21:34-03:00
 [INFO] ------------------------------------------------------------------------
 ```
 

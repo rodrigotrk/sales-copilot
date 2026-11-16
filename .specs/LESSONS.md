@@ -152,6 +152,24 @@ Seen once or not yet corroborated. Tracked, not trusted.
 - evidence: Verifier C99 x3 (deploy)
 - last seen: 2026-11-15T21:54:37Z
 
+### L-024 - Any request whose completion replaces the draft makes the draft read-only while in flight; undo waits for the save in progress.
+- signal: `ac_gap` · recurrence: 1 feature(s) · scope: `web` · harmful: 0
+- features: playbook-configuravel
+- evidence: Codex r4 1, 2 (C108, C109) (web)
+- last seen: 2026-11-16T00:22:02Z
+
+### L-025 - A value the screen hides must not block an action or be published unreviewed; decide with the user what happens to hidden values.
+- signal: `spec_precision_gap` · recurrence: 1 feature(s) · scope: `playbook` · harmful: 0
+- features: playbook-configuravel
+- evidence: Codex r4 3, Verifier (AD-061, AD-062) (playbook)
+- last seen: 2026-11-16T00:22:02Z
+
+### L-026 - Polling survives transient failures and stops for good on unmount, including a request already in flight.
+- signal: `ac_gap` · recurrence: 1 feature(s) · scope: `web` · harmful: 0
+- features: playbook-configuravel
+- evidence: Codex r4 4, Verifier (C110) (web)
+- last seen: 2026-11-16T00:22:02Z
+
 ## Quarantined (failed when applied - ignore)
 
 A confirmed lesson that recurred alongside failure. Kept for the maintainer to review.

@@ -3,7 +3,7 @@
   "promote_threshold": 2,
   "window_days": 45,
   "quarantine_threshold": 2,
-  "next_id": 24,
+  "next_id": 27,
   "lessons": [
     {
       "id": "L-001",
@@ -418,6 +418,60 @@
       ],
       "created": "2026-11-15T21:54:37Z",
       "last_seen": "2026-11-15T21:54:37Z"
+    },
+    {
+      "id": "L-024",
+      "key": "ac_gap::any request whose completion replaces the draft makes the draft read only while in flight undo waits for the save in progress",
+      "text": "Any request whose completion replaces the draft makes the draft read-only while in flight; undo waits for the save in progress.",
+      "signal": "ac_gap",
+      "scope": "web",
+      "status": "candidate",
+      "features": [
+        "playbook-configuravel"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "Codex r4 1, 2 (C108, C109) (web)"
+      ],
+      "created": "2026-11-16T00:22:02Z",
+      "last_seen": "2026-11-16T00:22:02Z"
+    },
+    {
+      "id": "L-025",
+      "key": "spec_precision_gap::a value the screen hides must not block an action or be published unreviewed decide with the user what happens to hidden values",
+      "text": "A value the screen hides must not block an action or be published unreviewed; decide with the user what happens to hidden values.",
+      "signal": "spec_precision_gap",
+      "scope": "playbook",
+      "status": "candidate",
+      "features": [
+        "playbook-configuravel"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "Codex r4 3, Verifier (AD-061, AD-062) (playbook)"
+      ],
+      "created": "2026-11-16T00:22:02Z",
+      "last_seen": "2026-11-16T00:22:02Z"
+    },
+    {
+      "id": "L-026",
+      "key": "ac_gap::polling survives transient failures and stops for good on unmount including a request already in flight",
+      "text": "Polling survives transient failures and stops for good on unmount, including a request already in flight.",
+      "signal": "ac_gap",
+      "scope": "web",
+      "status": "candidate",
+      "features": [
+        "playbook-configuravel"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "Codex r4 4, Verifier (C110) (web)"
+      ],
+      "created": "2026-11-16T00:22:02Z",
+      "last_seen": "2026-11-16T00:22:02Z"
     }
   ]
 }
