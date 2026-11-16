@@ -1,4 +1,4 @@
-import { screen } from '@testing-library/vue'
+import { cleanup, screen } from '@testing-library/vue'
 import { describe, expect, it } from 'vitest'
 import { fakeApi, ok, problem, renderApp } from '@/__tests__/harness'
 import { me, playbookServer, playbookState } from '@/features/playbook/__tests__/fixtures'
@@ -47,6 +47,21 @@ describe('entrada', () => {
     await user.click(screen.getByRole('button', { name: 'Enviar link de acesso' }))
 
     expect(await screen.findByText('Aguarde 1 minuto para pedir outro link.')).toBeTruthy()
+  })
+
+  it('[C123] e-mail recusado pelo servidor e falha de rede mostram mensagem na tela', async () => {
+    fakeApi({ 'POST /ott/generate': problem(422, 'invalid_email') })
+    const first = await renderApp('/entrar')
+    await first.user.type(screen.getByLabelText('E-mail'), 'pessoa@')
+    await first.user.click(screen.getByRole('button', { name: 'Enviar link de acesso' }))
+    expect(await screen.findByText('Informe um e-mail válido.')).toBeTruthy()
+    cleanup()
+
+    fakeApi({ 'POST /ott/generate': 'network' })
+    const second = await renderApp('/entrar')
+    await second.user.type(screen.getByLabelText('E-mail'), 'gestor@exemplo.com')
+    await second.user.click(screen.getByRole('button', { name: 'Enviar link de acesso' }))
+    expect(await screen.findByText('Não foi possível enviar o link. Tente de novo.')).toBeTruthy()
   })
 
   it('[C04b] página do link mostra Entrar como o e-mail e o botão Entrar', async () => {

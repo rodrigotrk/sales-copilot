@@ -28,8 +28,15 @@ async function send() {
     await requestLoginLink(address)
     message.value = authMessages.linkSent(address)
   } catch (e) {
-    if (!(e instanceof ApiError)) throw e
-    error.value = e.code === 'too_many_requests' ? authMessages.tooManyRequests : authMessages.sendFailed
+    // TypeError é falha de rede: a pessoa vê a mesma mensagem de envio que falhou.
+    if (!(e instanceof ApiError) && !(e instanceof TypeError)) throw e
+    const code = e instanceof ApiError ? e.code : ''
+    error.value =
+      code === 'too_many_requests'
+        ? authMessages.tooManyRequests
+        : code === 'invalid_email'
+          ? authMessages.invalidEmail
+          : authMessages.sendFailed
   }
 }
 </script>

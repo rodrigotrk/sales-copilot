@@ -55,6 +55,11 @@ class DocumentText {
                 String text = Files.readString(file, StandardCharsets.UTF_8);
                 return new Extracted(text, text);
             }
+            if (name.endsWith(".docx")) {
+                try (InputStream in = Files.newInputStream(file)) {
+                    ZipBudget.check(in);
+                }
+            }
             try (InputStream in = Files.newInputStream(file)) {
                 Extracted extracted = parse(in);
                 if (name.endsWith(".pdf") && extracted.plain().isBlank()) {
@@ -100,6 +105,7 @@ class DocumentText {
             throw new ImportFailure("google_docs_unavailable");
         }
         try {
+            ZipBudget.check(new java.io.ByteArrayInputStream(body));
             return parse(new java.io.ByteArrayInputStream(body));
         } catch (IOException e) {
             throw new ImportFailure("import_failed", e);

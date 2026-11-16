@@ -284,6 +284,50 @@ class ImportTest extends IntegrationTest {
     }
 
     @Test
+    @DisplayName("[C121] .docx que expande metadados para dezenas de MB falha com text_too_long sem chamar o modelo")
+    void compressedMetadataBomb() throws Exception {
+        Gestor g = newGestor();
+        long revision = revision(g);
+        UUID jobId = jobId(importFile(g, new MockMultipartFile("file", "bomba.docx",
+                "application/vnd.openxmlformats-officedocument.wordprocessingml.document", docxWithHugeTitle(30L * 1024 * 1024))));
+        String file = (String) jobRow(jobId).get("file_path");
+        worker.drain();
+        assertThat(jobRow(jobId)).containsEntry("status", "failed").containsEntry("error_code", "text_too_long");
+        assertThat(revision(g)).isEqualTo(revision);
+        assertThat(STUB.modelRequests()).isEmpty();
+        assertThat(Files.exists(IMPORT_DIRECTORY.resolve(file))).isFalse();
+    }
+
+    /** Um .docx válido em que docProps/core.xml traz um título de `titleBytes`, escrito em pedaços. */
+    private static byte[] docxWithHugeTitle(long titleBytes) throws java.io.IOException {
+        byte[] base = docx(10);
+        var out = new ByteArrayOutputStream();
+        try (var in = new java.util.zip.ZipInputStream(new java.io.ByteArrayInputStream(base));
+                var zip = new java.util.zip.ZipOutputStream(out)) {
+            java.util.zip.ZipEntry entry;
+            while ((entry = in.getNextEntry()) != null) {
+                if (entry.getName().equals("docProps/core.xml")) {
+                    continue;
+                }
+                zip.putNextEntry(new java.util.zip.ZipEntry(entry.getName()));
+                in.transferTo(zip);
+                zip.closeEntry();
+            }
+            zip.putNextEntry(new java.util.zip.ZipEntry("docProps/core.xml"));
+            zip.write(("<?xml version=\"1.0\" encoding=\"UTF-8\"?><cp:coreProperties "
+                    + "xmlns:cp=\"http://schemas.openxmlformats.org/package/2006/metadata/core-properties\" "
+                    + "xmlns:dc=\"http://purl.org/dc/elements/1.1/\"><dc:title>").getBytes(java.nio.charset.StandardCharsets.UTF_8));
+            byte[] chunk = "a".repeat(1024 * 1024).getBytes(java.nio.charset.StandardCharsets.UTF_8);
+            for (long written = 0; written < titleBytes; written += chunk.length) {
+                zip.write(chunk);
+            }
+            zip.write("</dc:title></cp:coreProperties>".getBytes(java.nio.charset.StandardCharsets.UTF_8));
+            zip.closeEntry();
+        }
+        return out.toByteArray();
+    }
+
+    @Test
     @DisplayName("[C80] documento sem itens falha sem mudar o rascunho")
     void nothingFound() throws Exception {
         Gestor g = newGestor();

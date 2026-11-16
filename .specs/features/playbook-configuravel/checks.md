@@ -421,6 +421,15 @@ Proof: run web | ✓ [C119] gravação de outro campo que termina enquanto a pes
 **C120** - `409` `import_running` ao gravar ou ao publicar deixa a tela em "Importando…" com o rascunho só leitura, e o acompanhamento continua mesmo se a consulta seguinte falhar (`503`) (AC 42, AC 67, AD-036)
 Proof: run web | ✓ [C120] 409 import_running ao gravar ou publicar deixa a tela em Importando e acompanha mesmo com a consulta falhando
 
+**C121** - Um `.docx` cujas partes expandem além do orçamento (uma entrada acima de 20 MB ou o total acima de 100 MB, como um título de 30 MB comprimido em poucos KB) é recusado antes do parser, com `text_too_long`, sem chamar o modelo, e o arquivo é apagado (AC 77, AD-026)
+Proof: run server | PASSED [C121] .docx que expande metadados para dezenas de MB falha com text_too_long sem chamar o modelo
+
+**C122** - Um `Error` ao ler o documento (como esgotamento de memória) encerra a tarefa como `failed` `import_failed` e apaga o arquivo, em vez de deixá-la voltar à fila (AD-038)
+Proof: run server | PASSED [C122] Error ao ler o documento encerra a tarefa como import_failed e apaga o arquivo
+
+**C123** - Na tela de entrada, `422` `invalid_email` mostra "Informe um e-mail válido." e falha de rede mostra "Não foi possível enviar o link. Tente de novo." (AC 2)
+Proof: run web | ✓ [C123] e-mail recusado pelo servidor e falha de rede mostram mensagem na tela
+
 ## Coverage
 
 | Set (size) | Member -> proof | Unproven |

@@ -55,8 +55,9 @@ class ImportWorker {
             finished = complete(job, claim.leaseToken(), extracted, text.plain());
         } catch (ImportFailure failure) {
             finished = fail(job, claim.leaseToken(), failure.code());
-        } catch (RuntimeException unexpected) {
-            // Sem isto a tarefa voltaria à fila a cada concessão vencida, sem fim.
+        } catch (RuntimeException | Error unexpected) {
+            // Sem isto a tarefa voltaria à fila a cada concessão vencida, sem fim. Error entra porque um
+            // documento malicioso pode esgotar a memória do parser; o que ele alocou já foi liberado aqui.
             finished = fail(job, claim.leaseToken(), "import_failed");
         }
         // Execução sem a concessão não apaga nada: o arquivo pertence a quem a assumiu.
