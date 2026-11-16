@@ -211,7 +211,24 @@ public final class MoneyInText {
             return false;
         }
         BigDecimal wanted = value.stripTrailingZeros();
-        return found.stream().anyMatch(f -> f.start() >= from && f.end() <= to && f.value().compareTo(wanted) == 0);
+        // Os números estão em ordem de posição: a busca binária acha o primeiro que começa no trecho.
+        int low = 0;
+        int high = found.size();
+        while (low < high) {
+            int middle = (low + high) >>> 1;
+            if (found.get(middle).start() < from) {
+                low = middle + 1;
+            } else {
+                high = middle;
+            }
+        }
+        for (int i = low; i < found.size() && found.get(i).start() < to; i++) {
+            Found number = found.get(i);
+            if (number.end() <= to && number.value().compareTo(wanted) == 0) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private static String read(String token) {

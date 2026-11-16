@@ -72,11 +72,11 @@ class ImportMergeTest {
     }
 
     @Test
-    @DisplayName("[C129] número em dinheiro maior que numeric(12,2) não entra no rascunho, mesmo presente no documento")
+    @DisplayName("[C129] número em dinheiro maior que numeric(12,2) não entra no rascunho, mesmo citado do documento")
     void hugeNumberFromTheDocumentIsDropped() {
-        String digits = "9".repeat(50_000);
-        String text = "Plano Grande por R$ 7.000 em 6x de R$ " + digits + ". Desconto máximo na call: R$ " + digits + ".";
-        var huge = new BigDecimal(digits);
+        // 11 dígitos inteiros: o primeiro tamanho acima de numeric(12,2), e cabe numa citação de verdade.
+        String text = "Plano Grande por R$ 7.000 em 6x de R$ 12.345.678.901,00. Desconto máximo na call: R$ 12.345.678.901,00.";
+        var huge = new BigDecimal("12345678901.00");
         var extracted = new ExtractedPlaybook(List.of(new ExtractedPlaybook.Stage("Abertura")), List.of(), List.of(),
                 new ExtractedPlaybook.PriceTable(null, huge, text, List.of(
                         new ExtractedPlaybook.Plan("Grande", null, new BigDecimal("7000"), 6, huge, text))));
@@ -182,6 +182,19 @@ class ImportMergeTest {
                 table).draft().priceTable();
         assertThat(fromTable.plans().getFirst().cash()).isEqualByComparingTo("6800.00");
         assertThat(fromTable.plans().getFirst().installments().value()).isEqualByComparingTo("800.00");
+
+        // Documento de 100 mil caracteres: citação acima de 2.000 caracteres não conta, e um trecho mínimo
+        // repetido em todo o documento é conferido rápido.
+        String ones = "1 ".repeat(50_000);
+        long started = System.nanoTime();
+        PriceTable big = ImportMerge.merge(PlaybookDocument.empty(), new ExtractedPlaybook(
+                List.of(new ExtractedPlaybook.Stage("Abertura")), List.of(), List.of(),
+                new ExtractedPlaybook.PriceTable(null, new BigDecimal("2"), "1", List.of(new ExtractedPlaybook.Plan(
+                        "Ouro", null, new BigDecimal("1"), 6, new BigDecimal("2"), ones.strip())))),
+                ones).draft().priceTable();
+        assertThat(big.plans().getFirst().cash()).isNull();
+        assertThat(big.maxDiscount()).isNull();
+        assertThat(java.time.Duration.ofNanos(System.nanoTime() - started)).isLessThan(java.time.Duration.ofSeconds(2));
 
         // O valor está no documento, mas não no trecho citado: fica vazio.
         PriceTable elsewhere = merged.apply("Plano Ouro: R$ 4.500 à vista", "Plano Ouro: R$ 4.500");

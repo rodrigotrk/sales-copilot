@@ -15,6 +15,7 @@ import java.util.stream.Collectors;
 final class Citation {
 
     private static final String SPACE = "[\\s\\u00A0\\u202F\\u2007\\u2009]+";
+    static final int MAX_EXCERPT = 2_000;
 
     private final String document;
     private final MoneyInText money;
@@ -25,7 +26,8 @@ final class Citation {
     }
 
     boolean confirms(String excerpt, BigDecimal value) {
-        if (excerpt == null || value == null || excerpt.isBlank()) {
+        // Uma citação é uma frase ou uma linha de tabela; um "trecho" do tamanho do documento não cita nada.
+        if (excerpt == null || value == null || excerpt.isBlank() || excerpt.length() > MAX_EXCERPT) {
             return false;
         }
         String pattern = Arrays.stream(excerpt.strip().split(SPACE)).map(Pattern::quote).collect(Collectors.joining(SPACE));
