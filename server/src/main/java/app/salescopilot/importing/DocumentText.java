@@ -35,6 +35,8 @@ class DocumentText {
     }
 
     private static final int MAX_TEXT = ImportWorker.MAX_TEXT;
+    /** Teto do XHTML enviado ao modelo: o texto do corpo com as tags das tabelas cabe com folga. */
+    static final int MAX_FOR_MODEL = 2_000_000;
 
     private static final Pattern GOOGLE_DOC = Pattern.compile("^https://docs\\.google\\.com/document/d/([A-Za-z0-9_-]+)(/.*)?$");
 
@@ -158,6 +160,12 @@ class DocumentText {
         } catch (org.xml.sax.SAXException | org.apache.tika.exception.TikaException e) {
             throw new ImportFailure(WriteLimitReachedException.isWriteLimitReached(e) ? "text_too_long" : "import_failed", e);
         }
-        return new Extracted(xhtml.toString(), plain.toString());
+        // O XHTML que vai ao modelo também tem teto: metadados, como o título, entram nele em atributos de
+        // <meta>, fora do texto do corpo, e o tamanho deles já vem limitado pela conferência das partes XML.
+        String forModel = xhtml.toString();
+        if (forModel.length() > MAX_FOR_MODEL) {
+            throw new ImportFailure("text_too_long");
+        }
+        return new Extracted(forModel, plain.toString());
     }
 }

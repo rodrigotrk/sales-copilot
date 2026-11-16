@@ -421,7 +421,7 @@ Proof: run web | ✓ [C119] gravação de outro campo que termina enquanto a pes
 **C120** - `409` `import_running` ao gravar ou ao publicar deixa a tela em "Importando…" com o rascunho só leitura, e o acompanhamento continua mesmo se a consulta seguinte falhar (`503`) (AC 42, AC 67, AD-036)
 Proof: run web | ✓ [C120] 409 import_running ao gravar ou publicar deixa a tela em Importando e acompanha mesmo com a consulta falhando
 
-**C121** - Um `.docx` com uma parte que expande além de 20 MB a mais de 100 para 1 (bomba de compressão), ou com mais de 100 MB descompactados no total, é recusado antes do parser com `text_too_long`, sem chamar o modelo, e o arquivo é apagado; as partes são lidas pelo diretório central, então uma assinatura falsa no meio do arquivo não esconde nenhuma; um `.docx` legítimo com uma imagem de 25 MB que comprime 5 para 1 importa normalmente (AC 77, AD-026)
+**C121** - Um `.docx` com uma parte XML (pelo nome ou por [Content_Types].xml, inclusive Override) acima de 20 MB descompactados, contados pelos bytes de fato produzidos e não pelo tamanho declarado, ou com mais de 100 MB no total, é recusado pela conferência antes do parser com `text_too_long`, sem chamar o modelo, e o arquivo é apagado; as partes são lidas pelo diretório central, então uma assinatura falsa não esconde nenhuma; o XHTML que iria ao modelo acima de 2 milhões de caracteres também é recusado; um `.docx` legítimo com uma imagem de 25 MB importa normalmente (AC 77, AD-026)
 Proof: run server | PASSED [C121] .docx que expande metadados para dezenas de MB falha com text_too_long sem chamar o modelo
 
 **C122** - Um `Error` ao ler o documento (como esgotamento de memória) encerra a tarefa como `failed` `import_failed`, apaga o arquivo e registra o erro no log, em vez de deixá-la voltar à fila (AD-038)
@@ -430,8 +430,8 @@ Proof: run server | PASSED [C122] Error ao ler o documento encerra a tarefa como
 **C123** - Na tela de entrada, `422` `invalid_email` mostra "Informe um e-mail válido." e falha de rede mostra "Não foi possível enviar o link. Tente de novo." (AC 2)
 Proof: run web | ✓ [C123] e-mail recusado pelo servidor e falha de rede mostram mensagem na tela
 
-**C124** - Arquivo cujo conteúdo não é do tipo da extensão (um zip enviado como `.pdf`) falha com `import_failed` sem chamar o modelo, e documentos embutidos não são abertos pelo parser (AC 74, AD-026)
-Proof: run server | PASSED [C124] arquivo cujo conteúdo não é do tipo da extensão falha com import_failed sem chamar o modelo
+**C124** - Arquivo cujo conteúdo não é do tipo da extensão (um zip enviado como `.pdf`) falha com `import_failed` sem chamar o modelo, e um `.docx` embutido em outro não é aberto: o texto dele não chega ao modelo (AC 74, AD-026)
+Proof: run server | PASSED [C124] conteúdo de outro tipo que a extensão falha e documento embutido não é aberto
 
 ## Coverage
 

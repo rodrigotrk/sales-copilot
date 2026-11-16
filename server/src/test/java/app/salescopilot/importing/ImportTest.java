@@ -304,11 +304,39 @@ class ImportTest extends IntegrationTest {
         worker.drain();
         assertThat(jobRow(hidden)).containsEntry("error_code", "text_too_long");
 
+        // O diretório central declara 1 MB comprimido para um título de 30 MB: o tamanho declarado não conta.
+        UUID lying = jobId(importFile(g, new MockMultipartFile("file", "mentira.docx",
+                "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                withDeclaredCompressedSize(docxWithHugeTitle(30L * 1024 * 1024), "docProps/core.xml", 1024 * 1024))));
+        worker.drain();
+        assertThat(jobRow(lying)).containsEntry("error_code", "text_too_long");
+        // A recusa vem da conferência, antes de o parser carregar a parte na memória.
+        Path lyingFile = Files.createTempFile("mentira", ".docx");
+        Files.write(lyingFile, withDeclaredCompressedSize(docxWithHugeTitle(30L * 1024 * 1024), "docProps/core.xml", 1024 * 1024));
+        try {
+            org.assertj.core.api.Assertions.assertThatThrownBy(() -> ZipBudget.check(lyingFile)).isInstanceOf(ImportFailure.class);
+        } finally {
+            Files.deleteIfExists(lyingFile);
+        }
+
         // Seis partes de 18 MB, cada uma abaixo do limite de parte, passam do total de 100 MB.
         UUID total = jobId(importFile(g, new MockMultipartFile("file", "total.docx",
                 "application/vnd.openxmlformats-officedocument.wordprocessingml.document", docxWithExtraParts(6, 18L * 1024 * 1024))));
         worker.drain();
         assertThat(jobRow(total)).containsEntry("error_code", "text_too_long");
+        assertThat(STUB.modelRequests()).isEmpty();
+
+        // Um título de 19 MB fica abaixo do limite de parte, mas o XHTML que iria ao modelo passa do teto.
+        UUID nineteen = jobId(importFile(g, new MockMultipartFile("file", "dezenove.docx",
+                "application/vnd.openxmlformats-officedocument.wordprocessingml.document", docxWithHugeTitle(19L * 1024 * 1024))));
+        worker.drain();
+        assertThat(jobRow(nineteen)).containsEntry("error_code", "text_too_long");
+
+        // Uma parte XML com nome de binário, declarada como XML por Override, conta como XML.
+        UUID disguised = jobId(importFile(g, new MockMultipartFile("file", "disfarce.docx",
+                "application/vnd.openxmlformats-officedocument.wordprocessingml.document", docxWithDisguisedXmlPart(25L * 1024 * 1024))));
+        worker.drain();
+        assertThat(jobRow(disguised)).containsEntry("error_code", "text_too_long");
         assertThat(STUB.modelRequests()).isEmpty();
 
         // Uma imagem de 25 MB que comprime como um bitmap de verdade não é confundida com bomba.
@@ -320,7 +348,7 @@ class ImportTest extends IntegrationTest {
     }
 
     @Test
-    @DisplayName("[C124] arquivo cujo conteúdo não é do tipo da extensão falha com import_failed sem chamar o modelo")
+    @DisplayName("[C124] conteúdo de outro tipo que a extensão falha e documento embutido não é aberto")
     void contentMustMatchExtension() throws Exception {
         Gestor g = newGestor();
         var zip = new ByteArrayOutputStream();
@@ -333,6 +361,21 @@ class ImportTest extends IntegrationTest {
         worker.drain();
         assertThat(jobRow(jobId)).containsEntry("status", "failed").containsEntry("error_code", "import_failed");
         assertThat(STUB.modelRequests()).isEmpty();
+
+        // Um .docx embutido em outro não é aberto: o texto dele não chega ao modelo.
+        byte[] inner;
+        try (var document = new org.apache.poi.xwpf.usermodel.XWPFDocument(); var bytes = new ByteArrayOutputStream()) {
+            document.createParagraph().createRun().setText("MARCADOR-EMBUTIDO");
+            document.write(bytes);
+            inner = bytes.toByteArray();
+        }
+        STUB.modelAnswers(ANSWER);
+        UUID embedded = jobId(importFile(g, new MockMultipartFile("file", "embutido.docx",
+                "application/vnd.openxmlformats-officedocument.wordprocessingml.document", docxWithEmbeddedDocx(inner))));
+        worker.drain();
+        assertThat(jobRow(embedded)).containsEntry("status", "done");
+        assertThat(STUB.modelRequests()).hasSize(1);
+        assertThat(STUB.modelRequests().getFirst()).doesNotContain("MARCADOR-EMBUTIDO");
     }
 
     /** Um .docx válido com `parts` partes extras de `bytes` cada, muito comprimíveis. */
@@ -347,6 +390,59 @@ class ImportTest extends IntegrationTest {
                 zip.closeEntry();
             }
         });
+    }
+
+    /** Um .docx válido com `customXml/item.bin` declarado como XML em [Content_Types].xml. */
+    private static byte[] docxWithDisguisedXmlPart(long bytes) throws java.io.IOException {
+        byte[] base = rewriteDocx(docx(10), zip -> {
+            byte[] chunk = "a".repeat(1024 * 1024).getBytes(java.nio.charset.StandardCharsets.UTF_8);
+            zip.putNextEntry(new java.util.zip.ZipEntry("customXml/item.bin"));
+            for (long written = 0; written < bytes; written += chunk.length) {
+                zip.write(chunk);
+            }
+            zip.closeEntry();
+        });
+        return replaceEntry(base, "[Content_Types].xml", types -> types.replace("</Types>",
+                "<Override PartName=\"/customXml/item.bin\" ContentType=\"application/xml\"/></Types>"));
+    }
+
+    /** Um .docx com outro .docx embutido como pacote, ligado ao documento por relacionamento. */
+    private static byte[] docxWithEmbeddedDocx(byte[] inner) throws java.io.IOException {
+        byte[] base = rewriteDocx(docx(10), zip -> {
+            zip.putNextEntry(new java.util.zip.ZipEntry("word/embeddings/interno.docx"));
+            zip.write(inner);
+            zip.closeEntry();
+        });
+        base = replaceEntry(base, "[Content_Types].xml", types -> types.replace("</Types>",
+                "<Default Extension=\"docx\" ContentType=\"application/vnd.openxmlformats-officedocument.wordprocessingml.document\"/></Types>"));
+        return replaceEntry(base, "word/_rels/document.xml.rels", rels -> rels.replace("</Relationships>",
+                "<Relationship Id=\"rIdEmbutido\" Type=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships/package\" "
+                        + "Target=\"embeddings/interno.docx\"/></Relationships>"));
+    }
+
+    private static byte[] replaceEntry(byte[] zipBytes, String name, java.util.function.UnaryOperator<String> change)
+            throws java.io.IOException {
+        var out = new ByteArrayOutputStream();
+        boolean found = false;
+        try (var in = new java.util.zip.ZipInputStream(new java.io.ByteArrayInputStream(zipBytes));
+                var zip = new java.util.zip.ZipOutputStream(out)) {
+            java.util.zip.ZipEntry entry;
+            while ((entry = in.getNextEntry()) != null) {
+                zip.putNextEntry(new java.util.zip.ZipEntry(entry.getName()));
+                if (entry.getName().equals(name)) {
+                    found = true;
+                    zip.write(change.apply(new String(in.readAllBytes(), java.nio.charset.StandardCharsets.UTF_8))
+                            .getBytes(java.nio.charset.StandardCharsets.UTF_8));
+                } else {
+                    in.transferTo(zip);
+                }
+                zip.closeEntry();
+            }
+        }
+        if (!found) {
+            throw new IllegalStateException("parte ausente: " + name);
+        }
+        return out.toByteArray();
     }
 
     /** Um .docx válido com uma imagem grande que comprime pouco, como um bitmap de verdade. */
@@ -433,6 +529,26 @@ class ImportTest extends IntegrationTest {
             at += 46 + nameLength + (fixed.getShort(at + 30) & 0xffff) + (fixed.getShort(at + 32) & 0xffff);
         }
         fixed.putInt(eocd + 4 + 16, cdOffset + 4);
+        return out;
+    }
+
+    /** Troca, no diretório central, o tamanho comprimido declarado de `entryName`. */
+    private static byte[] withDeclaredCompressedSize(byte[] zip, String entryName, int declared) {
+        byte[] out = zip.clone();
+        var data = java.nio.ByteBuffer.wrap(out).order(java.nio.ByteOrder.LITTLE_ENDIAN);
+        int eocd = out.length - 22;
+        while (data.getInt(eocd) != 0x06054b50) {
+            eocd--;
+        }
+        int at = data.getInt(eocd + 16);
+        int entries = data.getShort(eocd + 10) & 0xffff;
+        for (int i = 0; i < entries; i++) {
+            int nameLength = data.getShort(at + 28) & 0xffff;
+            if (new String(out, at + 46, nameLength, java.nio.charset.StandardCharsets.UTF_8).equals(entryName)) {
+                data.putInt(at + 20, declared);
+            }
+            at += 46 + nameLength + (data.getShort(at + 30) & 0xffff) + (data.getShort(at + 32) & 0xffff);
+        }
         return out;
     }
 
