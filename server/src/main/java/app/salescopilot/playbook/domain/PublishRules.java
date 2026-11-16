@@ -38,7 +38,10 @@ public final class PublishRules {
         }
         List<String> pending = draft.priceTable().plans().stream().filter(p -> p.review() != null)
                 .map(Plan::id).map(Object::toString).toList();
-        if (!pending.isEmpty() || draft.priceTable().maxDiscountReview() != null) {
+        // Sem plano a linha do desconto não aparece (AC 52) e não há onde usar "Conferido"; a marca volta a
+        // contar quando a tabela ganha um plano (AD-061).
+        boolean discountPending = draft.priceTable().maxDiscountReview() != null && !draft.priceTable().plans().isEmpty();
+        if (!pending.isEmpty() || discountPending) {
             return Optional.of(new Refusal("pending_review",
                     "Confira os valores marcados \"Importado · conferir\" antes de publicar.", pending));
         }

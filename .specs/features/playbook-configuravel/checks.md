@@ -346,7 +346,7 @@ Proof: run server | PASSED [C95] e-mail válido de até 320 caracteres entra e g
 **C96** - Rascunho nulo ou com item nulo responde `422` com `invalid_document`, e plano com `id` nulo responde `422` com os erros de campo, sem `500`; nada é gravado (AC 37, Surface do PUT)
 Proof: run server | PASSED [C96] rascunho nulo ou com item nulo responde 422 invalid_document sem gravar
 
-**C97** - Erros do próprio Spring (JSON malformado, tipo de conteúdo, método, parâmetro ausente) saem em `application/problem+json` com `code`, `type` e `detail` em português (AD-057)
+**C97** - Erros do próprio Spring (JSON malformado, tipo de conteúdo, método, parâmetro ausente) e endereço inexistente (`404` `not_found`) saem em `application/problem+json` com `code`, `type` e `detail` em português (AD-057)
 Proof: run server | PASSED [C97] erros do Spring saem em RFC 9457 com code e type
 
 **C98** - Servidor de e-mail fora do ar faz o pedido de link responder `503` `mail_unavailable` em RFC 9457 (AC 2, AD-057)
@@ -376,8 +376,8 @@ Proof: run web | ✓ [C105] importação iniciada em outra aba fecha a linha abe
 **C106** - Valor em dinheiro da resposta do modelo chega com todos os dígitos (`90071992547409.91`, `4500.10`), sem passar por ponto flutuante (AD-025, AC 71)
 Proof: run server | PASSED [C106] valor em dinheiro da resposta do modelo chega com todos os dígitos
 
-**C107** - Desconto só existe com plano: a importação não preenche desconto se a tabela fica sem plano e avisa "O documento traz desconto máximo de R$ <valor>; cadastre um plano para informar o desconto."; rascunho gravado sem plano volta com `maxDiscount` e `maxDiscountReview` nulos (AC 52, AD-014, AC 69)
-Proof: run server | PASSED [C107] rascunho gravado sem plano perde o desconto e a marca de conferência
+**C107** - Sem plano, o desconto e a marca dele ficam guardados: a importação preenche o desconto vazio com a marca "Importado · conferir" mesmo sem plano (AC 72), a publicação sem plano não responde `pending_review` por causa dele, e com um plano a marca volta a bloquear até "Conferido" (AC 52, AC 59, AD-061)
+Proof: run server | PASSED [C107] desconto sem plano fica guardado e só bloqueia a publicação quando há plano
 
 **C108** - Enquanto a publicação está em andamento, nenhuma linha abre para edição e nenhum campo da tela fica editável; depois dela a edição volta (AC 35, AC 54)
 Proof: run web | ✓ [C108] durante a publicação nenhuma linha abre para edição e nada digitado se perde
@@ -385,14 +385,17 @@ Proof: run web | ✓ [C108] durante a publicação nenhuma linha abre para ediç
 **C109** - "Desfazer" fica desabilitado enquanto outra gravação está em andamento, e a tela termina igual ao rascunho gravado (AC 40, AC 54)
 Proof: run web | ✓ [C109] Desfazer fica indisponível enquanto outra gravação está em andamento
 
-**C110** - Uma consulta da importação que falha (`503`) não encerra o acompanhamento: a tela consulta de novo e sai de "Importando…" quando a tarefa termina (AC 67, AC 68)
+**C110** - Uma consulta da importação que falha (`503`) não encerra o acompanhamento: a tela consulta de novo e sai de "Importando…" quando a tarefa termina; ao sair da tela com uma consulta em andamento, nenhuma consulta nova é feita (AC 67, AC 68)
 Proof: run web | ✓ [C110] consulta da importação que falha uma vez continua até a tarefa terminar
 
 **C111** - Voltar um campo ao valor gravado apaga o erro do servidor daquele rascunho e libera "Publicar" e "Importar documento" (AC 37, AC 60)
 Proof: run web | ✓ [C111] voltar o campo ao valor gravado apaga o erro do servidor e libera Publicar
 
 **C24c** - "Sair" aparece na tela de acesso não liberado, na de criação de negócio e na lista de negócios, e leva a `/entrar` (AC 24, AD-059)
-Proof: run web | ✓ [C24c] Sair aparece na tela de acesso não liberado e na lista de negócios e leva a /entrar
+Proof: run web | ✓ [C24c] Sair aparece no acesso não liberado, na criação de negócio e na lista e leva a /entrar
+
+**C112** - Remover o último plano apaga o erro local do desconto, cuja linha some (AC 52), e libera "Publicar" e "Importar documento" (AC 46, AC 60)
+Proof: run web | ✓ [C112] remover o último plano apaga o erro do desconto e libera Publicar e Importar documento
 
 ## Coverage
 
@@ -440,7 +443,7 @@ Proof: run web | ✓ [C24c] Sair aparece na tela de acesso não liberado e na li
 
 ## Handoff
 
-- **Settled mid-build:** "Vertical slice + Modulith (Recomendado)"; "Por funcionalidade (Recomendado)"; "Meio-termo (Recomendado)"; "Sim, Makefile (Recomendado)" - registrados em AD-053 a AD-056; "nao esquece de aplicar o RFC 9457: Problem Details for HTTP APIs" - AD-057; "prefira arquivos yml do que properties" - AD-058; textos do app web: "Sim, confirmo (Recomendado)"; menu: "Aviso ao clicar (Recomendado)" e "Sim, no rodapé do menu (Recomendado)" - AD-059; validação de telas: "Como a playwright-skill" - AD-060; revisão externa pelo Codex em ciclo, rodada por `codex exec --dangerously-bypass-approvals-and-sandbox` numa cópia `git worktree`, até o veredito `SEM DEFEITOS`, e só então o push, com confirmação (user: "continue até zerar os defeitos"; "Sem sandbox, na cópia")
+- **Settled mid-build:** "Vertical slice + Modulith (Recomendado)"; "Por funcionalidade (Recomendado)"; "Meio-termo (Recomendado)"; "Sim, Makefile (Recomendado)" - registrados em AD-053 a AD-056; "nao esquece de aplicar o RFC 9457: Problem Details for HTTP APIs" - AD-057; "prefira arquivos yml do que properties" - AD-058; textos do app web: "Sim, confirmo (Recomendado)"; menu: "Aviso ao clicar (Recomendado)" e "Sim, no rodapé do menu (Recomendado)" - AD-059; validação de telas: "Como a playwright-skill" - AD-060; revisão externa pelo Codex em ciclo, rodada por `codex exec --dangerously-bypass-approvals-and-sandbox` numa cópia `git worktree`, até o veredito `SEM DEFEITOS`, e só então o push, com confirmação (user: "continue até zerar os defeitos"; "Sem sandbox, na cópia"); desconto sem plano fica guardado e a publicação ignora a marca dele enquanto não houver plano (AD-061; user: "Mantém o desconto (Recomendado)")
 - **Dispatched:** Verifier at `33a3580` - returned; screens round 1 at `33a3580` - returned; screens round 2 at `fa433df` - returned; Verifier for C92-C99 at `f348be9` - returned; screens round 2 again at `f348be9` and at `150517e` - returned; Verifier for the Codex round 2 checks at `6793cee` - returned; screens round 2 again at `6793cee` and at `4d4c2ec` - returned; Verifier for the Codex round 3 checks at `d2dbe74` - returned; screens round 2 again at `d2dbe74` - returned; Verifier for C99 and C103 at `7b96a57` - returned; screens round 2 again at `7b96a57` - returned; Verifier for C99 and C103 at `e299335`; screens round 2 again at `e299335` - returned; screens round 2 again at `6225db3` - returned; Verifier for the Codex round 4 checks after `76b6cfe`; screens round 2 again after `76b6cfe`
 - **Boundary:** C1-C91 closed at `a155717`; C92-C99 (revisão do Codex) closed at `e1aca23`; C100-C102 (segunda revisão do Codex) closed at `43e63a9`, C99 at `d1df50d`; gate `validate_verification.py` 0 errors
 - **Abandoned:** suíte Playwright versionada com `toHaveScreenshot` - AD-060 escolheu a caminhada avulsa

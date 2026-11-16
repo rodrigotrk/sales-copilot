@@ -68,20 +68,25 @@ class PlaybookTest extends IntegrationTest {
     }
 
     @Test
-    @DisplayName("[C107] rascunho gravado sem plano perde o desconto e a marca de conferência")
-    void discountLeavesWithTheLastPlan() throws Exception {
+    @DisplayName("[C107] desconto sem plano fica guardado e só bloqueia a publicação quando há plano")
+    void discountWithoutPlans() throws Exception {
         Gestor g = newGestor();
         UUID id = playbookId(g);
         var draft = (tools.jackson.databind.node.ObjectNode) json.readTree(Drafts.complete());
         var table = (tools.jackson.databind.node.ObjectNode) draft.get("priceTable");
+        var plans = table.get("plans").deepCopy();
         table.putArray("plans");
         table.putObject("maxDiscountReview").put("status", "pending").put("excerpt", "Desconto máximo: 300.");
-        String withoutPlans = json.writeValueAsString(draft);
-        save(g, id, withoutPlans, 0).andExpect(status().isOk())
-                .andExpect(jsonPath("$.draft.priceTable.maxDiscount").value(org.hamcrest.Matchers.nullValue()))
-                .andExpect(jsonPath("$.draft.priceTable.maxDiscountReview").value(org.hamcrest.Matchers.nullValue()));
-        save(g, id, Drafts.complete(), 1).andExpect(status().isOk())
-                .andExpect(jsonPath("$.draft.priceTable.maxDiscount").value("300.00"));
+        save(g, id, json.writeValueAsString(draft), 0).andExpect(status().isOk())
+                .andExpect(jsonPath("$.draft.priceTable.maxDiscount").value("300.00"))
+                .andExpect(jsonPath("$.draft.priceTable.maxDiscountReview.status").value("pending"));
+
+        publish(g, id, 1).andExpect(status().isCreated());
+
+        table.set("plans", plans);
+        save(g, id, json.writeValueAsString(draft), 1).andExpect(status().isOk());
+        publish(g, id, 2).andExpect(status().isUnprocessableContent())
+                .andExpect(jsonPath("$.code").value("pending_review"));
     }
 
     @Test

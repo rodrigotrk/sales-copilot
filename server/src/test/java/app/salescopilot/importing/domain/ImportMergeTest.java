@@ -47,6 +47,13 @@ class ImportMergeTest {
         assertThat(table.maxDiscountReview().status()).isEqualTo("pending");
         assertThat(table.maxDiscountReview().excerpt()).isEqualTo("Desconto máximo na call: R$ 500.");
         assertThat(result.notices()).isEmpty();
+        // Também sem plano na tabela (AD-061): o desconto entra com a marca, e a linha aparece quando houver plano.
+        var withoutPlans = ImportMerge.merge(PlaybookDocument.empty(),
+                new ExtractedPlaybook(List.of(new ExtractedPlaybook.Stage("Abertura")), List.of(), List.of(),
+                        new ExtractedPlaybook.PriceTable(null, new BigDecimal("500"), "Desconto máximo na call: R$ 500.", List.of())),
+                TEXT);
+        assertThat(withoutPlans.draft().priceTable().maxDiscount()).isEqualByComparingTo("500.00");
+        assertThat(withoutPlans.draft().priceTable().maxDiscountReview().status()).isEqualTo("pending");
     }
 
     @Test
@@ -62,19 +69,6 @@ class ImportMergeTest {
         assertThat(result.notices()).containsExactly(
                 "O documento chama a coluna de \"Sessões\"; o nome atual (\"Encontros\") foi mantido.",
                 "O documento traz desconto máximo de R$ 500; o atual (R$ 300) foi mantido.");
-    }
-
-    @Test
-    @DisplayName("[C107] desconto do documento sem plano na tabela não entra e gera aviso")
-    void discountNeedsAPlan() {
-        var extracted = new ExtractedPlaybook(List.of(new ExtractedPlaybook.Stage("Abertura")), List.of(), List.of(),
-                new ExtractedPlaybook.PriceTable(null, new BigDecimal("500"), "Desconto máximo na call: R$ 500.", List.of()));
-        var result = ImportMerge.merge(PlaybookDocument.empty(), extracted, TEXT);
-        PriceTable table = result.draft().priceTable();
-        assertThat(table.maxDiscount()).isNull();
-        assertThat(table.maxDiscountReview()).isNull();
-        assertThat(result.notices()).containsExactly(
-                "O documento traz desconto máximo de R$ 500; cadastre um plano para informar o desconto.");
     }
 
     private static ImportMerge.Result merge(PlaybookDocument current, ExtractedPlaybook.Plan plan, String column,

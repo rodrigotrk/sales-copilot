@@ -269,7 +269,27 @@ describe('correções da revisão de código', () => {
     await waitFor(() => expect(screen.queryByText('Importando…')).toBeNull(), { timeout: 7000 })
     expect(gets).toBeGreaterThanOrEqual(3)
     expect(button('Importar documento').disabled).toBe(false)
-  }, 10000)
+    cleanup()
+
+    // Sair da tela com uma consulta em andamento encerra o acompanhamento.
+    let pending: (reply: ReturnType<typeof ok>) => void = () => {}
+    let later = 0
+    fakeApi({
+      'GET /api/me': ok(me()),
+      'GET /api/businesses/b1/playbook': () => {
+        later += 1
+        if (later === 1) return ok(running)
+        return new Promise((resolve) => (pending = resolve))
+      },
+    })
+    await renderApp('/n/b1/playbook')
+    expect(await screen.findByText('Importando…')).toBeTruthy()
+    await waitFor(() => expect(later).toBe(2), { timeout: 4000 })
+    cleanup()
+    pending(ok(running))
+    await new Promise((resolve) => setTimeout(resolve, 4500))
+    expect(later).toBe(2)
+  }, 20000)
 
   it('[C111] voltar o campo ao valor gravado apaga o erro do servidor e libera Publicar', async () => {
     const { routes, acceptDraft } = playbookServer(playbookState())
@@ -305,7 +325,7 @@ describe('correções da revisão de código', () => {
     expect(button('Importar documento').disabled).toBe(false)
   })
 
-  it('[C24c] Sair aparece na tela de acesso não liberado e na lista de negócios e leva a /entrar', async () => {
+  it('[C24c] Sair aparece no acesso não liberado, na criação de negócio e na lista e leva a /entrar', async () => {
     const calls = fakeApi({
       'GET /api/me': ok(me({ businesses: [], lastBusinessId: null, canCreateBusiness: false })),
       'POST /logout': ok(undefined, 204),
@@ -321,9 +341,42 @@ describe('correções da revisão de código', () => {
       'GET /api/me': ok(me({ businesses: [{ id: 'b1', name: 'Solar Norte', role: 'gestor' }, { id: 'b2', name: 'Loja Sul', role: 'gestor' }], lastBusinessId: null })),
       'POST /logout': ok(undefined, 204),
     })
+    const create = fakeApi({
+      'GET /api/me': ok(me({ businesses: [], lastBusinessId: null, canCreateBusiness: true })),
+      'POST /logout': ok(undefined, 204),
+    })
+    const creation = await renderApp('/')
+    expect(screen.getByText('Crie o seu negócio')).toBeTruthy()
+    await creation.user.click(screen.getByRole('button', { name: 'Sair' }))
+    await waitFor(() => expect(creation.router.currentRoute.value.path).toBe('/entrar'))
+    expect(create.some((c) => c.method === 'POST' && c.path === '/logout')).toBe(true)
+    cleanup()
+
     const list = await renderApp('/negocios')
     expect(await screen.findByText('Escolha o negócio')).toBeTruthy()
     await list.user.click(screen.getByRole('button', { name: 'Sair' }))
     await waitFor(() => expect(list.router.currentRoute.value.path).toBe('/entrar'))
+  })
+
+  it('[C112] remover o último plano apaga o erro do desconto e libera Publicar e Importar documento', async () => {
+    const { routes } = playbookServer(playbookState())
+    fakeApi(routes)
+    const { user } = await renderApp('/n/b1/playbook')
+    await screen.findByText(/^Playbook: /)
+    const prices = within(screen.getByRole('region', { name: 'Tabela de preços' }))
+
+    await user.click(screen.getByText(/Desconto máximo na call/))
+    await user.clear(screen.getByLabelText('Desconto máximo na call'))
+    await user.type(screen.getByLabelText('Desconto máximo na call'), 'abc')
+    await user.click(document.body)
+    expect(button('Publicar').disabled).toBe(true)
+
+    await user.click(prices.getAllByRole('button', { name: 'Remover' })[0]!)
+    await waitFor(() => expect(prices.getAllByRole('button', { name: 'Remover' })).toHaveLength(1))
+    await user.click(prices.getAllByRole('button', { name: 'Remover' })[0]!)
+
+    await waitFor(() => expect(button('Importar documento').disabled).toBe(false))
+    expect(button('Publicar').disabled).toBe(false)
+    expect(screen.queryByText(/Desconto máximo na call/)).toBeNull()
   })
 })

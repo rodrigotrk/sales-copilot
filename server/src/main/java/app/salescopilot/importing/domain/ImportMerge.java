@@ -75,11 +75,7 @@ public final class ImportMerge {
         BigDecimal documentDiscount = extracted.priceTable().maxDiscount();
         if (documentDiscount != null && money.contains(documentDiscount) && documentDiscount.signum() >= 0
                 && twoDecimals(documentDiscount)) {
-            if (plans.isEmpty()) {
-                // Sem plano a tela não mostra a linha do desconto (AC 52) e não há preço para compará-lo (AD-014).
-                notices.add("O documento traz desconto máximo de R$ " + BrazilianReais.format(documentDiscount)
-                        + "; cadastre um plano para informar o desconto.");
-            } else if (discount == null) {
+            if (discount == null) {
                 discount = scale(documentDiscount);
                 discountReview = Review.pending(excerpt(extracted.priceTable().maxDiscountExcerpt()));
             } else if (discount.compareTo(documentDiscount) != 0) {

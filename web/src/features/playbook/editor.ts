@@ -77,7 +77,7 @@ export function createEditor(businessId: string) {
     saved = clone(fresh.draft)
     revision = fresh.revision
     const job = fresh.importJob
-    if (importActive.value) {
+    if (importActive.value && !disposed) {
       watchingImport = true
       importResult.value = []
       pollTimer = setTimeout(poll, POLL_MS)
@@ -92,7 +92,8 @@ export function createEditor(businessId: string) {
   async function poll() {
     try {
       await reload()
-    } catch {
+    } catch (e) {
+      if (!(e instanceof ApiError) && !(e instanceof TypeError)) throw e
       if (!disposed) pollTimer = setTimeout(poll, POLL_MS)
     }
   }
@@ -216,6 +217,12 @@ export function createEditor(businessId: string) {
       Object.fromEntries(Object.entries(errors).filter(([key]) => !key.startsWith(`${id}.`)))
     localErrors.value = ofOtherRows(localErrors.value)
     serverErrors.value = ofOtherRows(serverErrors.value)
+    // Sem plano a linha do desconto some (AC 52), e um erro dela ficaria bloqueando sem aparecer.
+    if (!draft.value!.priceTable.plans.length) {
+      const discount = fieldKey(null, 'maxDiscount')
+      localErrors.value = Object.fromEntries(Object.entries(localErrors.value).filter(([key]) => key !== discount))
+      serverErrors.value = Object.fromEntries(Object.entries(serverErrors.value).filter(([key]) => key !== discount))
+    }
     void save()
   }
 

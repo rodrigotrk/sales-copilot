@@ -66,7 +66,7 @@ public class Problems extends ResponseEntityExceptionHandler {
     protected ResponseEntity<Object> handleExceptionInternal(Exception e, Object body, HttpHeaders headers,
             HttpStatusCode status, WebRequest request) {
         ProblemDetail problem = body instanceof ProblemDetail detail ? detail : ProblemDetail.forStatus(status);
-        String code = codeFor(e);
+        String code = codeFor(e, status.value());
         problem.setType(URI.create("/problems/" + code));
         problem.setProperty("code", code);
         problem.setDetail(detailFor(code));
@@ -76,13 +76,13 @@ public class Problems extends ResponseEntityExceptionHandler {
         return super.handleExceptionInternal(e, problem, headers, status, request);
     }
 
-    private static String codeFor(Exception e) {
+    private static String codeFor(Exception e, int status) {
         return switch (e) {
             case HttpMessageNotReadableException ignored -> "malformed_request";
             case MissingServletRequestParameterException ignored -> "missing_parameter";
             case HttpRequestMethodNotSupportedException ignored -> "method_not_allowed";
             case HttpMediaTypeNotSupportedException ignored -> "unsupported_media_type";
-            default -> "invalid_request";
+            default -> codeForStatus(status);
         };
     }
 

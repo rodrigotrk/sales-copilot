@@ -31,12 +31,12 @@ class FirewallProblemsTest extends IntegrationTest {
     @DisplayName("[C103] erro recusado antes do MVC sai em RFC 9457 com code e type")
     void rejectionsBeforeMvcAreProblems() throws Exception {
         String[][] cases = {
-                { "GET", "/api//me", "400", "request_rejected" },
-                { "GET", "/api/me;extra", "400", "request_rejected" },
-                { "TRACE", "/api/me", "405", "method_not_allowed" },
-                { "GET", "/api/a%2Fb", "400", "invalid_request" },
-                { "GET", "/api/%00", "400", "invalid_request" },
-                { "GET", "/api/%zz", "400", "invalid_request" },
+                { "GET", "/api//me", "400", "request_rejected", "Endereço de requisição inválido." },
+                { "GET", "/api/me;extra", "400", "request_rejected", "Endereço de requisição inválido." },
+                { "TRACE", "/api/me", "405", "method_not_allowed", "Método não permitido neste endereço." },
+                { "GET", "/api/a%2Fb", "400", "invalid_request", "Requisição inválida." },
+                { "GET", "/api/%00", "400", "invalid_request", "Requisição inválida." },
+                { "GET", "/api/%zz", "400", "invalid_request", "Requisição inválida." },
 
         };
         for (String[] c : cases) {
@@ -48,7 +48,7 @@ class FirewallProblemsTest extends IntegrationTest {
             assertThat(body.get("code").asString()).as(label).isEqualTo(c[3]);
             assertThat(body.get("type").asString()).as(label).isEqualTo("/problems/" + c[3]);
             assertThat(body.get("instance").asString()).as(label).isEqualTo(c[1]);
-            assertThat(body.get("detail").asString()).as(label).isNotBlank();
+            assertThat(body.get("detail").asString()).as(label).isEqualTo(c[4]);
         }
 
         // Linha de pedido recusada inteira: não há caminho guardado, e o instance é "/".
@@ -58,6 +58,8 @@ class FirewallProblemsTest extends IntegrationTest {
         var rawBody = json.readTree(rawByte.body());
         assertThat(rawBody.get("code").asString()).isEqualTo("invalid_request");
         assertThat(rawBody.get("instance").asString()).isEqualTo("/");
+        assertThat(rawBody.get("type").asString()).isEqualTo("/problems/invalid_request");
+        assertThat(rawBody.get("detail").asString()).isEqualTo("Requisição inválida.");
     }
 
     private Raw send(String method, String path) throws IOException {
