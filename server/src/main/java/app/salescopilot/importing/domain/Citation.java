@@ -15,7 +15,8 @@ import java.util.stream.Collectors;
 final class Citation {
 
     private static final String SPACE = "[\\s\\u00A0\\u202F\\u2007\\u2009]+";
-    static final int MAX_EXCERPT = 2_000;
+    /** O mesmo tamanho que a tela mostra em "Importado · conferir": o gestor vê o trecho inteiro que sustentou o valor. */
+    static final int MAX_EXCERPT = 300;
 
     private final String document;
     private final MoneyInText money;

@@ -22,7 +22,7 @@ import app.salescopilot.shared.BrazilianReais;
  */
 public final class ImportMerge {
 
-    private static final int EXCERPT_LIMIT = 300;
+    private static final int EXCERPT_LIMIT = Citation.MAX_EXCERPT;
     private static final BigDecimal MAX_CASH = new BigDecimal("10000000.00");
 
     public record Result(PlaybookDocument draft, Map<String, Integer> counts, int skipped, List<String> notices) {

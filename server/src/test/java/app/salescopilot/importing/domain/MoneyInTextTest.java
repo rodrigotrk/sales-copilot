@@ -22,6 +22,10 @@ class MoneyInTextTest {
                 assertThat(money.contains(new BigDecimal(value))).as(text + " autoriza " + value).isFalse();
             }
         }
+        // "E" com só espaços antes, no começo do texto, não derruba a leitura; sem dígito antes, o 3 é um número escrito.
+        org.assertj.core.api.Assertions.assertThatCode(() -> new MoneyInText("  E 3\nEtapas: Abertura.")).doesNotThrowAnyException();
+        assertThat(new MoneyInText("  E 3\nEtapas: Abertura.").contains(new BigDecimal("3"))).isTrue();
+
         // As grafias usuais de preço continuam valendo.
         var usual = new MoneyInText("""
                 Planos:

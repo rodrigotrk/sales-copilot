@@ -196,6 +196,20 @@ class ImportMergeTest {
         assertThat(big.maxDiscount()).isNull();
         assertThat(java.time.Duration.ofNanos(System.nanoTime() - started)).isLessThan(java.time.Duration.ofSeconds(2));
 
+        // A citação aceita é a que a tela mostra inteira: acima de 300 caracteres o valor não entra.
+        String longText = "Condições do plano. ".repeat(17) + "À vista R$ 4.500; desconto R$ 300.";
+        PriceTable longCitation = ImportMerge.merge(PlaybookDocument.empty(), new ExtractedPlaybook(
+                List.of(new ExtractedPlaybook.Stage("Abertura")), List.of(), List.of(),
+                new ExtractedPlaybook.PriceTable(null, new BigDecimal("300"), longText, List.of(new ExtractedPlaybook.Plan(
+                        "Ouro", null, new BigDecimal("4500"), null, null, longText)))),
+                longText).draft().priceTable();
+        assertThat(longText.length()).isGreaterThan(300);
+        assertThat(longCitation.plans().getFirst().cash()).isNull();
+        assertThat(longCitation.maxDiscount()).isNull();
+        // E toda citação aceita aparece inteira na marca de conferência.
+        assertThat(cited.plans().getFirst().review().excerpt()).contains("4.500").contains("800");
+        assertThat(cited.maxDiscountReview().excerpt()).contains("300");
+
         // O valor está no documento, mas não no trecho citado: fica vazio.
         PriceTable elsewhere = merged.apply("Plano Ouro: R$ 4.500 à vista", "Plano Ouro: R$ 4.500");
         assertThat(elsewhere.plans().getFirst().installments()).isNull();

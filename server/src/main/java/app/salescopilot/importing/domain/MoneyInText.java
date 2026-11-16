@@ -156,8 +156,9 @@ public final class MoneyInText {
             return false;
         }
         boolean glued = at >= 1 && Character.isDigit(text.charAt(at - 1));
+        int beforeSpaces = at >= 1 ? skipSpaces(text, at - 1) : -1;
         boolean spacedCapital = text.charAt(at) == 'E' && at >= 2 && isHorizontalSpace(text.charAt(at - 1))
-                && Character.isDigit(text.charAt(skipSpaces(text, at - 1)));
+                && beforeSpaces >= 0 && Character.isDigit(text.charAt(beforeSpaces));
         return glued || spacedCapital;
     }
 
