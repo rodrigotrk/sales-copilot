@@ -50,7 +50,7 @@
 | C40 | `playbook.test.ts` `[C40] falha ao salvar mantém o valor e oferece Tentar de novo e Desfazer` | no - só erro de rede; a resposta `5xx` do critério não é exercitada |
 | C41 | `PlaybookTest` `[C41a] gravação com revisão antiga responde 409 revision_conflict`; `playbook.test.ts` `[C41b]` | yes |
 | C42 | `PlaybookTest` `[C42a] gravação com importação ativa responde 409 import_running`; `playbook.test.ts` `[C42b]` | yes |
-| C43 | `ImportTest` `[C43] gravação e importação simultâneas nunca gravam depois da tarefa` | yes |
+| C43 | `ImportTest` `[C43] gravação e importação simultâneas nunca gravam depois da tarefa` | yes - verde em 3 execuções seguidas de `saveWaitsForTheImportLock` em `dbf5e4e`. Sem a trava na gravação (`lockCurrent` lendo sem `FOR UPDATE`), falha na linha 907: a gravação responde 200 em vez de 409 `import_running`. Sem `drafts.lock` no `ImportController`, falha na linha 935 pelo prazo de 10 s: o POST ainda fica preso, porque a chave estrangeira de `import_jobs` para `playbooks` pede trava sobre a linha travada, mas a espera passa a ser no `INSERT INTO import_jobs`, que o filtro `query ILIKE '%playbooks%'` não reconhece. O teste pega a remoção da trava pelo texto da consulta que espera, e não por uma gravação que entra depois da tarefa; essa ordem continua garantida pela chave estrangeira mesmo sem a trava |
 | C44 | `playbook.test.ts` `[C44] nome da coluna extra vira o título entre Plano e À vista` | yes |
 | C45 | `playbook.test.ts` `[C45] coluna extra vazia some fora da edição` | yes |
 | C46 | `DraftRulesTest` `[C46a] à vista aceita 4500 e 4500,50 e recusa 0, 10000000,01 e três casas`; `playbook.test.ts` `[C46b]` | yes |
