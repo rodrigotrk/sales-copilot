@@ -18,6 +18,7 @@ import static org.springframework.security.test.web.servlet.request.SecurityMock
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 
 /** Um Error do parser, como o esgotamento de memória por um documento malicioso, também encerra a tarefa. */
+@org.junit.jupiter.api.extension.ExtendWith(org.springframework.boot.test.system.OutputCaptureExtension.class)
 class ImportWorkerErrorTest extends IntegrationTest {
 
     @MockitoSpyBean
@@ -27,8 +28,8 @@ class ImportWorkerErrorTest extends IntegrationTest {
     ImportWorker worker;
 
     @Test
-    @DisplayName("[C122] Error ao ler o documento encerra a tarefa como import_failed e apaga o arquivo")
-    void errorFinishesTheJob() throws Exception {
+    @DisplayName("[C122] Error ao ler o documento encerra a tarefa como import_failed, apaga o arquivo e fica no log")
+    void errorFinishesTheJob(org.springframework.boot.test.system.CapturedOutput output) throws Exception {
         doThrow(new OutOfMemoryError("documento malicioso")).when(documents).fromFile(any());
         Gestor g = newGestor();
         String playbookId = json.readTree(mvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders
@@ -47,5 +48,7 @@ class ImportWorkerErrorTest extends IntegrationTest {
         assertThat(jobRow(jobId)).containsEntry("status", "failed").containsEntry("error_code", "import_failed");
         assertThat(file).isNotNull();
         assertThat(java.nio.file.Files.exists(IMPORT_DIRECTORY.resolve(file))).isFalse();
+        assertThat(output.getAll()).contains("Importação " + jobId + " falhou com erro inesperado")
+                .contains("documento malicioso");
     }
 }

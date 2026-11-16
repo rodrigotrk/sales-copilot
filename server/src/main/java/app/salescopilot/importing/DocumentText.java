@@ -11,6 +11,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.apache.tika.exception.WriteLimitReachedException;
+import org.apache.tika.io.TikaInputStream;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.parser.AutoDetectParser;
 import org.apache.tika.parser.ParseContext;
@@ -55,18 +56,11 @@ class DocumentText {
                 String text = Files.readString(file, StandardCharsets.UTF_8);
                 return new Extracted(text, text);
             }
-            if (name.endsWith(".docx")) {
-                try (InputStream in = Files.newInputStream(file)) {
-                    ZipBudget.check(in);
-                }
+            Extracted extracted = parseFile(file, name.endsWith(".pdf") ? PDF : DOCX);
+            if (name.endsWith(".pdf") && extracted.plain().isBlank()) {
+                throw new ImportFailure("pdf_without_text");
             }
-            try (InputStream in = Files.newInputStream(file)) {
-                Extracted extracted = parse(in);
-                if (name.endsWith(".pdf") && extracted.plain().isBlank()) {
-                    throw new ImportFailure("pdf_without_text");
-                }
-                return extracted;
-            }
+            return extracted;
         } catch (IOException e) {
             throw new ImportFailure("import_failed", e);
         }
@@ -104,11 +98,48 @@ class DocumentText {
         if (body == null || body.length < 2 || body[0] != 'P' || body[1] != 'K') {
             throw new ImportFailure("google_docs_unavailable");
         }
+        Path copy = null;
         try {
-            ZipBudget.check(new java.io.ByteArrayInputStream(body));
-            return parse(new java.io.ByteArrayInputStream(body));
+            // Em arquivo, para a conferência ler o diretório central como o parser.
+            copy = Files.createTempFile("google-docs-", ".docx");
+            Files.write(copy, body);
+            return parseFile(copy, DOCX);
         } catch (IOException e) {
             throw new ImportFailure("import_failed", e);
+        } finally {
+            if (copy != null) {
+                try {
+                    Files.deleteIfExists(copy);
+                } catch (IOException e) {
+                    // A pasta temporária do sistema limpa o que sobrar.
+                }
+            }
+        }
+    }
+
+    private static final String DOCX = "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
+    private static final String PDF = "application/pdf";
+    private static final String OOXML = "application/x-tika-ooxml";
+
+    /**
+     * O conteúdo precisa ser do tipo que a extensão promete: um zip enviado como .pdf não chega ao parser.
+     * O .docx passa pela conferência de compressão antes.
+     */
+    private static Extracted parseFile(Path file, String expectedType) throws IOException, ImportFailure {
+        String detected;
+        try (TikaInputStream in = TikaInputStream.get(file)) {
+            detected = new AutoDetectParser().getDetector().detect(in, new Metadata()).getBaseType().toString();
+        }
+        // O detector às vezes só reconhece o pacote OOXML genérico; o parser do .docx confere o resto.
+        boolean matches = detected.equals(expectedType) || (expectedType.equals(DOCX) && detected.equals(OOXML));
+        if (!matches) {
+            throw new ImportFailure("import_failed");
+        }
+        if (expectedType.equals(DOCX)) {
+            ZipBudget.check(file);
+        }
+        try (InputStream in = Files.newInputStream(file)) {
+            return parse(in);
         }
     }
 
@@ -118,8 +149,12 @@ class DocumentText {
         // compressão não chega a ser acumulado inteiro na memória. Metadados, como o título, não contam.
         WriteOutContentHandler plain = new WriteOutContentHandler(MAX_TEXT + 1);
         try {
+            // Documentos embutidos (outro .docx, um zip, uma planilha) não são abertos: nada fora do texto do
+            // próprio documento importa, e cada um seria uma nova chance de bomba de compressão.
+            ParseContext context = new ParseContext();
+            context.set(org.apache.tika.parser.Parser.class, org.apache.tika.parser.EmptyParser.INSTANCE);
             new AutoDetectParser().parse(in, new TeeContentHandler(xhtml, new BodyContentHandler(plain)), new Metadata(),
-                    new ParseContext());
+                    context);
         } catch (org.xml.sax.SAXException | org.apache.tika.exception.TikaException e) {
             throw new ImportFailure(WriteLimitReachedException.isWriteLimitReached(e) ? "text_too_long" : "import_failed", e);
         }

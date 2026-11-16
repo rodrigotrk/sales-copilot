@@ -2,34 +2,46 @@ package app.salescopilot.importing;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.zip.ZipInputStream;
+import java.nio.file.Path;
+import java.util.Enumeration;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipFile;
 
 /**
- * Conferência do .docx antes do Tika: descompacta em streaming, descartando o conteúdo, e recusa o
- * arquivo se uma entrada ou o total passa do orçamento. O POI lê partes como os metadados inteiras na
- * memória, antes de qualquer limite de texto, e um .docx de 50 KB pode expandir para gigabytes.
+ * Conferência do .docx antes do Tika: descompacta cada parte, descartando o conteúdo, e recusa o arquivo
+ * se uma parte tem cara de bomba de compressão ou se o total passa do orçamento. O POI lê partes como os
+ * metadados inteiras na memória, antes de qualquer limite de texto, e um .docx de 50 KB pode expandir
+ * para gigabytes. As partes vêm do diretório central, como o parser as lê: uma assinatura falsa no meio
+ * do arquivo não esconde nenhuma.
  */
 final class ZipBudget {
 
-    /** Uma parte XML com mais de 20 MB já traz bem mais que os 100 mil caracteres aceitos (AC 77). */
-    static final long MAX_ENTRY_BYTES = 20L * 1024 * 1024;
+    /** Acima disto, uma parte só passa se comprimir menos de 100 para 1, como uma imagem de verdade. */
+    static final long LARGE_ENTRY_BYTES = 20L * 1024 * 1024;
+    static final long MAX_RATIO = 100;
     static final long MAX_TOTAL_BYTES = 100L * 1024 * 1024;
 
     private ZipBudget() {
     }
 
-    static void check(InputStream in) throws IOException, ImportFailure {
-        try (ZipInputStream zip = new ZipInputStream(in)) {
+    static void check(Path file) throws IOException, ImportFailure {
+        try (ZipFile zip = new ZipFile(file.toFile())) {
             byte[] buffer = new byte[64 * 1024];
             long total = 0;
-            while (zip.getNextEntry() != null) {
-                long entry = 0;
-                int read;
-                while ((read = zip.read(buffer)) > 0) {
-                    entry += read;
-                    total += read;
-                    if (entry > MAX_ENTRY_BYTES || total > MAX_TOTAL_BYTES) {
-                        throw new ImportFailure("text_too_long");
+            Enumeration<? extends ZipEntry> entries = zip.entries();
+            while (entries.hasMoreElements()) {
+                ZipEntry entry = entries.nextElement();
+                long compressed = Math.max(entry.getCompressedSize(), 1);
+                long expanded = 0;
+                try (InputStream in = zip.getInputStream(entry)) {
+                    int read;
+                    while ((read = in.read(buffer)) > 0) {
+                        expanded += read;
+                        total += read;
+                        boolean bomb = expanded > LARGE_ENTRY_BYTES && expanded > compressed * MAX_RATIO;
+                        if (bomb || total > MAX_TOTAL_BYTES) {
+                            throw new ImportFailure("text_too_long");
+                        }
                     }
                 }
             }

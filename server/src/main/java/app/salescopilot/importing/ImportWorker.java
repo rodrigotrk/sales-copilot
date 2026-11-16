@@ -13,6 +13,8 @@ import app.salescopilot.shared.Tenancy;
 @Component
 class ImportWorker {
 
+    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(ImportWorker.class);
+
     static final int MAX_TEXT = 100_000;
 
     private final ImportJobs jobs;
@@ -56,6 +58,7 @@ class ImportWorker {
         } catch (ImportFailure failure) {
             finished = fail(job, claim.leaseToken(), failure.code());
         } catch (RuntimeException | Error unexpected) {
+            log.error("Importação {} falhou com erro inesperado", job.id(), unexpected);
             // Sem isto a tarefa voltaria à fila a cada concessão vencida, sem fim. Error entra porque um
             // documento malicioso pode esgotar a memória do parser; o que ele alocou já foi liberado aqui.
             finished = fail(job, claim.leaseToken(), "import_failed");

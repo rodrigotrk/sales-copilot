@@ -296,6 +296,144 @@ class ImportTest extends IntegrationTest {
         assertThat(revision(g)).isEqualTo(revision);
         assertThat(STUB.modelRequests()).isEmpty();
         assertThat(Files.exists(IMPORT_DIRECTORY.resolve(file))).isFalse();
+
+        // A parte escondida atrás de uma assinatura falsa de diretório central também é conferida.
+        UUID hidden = jobId(importFile(g, new MockMultipartFile("file", "escondida.docx",
+                "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                withFakeCentralDirectorySignature(docxWithHugeTitle(30L * 1024 * 1024), "docProps/core.xml"))));
+        worker.drain();
+        assertThat(jobRow(hidden)).containsEntry("error_code", "text_too_long");
+
+        // Seis partes de 18 MB, cada uma abaixo do limite de parte, passam do total de 100 MB.
+        UUID total = jobId(importFile(g, new MockMultipartFile("file", "total.docx",
+                "application/vnd.openxmlformats-officedocument.wordprocessingml.document", docxWithExtraParts(6, 18L * 1024 * 1024))));
+        worker.drain();
+        assertThat(jobRow(total)).containsEntry("error_code", "text_too_long");
+        assertThat(STUB.modelRequests()).isEmpty();
+
+        // Uma imagem de 25 MB que comprime como um bitmap de verdade não é confundida com bomba.
+        STUB.modelAnswers(ANSWER);
+        UUID image = jobId(importFile(g, new MockMultipartFile("file", "imagem.docx",
+                "application/vnd.openxmlformats-officedocument.wordprocessingml.document", docxWithRandomImage(25 * 1024 * 1024))));
+        worker.drain();
+        assertThat(jobRow(image)).containsEntry("status", "done");
+    }
+
+    @Test
+    @DisplayName("[C124] arquivo cujo conteúdo não é do tipo da extensão falha com import_failed sem chamar o modelo")
+    void contentMustMatchExtension() throws Exception {
+        Gestor g = newGestor();
+        var zip = new ByteArrayOutputStream();
+        try (var out = new java.util.zip.ZipOutputStream(zip)) {
+            out.putNextEntry(new java.util.zip.ZipEntry("dentro.docx"));
+            out.write(docx(10));
+            out.closeEntry();
+        }
+        UUID jobId = jobId(importFile(g, new MockMultipartFile("file", "falso.pdf", "application/pdf", zip.toByteArray())));
+        worker.drain();
+        assertThat(jobRow(jobId)).containsEntry("status", "failed").containsEntry("error_code", "import_failed");
+        assertThat(STUB.modelRequests()).isEmpty();
+    }
+
+    /** Um .docx válido com `parts` partes extras de `bytes` cada, muito comprimíveis. */
+    private static byte[] docxWithExtraParts(int parts, long bytes) throws java.io.IOException {
+        return rewriteDocx(docx(10), zip -> {
+            byte[] chunk = "a".repeat(1024 * 1024).getBytes(java.nio.charset.StandardCharsets.UTF_8);
+            for (int i = 0; i < parts; i++) {
+                zip.putNextEntry(new java.util.zip.ZipEntry("customXml/item" + i + ".xml"));
+                for (long written = 0; written < bytes; written += chunk.length) {
+                    zip.write(chunk);
+                }
+                zip.closeEntry();
+            }
+        });
+    }
+
+    /** Um .docx válido com uma imagem grande que comprime pouco, como um bitmap de verdade. */
+    private static byte[] docxWithRandomImage(int bytes) throws java.io.IOException {
+        return rewriteDocx(docx(10), zip -> {
+            // 16 cores em blocos de 4 pixels: comprime algumas vezes, como um bitmap de verdade, longe de 100 para 1.
+            byte[] random = new byte[bytes];
+            var colors = new java.util.Random(7);
+            for (int i = 0; i < bytes; i += 4) {
+                byte color = (byte) colors.nextInt(16);
+                for (int j = i; j < Math.min(i + 4, bytes); j++) {
+                    random[j] = color;
+                }
+            }
+            zip.putNextEntry(new java.util.zip.ZipEntry("word/media/image1.bmp"));
+            zip.write(random);
+            zip.closeEntry();
+        });
+    }
+
+    private interface ZipWriter {
+        void write(java.util.zip.ZipOutputStream zip) throws java.io.IOException;
+    }
+
+    private static byte[] rewriteDocx(byte[] base, ZipWriter extra) throws java.io.IOException {
+        var out = new ByteArrayOutputStream();
+        try (var in = new java.util.zip.ZipInputStream(new java.io.ByteArrayInputStream(base));
+                var zip = new java.util.zip.ZipOutputStream(out)) {
+            java.util.zip.ZipEntry entry;
+            while ((entry = in.getNextEntry()) != null) {
+                zip.putNextEntry(new java.util.zip.ZipEntry(entry.getName()));
+                if (entry.getName().equals("[Content_Types].xml")) {
+                    // Declara o tipo das imagens acrescentadas, como um .docx de verdade.
+                    String types = new String(in.readAllBytes(), java.nio.charset.StandardCharsets.UTF_8);
+                    zip.write(types.replace("<Default ", "<Default Extension=\"bmp\" ContentType=\"image/bmp\"/><Default ")
+                            .getBytes(java.nio.charset.StandardCharsets.UTF_8));
+                } else {
+                    in.transferTo(zip);
+                }
+                zip.closeEntry();
+            }
+            extra.write(zip);
+        }
+        return out.toByteArray();
+    }
+
+    /**
+     * Insere "PK\\1\\2" antes do cabeçalho local de `entryName` e corrige os deslocamentos: quem lê o zip em
+     * ordem para ali, quem lê o diretório central encontra a parte.
+     */
+    private static byte[] withFakeCentralDirectorySignature(byte[] zip, String entryName) {
+        var data = java.nio.ByteBuffer.wrap(zip).order(java.nio.ByteOrder.LITTLE_ENDIAN);
+        int eocd = zip.length - 22;
+        while (data.getInt(eocd) != 0x06054b50) {
+            eocd--;
+        }
+        int cdOffset = data.getInt(eocd + 16);
+        int entries = data.getShort(eocd + 10) & 0xffff;
+        int insertAt = -1;
+        int at = cdOffset;
+        for (int i = 0; i < entries; i++) {
+            int nameLength = data.getShort(at + 28) & 0xffff;
+            String name = new String(zip, at + 46, nameLength, java.nio.charset.StandardCharsets.UTF_8);
+            if (name.equals(entryName)) {
+                insertAt = data.getInt(at + 42);
+            }
+            at += 46 + nameLength + (data.getShort(at + 30) & 0xffff) + (data.getShort(at + 32) & 0xffff);
+        }
+        byte[] out = new byte[zip.length + 4];
+        System.arraycopy(zip, 0, out, 0, insertAt);
+        out[insertAt] = 'P';
+        out[insertAt + 1] = 'K';
+        out[insertAt + 2] = 1;
+        out[insertAt + 3] = 2;
+        System.arraycopy(zip, insertAt, out, insertAt + 4, zip.length - insertAt);
+        var fixed = java.nio.ByteBuffer.wrap(out).order(java.nio.ByteOrder.LITTLE_ENDIAN);
+        at = cdOffset + 4;
+        for (int i = 0; i < entries; i++) {
+            int offset = fixed.getInt(at + 42);
+            if (offset >= insertAt) {
+                fixed.putInt(at + 42, offset + 4);
+            }
+            int nameLength = fixed.getShort(at + 28) & 0xffff;
+            at += 46 + nameLength + (fixed.getShort(at + 30) & 0xffff) + (fixed.getShort(at + 32) & 0xffff);
+        }
+        fixed.putInt(eocd + 4 + 16, cdOffset + 4);
+        return out;
     }
 
     /** Um .docx válido em que docProps/core.xml traz um título de `titleBytes`, escrito em pedaços. */
