@@ -3,7 +3,7 @@
   "promote_threshold": 2,
   "window_days": 45,
   "quarantine_threshold": 2,
-  "next_id": 32,
+  "next_id": 33,
   "lessons": [
     {
       "id": "L-001",
@@ -562,6 +562,24 @@
       ],
       "created": "2026-11-16T01:24:52Z",
       "last_seen": "2026-11-16T01:24:52Z"
+    },
+    {
+      "id": "L-032",
+      "key": "weak_test::prove database passwords over the network from another container local socket and loopback are trust",
+      "text": "Prove database passwords over the network from another container; local socket and loopback are trust.",
+      "signal": "weak_test",
+      "scope": "deploy",
+      "status": "candidate",
+      "features": [
+        "playbook-configuravel"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "Codex r7 2 (C104) (deploy)"
+      ],
+      "created": "2026-11-16T01:44:38Z",
+      "last_seen": "2026-11-16T01:44:38Z"
     }
   ]
 }

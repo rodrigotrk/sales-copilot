@@ -25,6 +25,9 @@ done
 roles=$(docker exec "$name" psql -U postgres -d salescopilot -Atc \
 	"SELECT string_agg(rolname, ' ' ORDER BY rolname) FROM pg_roles WHERE rolname IN ('app', 'job_claimer', 'migrator')")
 [ "$roles" = "app job_claimer migrator" ] || { echo "papéis criados: $roles"; exit 1; }
+# job_claimer só é dono das funções privilegiadas: nenhum login com ele (AD-049).
+claimer_login=$(docker exec "$name" psql -U postgres -d salescopilot -Atc "SELECT rolcanlogin FROM pg_roles WHERE rolname = 'job_claimer'")
+[ "$claimer_login" = f ] || { echo "job_claimer aceita login"; exit 1; }
 # As senhas são conferidas de outro contêiner: dentro do próprio contêiner o Postgres aceita o loopback
 # sem senha (trust), e só a rede exige scram-sha-256, como a conexão do servidor em produção.
 login() {
