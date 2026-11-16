@@ -109,7 +109,7 @@ class DocumentText {
                 try {
                     Files.deleteIfExists(copy);
                 } catch (IOException e) {
-                    // A pasta temporária do sistema limpa o que sobrar.
+                    // A varredura de órfãos apaga a cópia que sobrar na pasta de importação.
                 }
             }
         }

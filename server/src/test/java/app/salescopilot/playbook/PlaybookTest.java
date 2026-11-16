@@ -138,10 +138,23 @@ class PlaybookTest extends IntegrationTest {
                 .andExpect(jsonPath("$.errors[0].field").value("maxDiscount"));
         assertThat(playbook(g).get("revision").asLong()).isZero();
 
-        // Um valor grande de verdade, sem o teto do preço à vista, ainda vale para a parcela.
+        // Um plano só, com à vista enorme e desconto negativo: os dois erros, numa resposta curta, sem formatar o valor recusado.
+        draft = (tools.jackson.databind.node.ObjectNode) json.readTree(Drafts.complete());
+        ((tools.jackson.databind.node.ArrayNode) draft.get("priceTable").get("plans")).remove(1);
+        ((tools.jackson.databind.node.ObjectNode) draft.get("priceTable").get("plans").get(0)).put("cash", "1E+100000000");
+        ((tools.jackson.databind.node.ObjectNode) draft.get("priceTable")).put("maxDiscount", "-1.00");
+        var refused = save(g, id, json.writeValueAsString(draft), 0).andExpect(status().isUnprocessableContent())
+                .andExpect(jsonPath("$.errors[*].field", org.hamcrest.Matchers.hasItems("cash", "maxDiscount")))
+                .andReturn().getResponse().getContentAsString();
+        assertThat(refused.length()).isLessThan(10_000);
+
+        // numeric(12,2) (AD-025): 10 dígitos inteiros valem para a parcela, sem o teto do preço à vista; 11 não.
         draft = (tools.jackson.databind.node.ObjectNode) json.readTree(Drafts.complete());
         plan = (tools.jackson.databind.node.ObjectNode) draft.get("priceTable").get("plans").get(0);
-        ((tools.jackson.databind.node.ObjectNode) plan.get("installments")).put("value", "999999999999.99");
+        ((tools.jackson.databind.node.ObjectNode) plan.get("installments")).put("value", "10000000000.00");
+        save(g, id, json.writeValueAsString(draft), 0).andExpect(status().isUnprocessableContent())
+                .andExpect(jsonPath("$.errors[0].field").value("installments"));
+        ((tools.jackson.databind.node.ObjectNode) plan.get("installments")).put("value", "9999999999.99");
         save(g, id, json.writeValueAsString(draft), 0).andExpect(status().isOk());
     }
 

@@ -104,7 +104,9 @@ public final class DraftRules {
     }
 
     public static Optional<BigDecimal> lowestCash(PriceTable table) {
-        return table.plans().stream().map(Plan::cash).filter(Objects::nonNull).min(BigDecimal::compareTo);
+        // Só preços à vista válidos: um inválido já tem o próprio erro e não entra na mensagem do desconto.
+        return table.plans().stream().map(Plan::cash).filter(Objects::nonNull).filter(Money::isValidCash)
+                .min(BigDecimal::compareTo);
     }
 
     /** Um id nulo já é um problema próprio ("invalid_id"); os demais problemas do item saem sem id. */

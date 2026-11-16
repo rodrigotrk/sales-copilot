@@ -317,7 +317,7 @@ Proof: run server | PASSED [C85] concessão vencida é reprocessada sem duplicar
 **C86** - `claim_next_import_job()` entrega tarefas de dois negócios e o papel `app` só vê as do seu negócio (AC 86)
 Proof: run server | PASSED [C86] claim entrega tarefas de dois negócios e o papel app só vê as suas
 
-**C87** - Ao terminar em `done` ou `failed`, o arquivo é apagado depois do commit e o texto extraído não é gravado (AC 87); um .docx que passa pelo processo de extração também conclui sem que nenhum arquivo da pasta de importação ou das pastas de extração contenha o texto, nem durante a extração (o resultado volta pela saída padrão do filho, AD-063), e nenhuma pasta de extração sobra
+**C87** - Ao terminar em `done` ou `failed`, o arquivo é apagado depois do commit e o texto extraído não é gravado (AC 87); um .docx passa pelo processo de extração, cujo resultado volta pela saída padrão (AD-063), e ao fim nenhum arquivo da pasta de importação ou das pastas de extração contém o texto e nenhuma pasta de extração sobra; um filho que deixa o texto em arquivo faz a prova falhar
 Proof: run server | PASSED [C87] arquivo da tarefa é apagado depois do commit e o texto não é gravado
 
 **C88** - A varredura apaga arquivos de tarefas encerradas e órfãos com mais de 1 hora (AC 88)
@@ -442,8 +442,14 @@ Proof: run server | PASSED [C126] extração que passa do tempo limite é encerr
 **C127** - Uma extração interrompida no meio (como no desligamento do servidor) encerra o processo filho em até 500 ms, em vez de deixá-lo rodando sem tempo limite (AD-063)
 Proof: run server | PASSED [C127] extração interrompida encerra o processo filho
 
-**C128** - Valor em dinheiro com representação enorme (`1E+2147483647` na parcela, `1E-2147483647` no à vista, `1E+100000000` no desconto sem plano) responde `422` com erro do campo, sem `500` e sem gravar; um valor de parcela grande de verdade (`999999999999.99`) continua aceito (AD-025, AC 47)
+**C128** - Valor em dinheiro fora de `numeric(12,2)` (AD-025): representação enorme (`1E+2147483647` na parcela, `1E-2147483647` no à vista, `1E+100000000` no desconto sem plano) ou parcela com 11 dígitos inteiros responde `422` com erro do campo, sem `500` e sem gravar; com um plano de à vista enorme e desconto negativo, a resposta traz os dois erros e tem menos de 10 KB; parcela de `9999999999.99` é aceita (AC 47)
 Proof: run server | PASSED [C128] valor em dinheiro com expoente enorme responde 422 com erro de campo, sem 500 nem gravar
+
+**C129** - Na importação, um número em dinheiro maior que `numeric(12,2)` não entra no rascunho, mesmo presente no texto do documento: parcela e desconto de 50 mil dígitos ficam vazios (AD-025, AC 71)
+Proof: run server | PASSED [C129] número em dinheiro maior que numeric(12,2) não entra no rascunho, mesmo presente no documento
+
+**C130** - Resultado do processo de extração com status desconhecido ou texto mais curto que o tamanho declarado termina em `import_failed` (AD-063)
+Proof: run server | PASSED [C130] resultado do filho com status desconhecido ou texto cortado vira import_failed
 
 ## Coverage
 

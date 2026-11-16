@@ -71,6 +71,22 @@ class ImportMergeTest {
                 "O documento traz desconto máximo de R$ 500; o atual (R$ 300) foi mantido.");
     }
 
+    @Test
+    @DisplayName("[C129] número em dinheiro maior que numeric(12,2) não entra no rascunho, mesmo presente no documento")
+    void hugeNumberFromTheDocumentIsDropped() {
+        String digits = "9".repeat(50_000);
+        String text = "Plano Grande por R$ 7.000 em 6x de R$ " + digits + ". Desconto máximo na call: R$ " + digits + ".";
+        var huge = new BigDecimal(digits);
+        var extracted = new ExtractedPlaybook(List.of(new ExtractedPlaybook.Stage("Abertura")), List.of(), List.of(),
+                new ExtractedPlaybook.PriceTable(null, huge, "Desconto máximo na call", List.of(
+                        new ExtractedPlaybook.Plan("Grande", null, new BigDecimal("7000"), 6, huge, "Plano Grande"))));
+        var result = ImportMerge.merge(PlaybookDocument.empty(), extracted, text);
+        PriceTable table = result.draft().priceTable();
+        assertThat(table.plans().getFirst().installments()).isNull();
+        assertThat(table.maxDiscount()).isNull();
+        assertThat(table.plans().getFirst().cash()).isEqualByComparingTo("7000.00");
+    }
+
     private static ImportMerge.Result merge(PlaybookDocument current, ExtractedPlaybook.Plan plan, String column,
             BigDecimal discount) {
         var extracted = new ExtractedPlaybook(List.of(new ExtractedPlaybook.Stage("Abertura")), List.of(), List.of(),

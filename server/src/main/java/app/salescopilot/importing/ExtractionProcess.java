@@ -111,12 +111,15 @@ class ExtractionProcess {
     }
 
     /** O protocolo de {@link IsolatedExtraction}: "ok" com o XHTML e o texto, ou "error" com o código. */
-    private static DocumentText.Extracted decode(byte[] bytes) throws IOException, ImportFailure {
+    static DocumentText.Extracted decode(byte[] bytes) throws IOException, ImportFailure {
         var in = new java.io.DataInputStream(new java.io.ByteArrayInputStream(bytes));
         String status = in.readUTF();
         if (IsolatedExtraction.ERROR.equals(status)) {
             String code = in.readUTF();
             throw new ImportFailure(KNOWN_CODES.contains(code) ? code : "import_failed");
+        }
+        if (!IsolatedExtraction.OK.equals(status)) {
+            throw new ImportFailure("import_failed");
         }
         String forModel = text(in, TextExtraction.MAX_FOR_MODEL);
         String plain = text(in, TextExtraction.MAX_TEXT + 1);
@@ -128,7 +131,12 @@ class ExtractionProcess {
         if (length < 0 || length > 4L * maxChars) {
             throw new ImportFailure("text_too_long");
         }
-        String text = new String(in.readNBytes(length), StandardCharsets.UTF_8);
+        byte[] bytes = in.readNBytes(length);
+        if (bytes.length != length) {
+            // Resultado cortado: o filho caiu no meio da escrita.
+            throw new ImportFailure("import_failed");
+        }
+        String text = new String(bytes, StandardCharsets.UTF_8);
         if (text.length() > maxChars) {
             throw new ImportFailure("text_too_long");
         }

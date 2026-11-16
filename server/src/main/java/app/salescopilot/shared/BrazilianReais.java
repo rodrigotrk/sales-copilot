@@ -11,6 +11,20 @@ public final class BrazilianReais {
     private BrazilianReais() {
     }
 
+    /** `numeric(12,2)` (AD-025): até 10 dígitos inteiros e 2 casas, ou seja, até R$ 9.999.999.999,99. */
+    public static final int MAX_INTEGER_DIGITS = 10;
+
+    /**
+     * Valor em reais com no máximo duas casas e até {@link #MAX_INTEGER_DIGITS} dígitos inteiros. A representação é
+     * conferida antes de qualquer conta: `setScale` ou `toPlainString` em 1E+2147483647 estoura ou esgota a memória.
+     */
+    public static boolean isExactReais(BigDecimal value) {
+        long integerDigits = (long) value.precision() - value.scale();
+        boolean bounded = value.precision() <= 40 && value.scale() <= 20 && value.scale() >= -MAX_INTEGER_DIGITS
+                && integerDigits <= MAX_INTEGER_DIGITS;
+        return bounded && value.stripTrailingZeros().scale() <= 2;
+    }
+
     public static String format(BigDecimal value) {
         DecimalFormatSymbols symbols = DecimalFormatSymbols.getInstance(Locale.of("pt", "BR"));
         boolean whole = value.stripTrailingZeros().scale() <= 0;
