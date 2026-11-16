@@ -1,29 +1,41 @@
 package app.salescopilot.importing.domain;
 
 import java.math.BigDecimal;
+import java.util.Arrays;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 /**
- * Citação verificável (AC 71, AD-065): um valor em dinheiro do modelo só entra no rascunho se o trecho que o
- * modelo citou estiver literalmente no documento e contiver esse valor escrito. Espaços são normalizados nos
- * dois lados, porque o texto do documento e o que o modelo leu podem quebrar linhas em pontos diferentes.
+ * Citação verificável (AC 71, AD-065): um valor em dinheiro do modelo só entra no rascunho se vier de um número
+ * escrito no documento que esteja inteiro dentro do trecho citado. Os números são lidos uma vez no documento
+ * original, com posição; o trecho é localizado nele aceitando qualquer espaço entre as palavras, porque o texto
+ * do documento e o que o modelo leu podem quebrar linhas em pontos diferentes.
  */
 final class Citation {
 
+    private static final String SPACE = "[\\s\\u00A0\\u202F\\u2007\\u2009]+";
+
     private final String document;
+    private final MoneyInText money;
 
     Citation(String documentText) {
-        this.document = normalize(documentText);
+        this.document = documentText == null ? "" : documentText;
+        this.money = new MoneyInText(this.document);
     }
 
     boolean confirms(String excerpt, BigDecimal value) {
-        if (excerpt == null || value == null) {
+        if (excerpt == null || value == null || excerpt.isBlank()) {
             return false;
         }
-        String quoted = normalize(excerpt);
-        return !quoted.isEmpty() && document.contains(quoted) && new MoneyInText(quoted).contains(value);
-    }
-
-    private static String normalize(String text) {
-        return text == null ? "" : text.replaceAll("[\\s\\u00A0\\u202F\\u2007\\u2009]+", " ").strip();
+        String pattern = Arrays.stream(excerpt.strip().split(SPACE)).map(Pattern::quote).collect(Collectors.joining(SPACE));
+        Matcher occurrence = Pattern.compile(pattern).matcher(document);
+        while (occurrence.find()) {
+            // Um número cortado pela borda do trecho ("4.500" dentro de "14.500") não vale.
+            if (money.containsWithin(value, occurrence.start(), occurrence.end())) {
+                return true;
+            }
+        }
+        return false;
     }
 }

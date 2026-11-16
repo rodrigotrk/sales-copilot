@@ -139,7 +139,7 @@ class ImportMergeTest {
     }
 
     @Test
-    @DisplayName("[C135] valor só entra se o trecho citado estiver no documento e contiver o valor escrito")
+    @DisplayName("[C135] valor só entra se vier de um número inteiro dentro do trecho citado, que precisa estar no documento")
     void citationMustBeLiteralAndContainTheValue() {
         String document = "Plano Ouro: R$ 4.500 à vista ou 6x de R$ 800.\nDesconto máximo na call: R$ 300.";
         java.util.function.BiFunction<String, String, PriceTable> merged = (planExcerpt, discountExcerpt) -> ImportMerge.merge(
@@ -162,6 +162,27 @@ class ImportMergeTest {
         PriceTable withoutValue = merged.apply("Plano Ouro:", "Desconto máximo na call:");
         assertThat(withoutValue.plans().getFirst().cash()).isNull();
         assertThat(withoutValue.maxDiscount()).isNull();
+        // Trecho que corta um número do documento: o pedaço não vale.
+        String cents = "Plano Ouro: R$ 14.500 à vista ou 6x de R$ 800,50.\nDesconto máximo na call: R$ -300.";
+        PriceTable cut = ImportMerge.merge(PlaybookDocument.empty(), new ExtractedPlaybook(
+                List.of(new ExtractedPlaybook.Stage("Abertura")), List.of(), List.of(),
+                new ExtractedPlaybook.PriceTable(null, new BigDecimal("300"), "300.", List.of(new ExtractedPlaybook.Plan(
+                        "Ouro", null, new BigDecimal("4500"), 6, new BigDecimal("800"), "4.500 à vista ou 6x de R$ 800")))),
+                cents).draft().priceTable();
+        assertThat(cut.plans().getFirst().cash()).isNull();
+        assertThat(cut.plans().getFirst().installments()).isNull();
+        assertThat(cut.maxDiscount()).isNull();
+
+        // Tabela e lista citadas corretamente: tabulação e quebra de linha separam os valores.
+        String table = "Ouro\t6.800\t12\t600\n6x de R$ 800\n100 vagas";
+        PriceTable fromTable = ImportMerge.merge(PlaybookDocument.empty(), new ExtractedPlaybook(
+                List.of(new ExtractedPlaybook.Stage("Abertura")), List.of(), List.of(),
+                new ExtractedPlaybook.PriceTable(null, new BigDecimal("600"), "Ouro\t6.800\t12\t600", List.of(new ExtractedPlaybook.Plan(
+                        "Ouro", null, new BigDecimal("6800"), 6, new BigDecimal("800"), "Ouro 6.800 12 600\n6x de R$ 800\n100 vagas")))),
+                table).draft().priceTable();
+        assertThat(fromTable.plans().getFirst().cash()).isEqualByComparingTo("6800.00");
+        assertThat(fromTable.plans().getFirst().installments().value()).isEqualByComparingTo("800.00");
+
         // O valor está no documento, mas não no trecho citado: fica vazio.
         PriceTable elsewhere = merged.apply("Plano Ouro: R$ 4.500 à vista", "Plano Ouro: R$ 4.500");
         assertThat(elsewhere.plans().getFirst().installments()).isNull();

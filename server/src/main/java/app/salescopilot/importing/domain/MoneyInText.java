@@ -26,7 +26,12 @@ public final class MoneyInText {
     private static final Pattern DOT_CENTS = Pattern.compile("\\d+\\.\\d{1,2}");
     private static final Pattern INTEGER = Pattern.compile("\\d+");
 
+    /** Cada número lido, com a posição dele no texto: a citação (AD-065) aceita só número inteiro dentro do trecho. */
+    private record Found(int start, int end, BigDecimal value) {
+    }
+
     private final Set<BigDecimal> values = new HashSet<>();
+    private final java.util.List<Found> found = new java.util.ArrayList<>();
 
     public MoneyInText(String text) {
         Matcher matcher = NUMBER.matcher(text);
@@ -41,7 +46,9 @@ public final class MoneyInText {
             }
             String plain = read(token);
             if (plain != null) {
-                values.add(new BigDecimal(plain).stripTrailingZeros());
+                BigDecimal value = new BigDecimal(plain).stripTrailingZeros();
+                values.add(value);
+                found.add(new Found(matcher.start(), matcher.end(), value));
             }
         }
     }
@@ -196,6 +203,15 @@ public final class MoneyInText {
 
     public boolean contains(BigDecimal value) {
         return value != null && values.contains(value.stripTrailingZeros());
+    }
+
+    /** O valor foi lido de um número que está inteiro entre `from` e `to`. */
+    public boolean containsWithin(BigDecimal value, int from, int to) {
+        if (value == null) {
+            return false;
+        }
+        BigDecimal wanted = value.stripTrailingZeros();
+        return found.stream().anyMatch(f -> f.start() >= from && f.end() <= to && f.value().compareTo(wanted) == 0);
     }
 
     private static String read(String token) {
