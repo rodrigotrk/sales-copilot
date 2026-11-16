@@ -188,6 +188,18 @@ Seen once or not yet corroborated. Tracked, not trusted.
 - evidence: Verifier C113, C116 (importing)
 - last seen: 2026-11-16T00:56:52Z
 
+### L-030 - SECURITY DEFINER functions qualify every relation and list pg_temp last in search_path.
+- signal: `ac_gap` · recurrence: 1 feature(s) · scope: `database` · harmful: 0
+- features: playbook-configuravel
+- evidence: Codex r6 1 (C117) (database)
+- last seen: 2026-11-16T01:24:52Z
+
+### L-031 - A response assembled from several tables is read in one REPEATABLE READ snapshot.
+- signal: `ac_gap` · recurrence: 1 feature(s) · scope: `server` · harmful: 0
+- features: playbook-configuravel
+- evidence: Codex r6 3 (C118) (server)
+- last seen: 2026-11-16T01:24:52Z
+
 ## Quarantined (failed when applied - ignore)
 
 A confirmed lesson that recurred alongside failure. Kept for the maintainer to review.

@@ -3,7 +3,7 @@
   "promote_threshold": 2,
   "window_days": 45,
   "quarantine_threshold": 2,
-  "next_id": 30,
+  "next_id": 32,
   "lessons": [
     {
       "id": "L-001",
@@ -526,6 +526,42 @@
       ],
       "created": "2026-11-16T00:56:52Z",
       "last_seen": "2026-11-16T00:56:52Z"
+    },
+    {
+      "id": "L-030",
+      "key": "ac_gap::security definer functions qualify every relation and list pg temp last in search path",
+      "text": "SECURITY DEFINER functions qualify every relation and list pg_temp last in search_path.",
+      "signal": "ac_gap",
+      "scope": "database",
+      "status": "candidate",
+      "features": [
+        "playbook-configuravel"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "Codex r6 1 (C117) (database)"
+      ],
+      "created": "2026-11-16T01:24:52Z",
+      "last_seen": "2026-11-16T01:24:52Z"
+    },
+    {
+      "id": "L-031",
+      "key": "ac_gap::a response assembled from several tables is read in one repeatable read snapshot",
+      "text": "A response assembled from several tables is read in one REPEATABLE READ snapshot.",
+      "signal": "ac_gap",
+      "scope": "server",
+      "status": "candidate",
+      "features": [
+        "playbook-configuravel"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "Codex r6 3 (C118) (server)"
+      ],
+      "created": "2026-11-16T01:24:52Z",
+      "last_seen": "2026-11-16T01:24:52Z"
     }
   ]
 }
