@@ -31,7 +31,7 @@ public final class MoneyInText {
     public MoneyInText(String text) {
         Matcher matcher = NUMBER.matcher(text);
         while (matcher.find()) {
-            if (isNegative(text, matcher.start())) {
+            if (isNegative(text, matcher.start()) || !isIsolated(text, matcher.start(), matcher.end())) {
                 continue;
             }
             String token = matcher.group();
@@ -68,6 +68,67 @@ public final class MoneyInText {
             return false;
         }
         return at == 0 || !Character.isDigit(text.charAt(at - 1));
+    }
+
+    /** Antes do número: começo, espaço, "$", abertura, pontuação, sinal ou travessão de faixa. */
+    private static final String BEFORE = "$([{\"'*•:;,/+-\u2212\uFE63\uFF0D\u2013\u2014";
+    /** Depois do número: pontuação e fechamento. Letras e espaço têm regra própria. */
+    private static final String AFTER = ".,;:!?)]}\"'*%/";
+
+    /**
+     * Só um número isolado autoriza um valor (AD-064). Um pedaço de outra grafia nunca entra: "1e³", "1×10³",
+     * "7 000" com espaço não separável, "7'000" ou "Kit3" não são lidos; o campo fica vazio para o gestor.
+     * Valem os delimitadores comuns de preço: "R$ 4.500 à vista", "6x de R$ 800", "R$ 4.500em 6x" (palavra).
+     */
+    private static boolean isIsolated(String text, int start, int end) {
+        if (start > 0) {
+            char before = text.charAt(start - 1);
+            if (isSpace(before)) {
+                int previous = skipSpaces(text, start - 1);
+                // "7 000": o espaço separa milhares de outro número, não dois valores.
+                if (previous >= 0 && Character.isDigit(text.charAt(previous))) {
+                    return false;
+                }
+                // "1E 3": a letra colada a um dígito antes do espaço faz deste número a continuação de outro.
+                if (previous >= 1 && Character.isLetter(text.charAt(previous)) && Character.isDigit(text.charAt(previous - 1))) {
+                    return false;
+                }
+            } else if (BEFORE.indexOf(before) < 0) {
+                return false;
+            } else if (start >= 2 && Character.isDigit(text.charAt(start - 2)) && "-\u2013\u2014".indexOf(before) < 0) {
+                // "7'000" ou "1,5": pontuação entre dígitos continua o mesmo número; só a faixa separa dois valores.
+                return false;
+            }
+        }
+        if (end >= text.length()) {
+            return true;
+        }
+        char after = text.charAt(end);
+        if (isSpace(after)) {
+            int next = end;
+            while (next < text.length() && isSpace(text.charAt(next))) {
+                next++;
+            }
+            return next >= text.length() || !Character.isDigit(text.charAt(next));
+        }
+        if (after == '-' || after == '\u2013' || after == '\u2014') {
+            // Faixa ("1.200-1.400") ou separador ("4.500 - à vista").
+            return true;
+        }
+        if (AFTER.indexOf(after) >= 0) {
+            // "7'000" ou "7.000,": a pontuação seguida de dígito continua o número de outra forma.
+            return end + 1 >= text.length() || !Character.isDigit(text.charAt(end + 1));
+        }
+        if (Character.isLetter(after)) {
+            // Uma palavra colada ("4.500em", "6x de") vale; letra seguida de dígito, expoente ou "x10" não.
+            char next = end + 1 < text.length() ? text.charAt(end + 1) : ' ';
+            boolean multiplication = (after == 'x' || after == 'X') && !Character.isLetter(next) && !isSpace(next)
+                    && AFTER.indexOf(next) < 0;
+            boolean exponent = (after == 'e' || after == 'E') && !Character.isLetter(next);
+            return !multiplication && !exponent && (Character.isLetter(next) || isSpace(next) || AFTER.indexOf(next) >= 0
+                    || end + 1 >= text.length());
+        }
+        return false;
     }
 
     /** Inclui o espaço não separável, que a formatação de moeda em pt-BR põe entre "R$" e o número. */

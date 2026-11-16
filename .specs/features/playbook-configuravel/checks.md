@@ -463,6 +463,9 @@ Proof: run server | PASSED [C131] valor negativo do documento não autoriza o po
 **C133** - Número em notação científica no documento (`1E3`, `1e3`, `1,5E+3`, `2E-3`, e com o expoente marcado por menos Unicode ou travessão, como `1E−3`) não autoriza nenhum valor, nem os pedaços dele; um número comum ao lado de uma letra separada por espaço continua valendo (AC 71)
 Proof: run server | PASSED [C133] número em notação científica não autoriza nenhum pedaço dele
 
+**C134** - Só um número isolado no texto do documento autoriza um valor (AD-064): pedaços de outras grafias (`1E‐3` com hífens Unicode, `1e³`, `1E３`, `1E 3`, `1×10³`, `1x10^3`, `R$ 7 000` com espaço não separável, `R$ 7'000`) não autorizam 1, 3, 7, 10 nem 0; as grafias usuais de preço (`R$ 4.500 à vista`, `6x de R$ 800`, `R$4.500,50em 12x`, `(R$ 1.200)`, `até 300`, faixa `1.200-1.400`, `99/mês`, `5%`) continuam valendo (AC 71)
+Proof: run server | PASSED [C134] só número isolado autoriza valor: pedaço de outra grafia nunca entra, e as grafias usuais valem
+
 **C132** - Com o envio da importação pendente, o diálogo não fecha (Esc nem botão de fechar), e depois do `202` a tela entra em "Importando…" com o rascunho só leitura: nada pode ser digitado entre o envio e o `202` (AC 35, AC 40, AC 66)
 Proof: run web | ✓ [C132] com o envio da importação pendente o diálogo não fecha, e o rascunho não fica editável antes do 202
 
